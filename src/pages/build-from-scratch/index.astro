@@ -1,0 +1,29 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_TITLE } from '../../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Build from Scratch - ${SITE_TITLE}`} description="Implementing things from the ground up" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<h1>Build from Scratch</h1>
+			<p>Implementing things from the ground up.</p>
+			<p class="empty">Nothing here yet.</p>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	.empty {
+		color: rgb(var(--gray));
+		font-style: italic;
+	}
+</style>

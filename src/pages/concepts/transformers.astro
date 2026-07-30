@@ -1,0 +1,98 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_TITLE } from '../../consts';
+import { getEntry, render } from 'astro:content';
+
+const transformer = await getEntry('concepts', 'transformers');
+
+if (!transformer) {
+	throw new Error('Transformers article not found');
+}
+
+const { Content } = await render(transformer);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`${transformer.data.title} - ${SITE_TITLE}`} description={transformer.data.description} />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<article class="prose">
+				<header class="article-header">
+					<a href="/concepts" class="back-link">&larr; All Concepts</a>
+					<h1>{transformer.data.title}</h1>
+					<p class="description">{transformer.data.description}</p>
+				</header>
+				<Content />
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	.article-header {
+		margin-bottom: 2.5rem;
+		padding-bottom: 1.5rem;
+		border-bottom: 1px solid rgb(var(--gray-light));
+	}
+	.back-link {
+		display: inline-block;
+		margin-bottom: 1rem;
+		font-size: 0.9rem;
+		color: rgb(var(--gray));
+		text-decoration: none;
+	}
+	.back-link:hover {
+		color: var(--accent);
+	}
+	.article-header h1 {
+		font-size: 2.4rem;
+		margin-bottom: 0.5rem;
+	}
+	.description {
+		font-size: 1.1rem;
+		color: rgb(var(--gray));
+		margin: 0;
+	}
+	.prose {
+		line-height: 1.8;
+	}
+	.prose :global(h2),
+	.prose :global(strong) {
+		margin-top: 2rem;
+	}
+	.prose :global(ol),
+	.prose :global(ul) {
+		padding-left: 1.5rem;
+	}
+	.prose :global(li) {
+		margin-bottom: 0.5rem;
+	}
+	.prose :global(pre) {
+		background-color: rgb(var(--gray-dark));
+		color: #f8f8f2;
+		padding: 1.25rem;
+		border-radius: 8px;
+		overflow-x: auto;
+		font-size: 0.9rem;
+		line-height: 1.5;
+	}
+	.prose :global(img) {
+		margin: 1.5rem 0;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 8px;
+	}
+	.prose :global(blockquote) {
+		border-left: 4px solid var(--accent);
+		padding: 0.5rem 0 0.5rem 1.25rem;
+		margin: 1.5rem 0;
+		background: rgba(var(--gray-light), 0.3);
+		border-radius: 0 4px 4px 0;
+	}
+</style>

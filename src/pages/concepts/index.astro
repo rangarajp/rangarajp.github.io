@@ -1,0 +1,51 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_TITLE } from '../../consts';
+import { getCollection } from 'astro:content';
+
+const concepts = await getCollection('concepts');
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Concepts - ${SITE_TITLE}`} description="Core ideas and mental models" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<h1>Concepts</h1>
+			<p>Core ideas and mental models.</p>
+			<ul class="article-list">
+				{concepts.map((entry) => (
+					<li>
+						<a href={`/concepts/${entry.id}`}>{entry.data.title}</a>
+						<p>{entry.data.description}</p>
+					</li>
+				))}
+			</ul>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	.article-list {
+		list-style: none;
+		padding: 0;
+	}
+	.article-list li {
+		margin-bottom: 1.5rem;
+	}
+	.article-list a {
+		font-size: 1.2rem;
+		font-weight: 600;
+	}
+	.article-list p {
+		margin: 0.25rem 0 0;
+		color: rgb(var(--gray));
+		font-size: 0.95rem;
+	}
+</style>
