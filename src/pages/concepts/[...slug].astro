@@ -4,6 +4,7 @@ import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import { SITE_TITLE } from '../../consts';
 import { getCollection, render } from 'astro:content';
+import { getConceptPath, getSeriesContext, isSeriesHub } from '../../lib/concepts';
 
 export async function getStaticPaths() {
 	const concepts = await getCollection('concepts');
@@ -19,6 +20,13 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+
+const concepts = await getCollection('concepts');
+const seriesContext = getSeriesContext(entry, concepts);
+const isHub = isSeriesHub(entry.id);
+
+const backHref = seriesContext && !isHub ? seriesContext.series.hubPath : '/concepts';
+const backLabel = seriesContext && !isHub ? seriesContext.series.title : 'All Concepts';
 ---
 
 <!doctype html>
@@ -31,11 +39,82 @@ const { Content } = await render(entry);
 		<main>
 			<article class="prose">
 				<header class="article-header">
-					<a href="/concepts" class="back-link">&larr; All Concepts</a>
+					<nav class="breadcrumbs" aria-label="Breadcrumb">
+						<a href="/concepts">Concepts</a>
+						{seriesContext && (
+							<>
+								<span class="separator">/</span>
+								{isHub ? (
+									<span aria-current="page">{seriesContext.series.title}</span>
+								) : (
+									<a href={seriesContext.series.hubPath}>{seriesContext.series.title}</a>
+								)}
+							</>
+						)}
+						{seriesContext && !isHub && (
+							<>
+								<span class="separator">/</span>
+								<span aria-current="page">{entry.data.title}</span>
+							</>
+						)}
+						{!seriesContext && (
+							<>
+								<span class="separator">/</span>
+								<span aria-current="page">{entry.data.title}</span>
+							</>
+						)}
+					</nav>
+					<a href={backHref} class="back-link">&larr; {backLabel}</a>
 					<h1>{entry.data.title}</h1>
 					<p class="description">{entry.data.description}</p>
 				</header>
+
+				{seriesContext && (
+					<nav class="series-nav" aria-label={`${seriesContext.series.title} topics`}>
+						<p class="series-nav-label">In this series</p>
+						<ol class="series-nav-list">
+							{seriesContext.series.articles.map((article, index) => (
+								<li class:list={[{ active: article.id === entry.id }]}>
+									<span class="step">{index + 1}</span>
+									<a href={getConceptPath(article.id)}>{article.data.title}</a>
+								</li>
+							))}
+						</ol>
+					</nav>
+				)}
+
 				<Content />
+
+				{seriesContext && !isHub && seriesContext.currentIndex >= 0 && (
+					<nav class="page-nav" aria-label="Article navigation">
+						{seriesContext.currentIndex > 0 ? (
+							<a
+								class="page-nav-link prev"
+								href={getConceptPath(seriesContext.series.articles[seriesContext.currentIndex - 1].id)}
+							>
+								<span class="page-nav-direction">&larr; Previous</span>
+								<span class="page-nav-title">
+									{seriesContext.series.articles[seriesContext.currentIndex - 1].data.title}
+								</span>
+							</a>
+						) : (
+							<span />
+						)}
+						{seriesContext.currentIndex < seriesContext.series.articles.length - 1 ? (
+							<a
+								class="page-nav-link next"
+								href={getConceptPath(seriesContext.series.articles[seriesContext.currentIndex + 1].id)}
+							>
+								<span class="page-nav-direction">Next &rarr;</span>
+								<span class="page-nav-title">
+									{seriesContext.series.articles[seriesContext.currentIndex + 1].data.title}
+								</span>
+							</a>
+						) : (
+							<span />
+						)}
+					</nav>
+				)}
 			</article>
 		</main>
 		<Footer />
@@ -44,9 +123,28 @@ const { Content } = await render(entry);
 
 <style>
 	.article-header {
-		margin-bottom: 2.5rem;
+		margin-bottom: 2rem;
 		padding-bottom: 1.5rem;
 		border-bottom: 1px solid rgb(var(--gray-light));
+	}
+	.breadcrumbs {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.35rem;
+		margin-bottom: 0.75rem;
+		font-size: 0.85rem;
+		color: rgb(var(--gray));
+	}
+	.breadcrumbs a {
+		color: rgb(var(--gray));
+		text-decoration: none;
+	}
+	.breadcrumbs a:hover {
+		color: var(--accent);
+	}
+	.separator {
+		color: rgb(var(--gray-light));
 	}
 	.back-link {
 		display: inline-block;
@@ -66,6 +164,93 @@ const { Content } = await render(entry);
 		font-size: 1.1rem;
 		color: rgb(var(--gray));
 		margin: 0;
+	}
+	.series-nav {
+		margin-bottom: 2rem;
+		padding: 1rem 1.25rem;
+		background: rgba(var(--gray-light), 0.25);
+		border-radius: 8px;
+	}
+	.series-nav-label {
+		margin: 0 0 0.75rem;
+		font-size: 0.8rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: rgb(var(--gray));
+	}
+	.series-nav-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.series-nav-list li {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.series-nav-list li.active a {
+		color: var(--accent);
+		font-weight: 600;
+	}
+	.step {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.35rem;
+		height: 1.35rem;
+		border-radius: 999px;
+		background: rgb(var(--gray-light));
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: rgb(var(--gray));
+	}
+	.series-nav-list li.active .step {
+		background: var(--accent);
+		color: white;
+	}
+	.series-nav-list a {
+		font-size: 0.9rem;
+		text-decoration: none;
+	}
+	.series-nav-list a:hover {
+		color: var(--accent);
+	}
+	.page-nav {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+		margin-top: 3rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid rgb(var(--gray-light));
+	}
+	.page-nav-link {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding: 1rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 8px;
+		text-decoration: none;
+		color: inherit;
+		transition: border-color 0.2s;
+	}
+	.page-nav-link:hover {
+		border-color: var(--accent);
+	}
+	.page-nav-link.next {
+		text-align: right;
+		grid-column: 2;
+	}
+	.page-nav-direction {
+		font-size: 0.85rem;
+		color: rgb(var(--gray));
+	}
+	.page-nav-title {
+		font-weight: 600;
 	}
 	.prose {
 		line-height: 1.8;
@@ -101,5 +286,13 @@ const { Content } = await render(entry);
 		margin: 1.5rem 0;
 		background: rgba(var(--gray-light), 0.3);
 		border-radius: 0 4px 4px 0;
+	}
+	@media (max-width: 640px) {
+		.page-nav {
+			grid-template-columns: 1fr;
+		}
+		.page-nav-link.next {
+			grid-column: 1;
+		}
 	}
 </style>

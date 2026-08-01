@@ -4,11 +4,10 @@ import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import { SITE_TITLE } from '../../consts';
 import { getCollection } from 'astro:content';
+import { getConceptPath, groupConceptsBySeries } from '../../lib/concepts';
 
 const concepts = await getCollection('concepts');
-
-const getConceptPath = (id: string) =>
-	id.endsWith('/index') ? `/concepts/${id.slice(0, -'/index'.length)}` : `/concepts/${id}`;
+const { series, standalone } = groupConceptsBySeries(concepts);
 ---
 
 <!doctype html>
@@ -20,21 +19,106 @@ const getConceptPath = (id: string) =>
 		<Header />
 		<main>
 			<h1>Concepts</h1>
-			<p>Core ideas and mental models.</p>
-			<ul class="article-list">
-				{concepts.map((entry) => (
-					<li>
-						<a href={getConceptPath(entry.id)}>{entry.data.title}</a>
-						<p>{entry.data.description}</p>
-					</li>
-				))}
-			</ul>
+			<p>Core ideas and mental models, organized into learning paths.</p>
+
+			{series.map((item) => (
+				<section class="series">
+					<div class="series-header">
+						<h2><a href={item.hubPath}>{item.title}</a></h2>
+						{item.description && <p class="series-description">{item.description}</p>}
+					</div>
+					<ol class="series-articles">
+						{item.articles.map((article) => (
+							<li>
+								<a href={getConceptPath(article.id)}>{article.data.title}</a>
+								<p>{article.data.description}</p>
+							</li>
+						))}
+					</ol>
+				</section>
+			))}
+
+			{standalone.length > 0 && (
+				<section class="standalone">
+					<h2>Other topics</h2>
+					<ul class="article-list">
+						{standalone.map((entry) => (
+							<li>
+								<a href={getConceptPath(entry.id)}>{entry.data.title}</a>
+								<p>{entry.data.description}</p>
+							</li>
+						))}
+					</ul>
+				</section>
+			)}
 		</main>
 		<Footer />
 	</body>
 </html>
 
 <style>
+	.series {
+		margin-bottom: 2.5rem;
+		padding: 1.5rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 8px;
+	}
+	.series-header h2 {
+		font-size: 1.5rem;
+		margin: 0 0 0.35rem;
+	}
+	.series-header h2 a {
+		text-decoration: none;
+		color: inherit;
+	}
+	.series-header h2 a:hover {
+		color: var(--accent);
+	}
+	.series-description {
+		margin: 0;
+		color: rgb(var(--gray));
+		font-size: 0.95rem;
+	}
+	.series-articles {
+		list-style: none;
+		padding: 0;
+		margin: 1.25rem 0 0;
+		counter-reset: article;
+	}
+	.series-articles li {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 0.15rem 0.75rem;
+		align-items: baseline;
+		margin-bottom: 0.85rem;
+		counter-increment: article;
+	}
+	.series-articles li::before {
+		content: counter(article) '.';
+		color: rgb(var(--gray));
+		font-size: 0.9rem;
+		font-weight: 600;
+	}
+	.series-articles a {
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.series-articles a:hover {
+		color: var(--accent);
+	}
+	.series-articles p {
+		grid-column: 2;
+		margin: 0;
+		color: rgb(var(--gray));
+		font-size: 0.9rem;
+	}
+	.standalone {
+		margin-top: 2rem;
+	}
+	.standalone h2 {
+		font-size: 1.25rem;
+		margin-bottom: 1rem;
+	}
 	.article-list {
 		list-style: none;
 		padding: 0;

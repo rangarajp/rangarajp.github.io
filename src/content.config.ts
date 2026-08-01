@@ -11,6 +11,7 @@ const concepts = defineCollection({
 			pubDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
 			heroImage: z.optional(image()),
+			order: z.number().optional(),
 		}),
 });
 

@@ -2,6 +2,7 @@
 title: 'Positional Encoding'
 description: 'How sequence order information is injected into token representations.'
 pubDate: 'Aug 1 2026'
+order: 3
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 

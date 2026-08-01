@@ -5,9 +5,6 @@ pubDate: 'Aug 1 2026'
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-This section introduces the core building blocks of transformers.
+Transformers process text as a sequence of tokens. Each building block below covers one step in that pipeline — from raw text to contextual representations.
 
-- [Tokenization](./tokenization)
-- [Token Embeddings](./token-embeddings)
-- [Positional Encoding](./positional-encoding)
-- [Attention](./attention)
+Read them in order for the full picture, or jump to any topic that interests you.

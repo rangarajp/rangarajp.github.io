@@ -2,6 +2,7 @@
 title: 'Attention'
 description: 'How tokens weigh the relevance of other tokens in context.'
 pubDate: 'Aug 1 2026'
+order: 4
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 

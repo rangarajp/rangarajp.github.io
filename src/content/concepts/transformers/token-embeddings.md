@@ -2,6 +2,7 @@
 title: 'Token Embeddings'
 description: 'How tokens are mapped into dense numerical vectors.'
 pubDate: 'Aug 1 2026'
+order: 2
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 

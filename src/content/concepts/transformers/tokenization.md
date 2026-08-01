@@ -2,6 +2,7 @@
 title: 'Tokenization'
 description: 'How raw text is converted into model-friendly tokens.'
 pubDate: 'Aug 1 2026'
+order: 1
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
