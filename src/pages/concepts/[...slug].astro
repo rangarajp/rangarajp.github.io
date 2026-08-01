@@ -3,21 +3,28 @@ import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import { SITE_TITLE } from '../../consts';
-import { getEntry, render } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 
-const transformer = await getEntry('concepts', 'transformers');
+export async function getStaticPaths() {
+	const concepts = await getCollection('concepts');
 
-if (!transformer) {
-	throw new Error('Transformers article not found');
+	return concepts.map((entry) => {
+		const slug = entry.id.endsWith('/index') ? entry.id.slice(0, -'/index'.length) : entry.id;
+		return {
+			params: { slug },
+			props: { entry },
+		};
+	});
 }
 
-const { Content } = await render(transformer);
+const { entry } = Astro.props;
+const { Content } = await render(entry);
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`${transformer.data.title} - ${SITE_TITLE}`} description={transformer.data.description} />
+		<BaseHead title={`${entry.data.title} - ${SITE_TITLE}`} description={entry.data.description} />
 	</head>
 	<body>
 		<Header />
@@ -25,8 +32,8 @@ const { Content } = await render(transformer);
 			<article class="prose">
 				<header class="article-header">
 					<a href="/concepts" class="back-link">&larr; All Concepts</a>
-					<h1>{transformer.data.title}</h1>
-					<p class="description">{transformer.data.description}</p>
+					<h1>{entry.data.title}</h1>
+					<p class="description">{entry.data.description}</p>
 				</header>
 				<Content />
 			</article>

@@ -6,6 +6,9 @@ import { SITE_TITLE } from '../../consts';
 import { getCollection } from 'astro:content';
 
 const concepts = await getCollection('concepts');
+
+const getConceptPath = (id: string) =>
+	id.endsWith('/index') ? `/concepts/${id.slice(0, -'/index'.length)}` : `/concepts/${id}`;
 ---
 
 <!doctype html>
@@ -21,7 +24,7 @@ const concepts = await getCollection('concepts');
 			<ul class="article-list">
 				{concepts.map((entry) => (
 					<li>
-						<a href={`/concepts/${entry.id}`}>{entry.data.title}</a>
+						<a href={getConceptPath(entry.id)}>{entry.data.title}</a>
 						<p>{entry.data.description}</p>
 					</li>
 				))}
