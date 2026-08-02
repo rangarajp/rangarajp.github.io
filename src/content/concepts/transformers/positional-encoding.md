@@ -24,22 +24,22 @@ Positional embeddings inform word order and contextual relationships. Ideally, t
 
 There are a few common approaches.
 
-## 1. Naive representation
+## Naive representation
 
 Why not just add the absolute position number?
 
 | Token | Representation |
 | ----- | -------------- |
-| I     | embedding + 1  |
-| love  | embedding + 2  |
-| AI    | embedding + 3  |
+| I | embedding + 1 |
+| love | embedding + 2 |
+| AI | embedding + 3 |
 
 Problems:
 
 - Position numbers grow large for long sequences
 - No relative relationship is captured — the model ideally needs signals like "previous token" or "5 tokens earlier"
 
-## 2. Sinusoidal position encoding
+## Sinusoidal position encoding
 
 ### Why sine and cosine?
 
@@ -60,7 +60,7 @@ The second hand alone is not enough because it repeats every 60 seconds. Combine
 ![Sinusoidal Encoding](position_encoding_base_formula.png)
 
 | Variable | Meaning |
-| ------ | ------- |
+| -------- | ------- |
 | `pos` | Token position: 0, 1, 2, 3... |
 | `i` | Embedding dimension index |
 | `d_model` | Embedding dimension (e.g. 768) |
