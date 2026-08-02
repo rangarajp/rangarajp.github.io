@@ -113,7 +113,7 @@ Take two sentences:
 
 In both, *cat* and *ate* have a similar relative relationship. With sinusoidal encoding, this gives the same positional information rather than a distinct unique ID for each absolute position.
 
-## Summary
+### Sinusoidal encoding in one picture
 
 ```
 Position
@@ -141,3 +141,64 @@ Represent it as many clocks
 **Why 10000?** It spreads those frequencies over a wide range of wavelengths — the number itself is not sacred.
 
 **Why efficient?** No learned parameters, cheap to precompute, simple addition to embeddings, same dimensionality, and mathematically structured relative-position information.
+
+## RoPE
+
+**Key shift:** sinusoidal positional encoding *adds* position to token embeddings. **RoPE** (*Rotary Position Embedding*) *rotates* the query and key vectors inside attention.
+
+### Attention without position
+
+Attention for a token computes:
+
+```
+Q = X Wq
+K = X Wk
+V = X Wv
+```
+
+The attention score between token `m` and token `n` is:
+
+```
+Qmᵀ Kn
+```
+
+That score does not tell the model *where* tokens `m` and `n` occur — only how similar their query and key vectors are.
+
+### Rotating Q and K by position
+
+RoPE rotates the Q and K vectors based on their positions.
+
+For a token at position `m`:
+
+```
+Qm′ = Rm Qm
+Kn′ = Rn Kn
+```
+
+where `R` is a rotation matrix. The attention score becomes:
+
+```
+Qm′ᵀ Kn′
+```
+
+RoPE rotates information in the relevant dimensions and depends only on Q and K:
+
+- **Q and K** decide *where* to look
+- **V** carries *what* to retrieve
+
+### How RoPE works
+
+1. Create Q and K normally
+2. Split each Q/K vector into 2D pairs
+3. Assign each pair a frequency
+4. Rotate every pair by `position × frequency`
+5. Compute attention using the rotated Q and K
+
+```
+same token content
++ different position
+= different orientation
+
+orientation difference
+= relative positional distance
+```
