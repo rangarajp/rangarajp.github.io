@@ -57,7 +57,7 @@ The second hand alone is not enough because it repeats every 60 seconds. Combine
 
 ### The formula
 
-![Sinusoidal Encoding](position_encoding_base_formula.png)
+![Sinusoidal Encoding](./images/positional-encoding-formula.png)
 
 | Variable | Meaning |
 | -------- | ------- |

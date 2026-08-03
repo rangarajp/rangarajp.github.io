@@ -10,7 +10,7 @@ Tokens are the units a model uses for both inputs and outputs. When you send tex
 
 You can try this interactively with the [OpenAI tokenizer](https://platform.openai.com/tokenizer).
 
-![Tokenization from OpenAI](image-1.png)
+![Tokenization from OpenAI](./images/tokenization-openai-example.png)
 
 As a rough rule of thumb:
 
@@ -60,7 +60,7 @@ Input:  i want to learn ML
 Tokens: "i", "w", "a", "n", "t", ...
 ```
 
-![Tokenizer Algorithms](image-2.png)
+![Tokenizer Algorithms](./images/tokenization-approaches-algorithms.png)
 
 ### 4. Byte Pair Encoding (BPE)
 

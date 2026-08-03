@@ -31,10 +31,10 @@ Early embedding methods used Word2Vec. Embeddings were learned from a classifica
 
 It helps to include random negative examples. Each word starts with random token weights. Over training, the network updates those weights into useful embeddings.
 
-![Word2Vec](image-3.png)
+![Word2Vec](./images/token-embeddings-word2vec.png)
 
 ## Embedding techniques
 
 There are several families of embedding methods beyond Word2Vec. The diagram below compares common approaches.
 
-![Embedding Techniques](image-4.png)
+![Embedding Techniques](./images/token-embeddings-techniques.png)
