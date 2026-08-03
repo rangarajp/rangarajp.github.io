@@ -12,7 +12,7 @@ Problem with handling long sequences
 
 Take english to german translation, the challenge is not word by word translation. Certain words require access to word that appeared previously or latter. To address this problem, encoder-decoder style architecture was used with RNN style encoding & decoding.
 
-![Context Window Limit](./images/attention-background-context-window.png)
+![Why Attention](./images/attention-background-translation.png)
 
 Big limitation of RNN encoder-decoder is it can directly access previous hidden state. We assume the current hidden state captures all relevant information, which leads to loss of context in handling long context sequences.
 
