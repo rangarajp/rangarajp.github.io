@@ -76,13 +76,19 @@ BPE is a subword method inspired by data compression. It iteratively merges the 
    {"a", "b", "c", "d", "e"}
    ```
 
-2. **Count frequencies:**
+2. **Count character frequencies:**
 
    ```
    {"a": 1, "b": 3, "c": 3, "d": 2, "e": 1}
    ```
 
-3. **Find the most frequent pair** — `"bc"` appears 3 times
+3. **Count adjacent pairs:**
+
+   ```
+   {"ab": 1, "bc": 2, "cd": 2, "de": 1}
+   ```
+
+   `"bc"` and `"cd"` both appear twice. Merge `"bc"` first (tie-break; either pair is valid).
 
 4. **Merge into a new subword:**
 

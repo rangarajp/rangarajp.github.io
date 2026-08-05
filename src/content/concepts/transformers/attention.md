@@ -36,19 +36,18 @@ Both contain the word "bank", but the meaning differs:
 - Sentence A: **bank** = riverbank (geographic, nature-related)
 - Sentence B: **bank** = financial institution (business, money-related)
 
-A traditional word embedding treats "bank" the same way in both contexts:
+A traditional word embedding is the same in both sentences — ambiguous between the two senses:
 
 ```
-embedding("bank") = [0.2, -0.5, 0.8, 0.1, -0.3]  ← always the same
+embedding("bank") = [0.5, 0.5, 0.3, 0.0, 0.0]
+                     Geographic, Financial, Nature, Action, Person
 ```
 
-That single vector does not know what other words are in the sentence, what the sentence is about, or how important those words are for understanding this "bank".
-
-Self-attention fixes this by looking at all words, scoring how relevant each is to "bank", and building a **context vector** tailored to this sentence. Same word, different sentences → different context vectors.
+That single vector does not know what other words are nearby or which sense applies. Self-attention fixes this by looking at all words, scoring how relevant each is to "bank", and building a **context vector** tailored to this sentence. The token embedding starts the same; attention contextualizes it.
 
 ### Attention scores
 
-Walk through Sentence A with five embedding dimensions that capture meaning:
+Walk through Sentence A with five embedding dimensions:
 
 | Dimension | Meaning |
 | --------- | ------- |
@@ -66,9 +65,9 @@ Walk through Sentence A with five embedding dimensions that capture meaning:
 | by | 0.2 | 0.0 | 0.0 | 0.2 | 0.0 |
 | the | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
 | river | **0.8** | 0.0 | **0.9** | 0.0 | 0.0 |
-| **bank** | **0.7** | 0.1 | 0.5 | 0.0 | 0.0 |
+| **bank** | **0.5** | **0.5** | **0.3** | 0.0 | 0.0 |
 
-**Key observation:** in this sentence, "bank" has high Geographic (0.7) and Nature (0.5) values — not Financial.
+**Key point:** "bank" starts ambiguous — equal Geographic and Financial (0.5 each). Nothing in the embedding itself says this is a riverbank.
 
 For each word we have three roles:
 
@@ -78,21 +77,21 @@ For each word we have three roles:
 
 For simplicity, assume `Q = K = V = embedding`. In real models these are learned linear transformations.
 
-Focus on **"bank"** and compute how much attention it should pay to each other word. The score is the dot product `Q_bank · K_word`:
+Focus on **"bank"**. The score against each word is the dot product `Q_bank · K_word`:
 
 | Word | Key vector | Dot product with Q_bank | Score |
 | ---- | ---------- | ----------------------- | ----- |
-| I | [0.1, 0.0, 0.0, 0.0, 0.95] | `(0.7×0.1) + (0.1×0.0) + (0.5×0.0) + (0.0×0.0) + (0.0×0.95)` | **0.07** |
-| am | [0.0, 0.0, 0.0, 0.5, 0.1] | `(0.7×0.0) + (0.1×0.0) + (0.5×0.0) + (0.0×0.5) + (0.0×0.1)` | **0.00** |
-| sitting | [0.1, 0.0, 0.1, 0.9, 0.0] | `(0.7×0.1) + (0.1×0.0) + (0.5×0.1) + (0.0×0.9) + (0.0×0.0)` | **0.12** |
-| by | [0.2, 0.0, 0.0, 0.2, 0.0] | `(0.7×0.2) + (0.1×0.0) + (0.5×0.0) + (0.0×0.2) + (0.0×0.0)` | **0.14** |
-| the | [0.0, 0.0, 0.0, 0.0, 0.0] | `(0.7×0.0) + (0.1×0.0) + (0.5×0.0) + (0.0×0.0) + (0.0×0.0)` | **0.00** |
-| river | [0.8, 0.0, 0.9, 0.0, 0.0] | `(0.7×0.8) + (0.1×0.0) + (0.5×0.9) + (0.0×0.0) + (0.0×0.0)` | **1.01** |
-| bank | [0.7, 0.1, 0.5, 0.0, 0.0] | `(0.7×0.7) + (0.1×0.1) + (0.5×0.5) + (0.0×0.0) + (0.0×0.0)` | **0.75** |
+| I | [0.1, 0.0, 0.0, 0.0, 0.95] | `(0.5×0.1) + (0.5×0.0) + (0.3×0.0) + (0.0×0.0) + (0.0×0.95)` | **0.05** |
+| am | [0.0, 0.0, 0.0, 0.5, 0.1] | `(0.5×0.0) + (0.5×0.0) + (0.3×0.0) + (0.0×0.5) + (0.0×0.1)` | **0.00** |
+| sitting | [0.1, 0.0, 0.1, 0.9, 0.0] | `(0.5×0.1) + (0.5×0.0) + (0.3×0.1) + (0.0×0.9) + (0.0×0.0)` | **0.08** |
+| by | [0.2, 0.0, 0.0, 0.2, 0.0] | `(0.5×0.2) + (0.5×0.0) + (0.3×0.0) + (0.0×0.2) + (0.0×0.0)` | **0.10** |
+| the | [0.0, 0.0, 0.0, 0.0, 0.0] | `(0.5×0.0) + (0.5×0.0) + (0.3×0.0) + (0.0×0.0) + (0.0×0.0)` | **0.00** |
+| river | [0.8, 0.0, 0.9, 0.0, 0.0] | `(0.5×0.8) + (0.5×0.0) + (0.3×0.9) + (0.0×0.0) + (0.0×0.0)` | **0.67** |
+| bank | [0.5, 0.5, 0.3, 0.0, 0.0] | `(0.5×0.5) + (0.5×0.5) + (0.3×0.3) + (0.0×0.0) + (0.0×0.0)` | **0.59** |
 
-**Raw attention scores:** `[0.07, 0.00, 0.12, 0.14, 0.00, 1.01, 0.75]`
+**Raw attention scores:** `[0.05, 0.00, 0.08, 0.10, 0.00, 0.67, 0.59]`
 
-"river" gets the highest score (1.01) — it is the most semantically similar to "bank" in this geographic/nature context.
+"river" gets the highest score (0.67) — even though "bank" started ambiguous, the nature/geographic neighbor wins.
 
 Softmax converts scores into probabilities that sum to 1:
 
@@ -102,31 +101,31 @@ attention_weight = e^score / Σ e^score_i
 
 | Word | Score | e^Score |
 | ---- | ----- | ------- |
-| I | 0.07 | 1.07 |
+| I | 0.05 | 1.05 |
 | am | 0.00 | 1.00 |
-| sitting | 0.12 | 1.13 |
-| by | 0.14 | 1.15 |
+| sitting | 0.08 | 1.08 |
+| by | 0.10 | 1.11 |
 | the | 0.00 | 1.00 |
-| river | 1.01 | 2.75 |
-| bank | 0.75 | 2.12 |
+| river | 0.67 | 1.95 |
+| bank | 0.59 | 1.80 |
 
-**Sum:** `1.07 + 1.00 + 1.13 + 1.15 + 1.00 + 2.75 + 2.12 = 10.22`
+**Sum:** `1.05 + 1.00 + 1.08 + 1.11 + 1.00 + 1.95 + 1.80 = 9.00`
 
 | Word | Attention weight |
 | ---- | ---------------- |
-| I | 1.07 / 10.22 = **0.105** |
-| am | 1.00 / 10.22 = **0.098** |
-| sitting | 1.13 / 10.22 = **0.111** |
-| by | 1.15 / 10.22 = **0.113** |
-| the | 1.00 / 10.22 = **0.098** |
-| river | 2.75 / 10.22 = **0.269** |
-| bank | 2.12 / 10.22 = **0.207** |
+| I | 1.05 / 9.00 = **0.117** |
+| am | 1.00 / 9.00 = **0.111** |
+| sitting | 1.08 / 9.00 = **0.120** |
+| by | 1.11 / 9.00 = **0.123** |
+| the | 1.00 / 9.00 = **0.111** |
+| river | 1.95 / 9.00 = **0.217** |
+| bank | 1.80 / 9.00 = **0.200** |
 
 Interpretation:
 
-- **26.9%** of "bank"'s attention goes to "river"
-- **20.7%** goes to itself
-- The remaining ~52% is distributed among the other words
+- **21.7%** of "bank"'s attention goes to "river"
+- **20.0%** goes to itself
+- The remaining ~58% is distributed among the other words
 
 ### Context vector
 
@@ -138,74 +137,111 @@ context_vector = Σ attention_weight_i × V_i
 
 | Word | Attention wt | Value vector | Weighted vector |
 | ---- | ------------ | ------------ | --------------- |
-| I | 0.105 | [0.1, 0.0, 0.0, 0.0, 0.95] | [0.010, 0.0, 0.0, 0.0, 0.100] |
-| am | 0.098 | [0.0, 0.0, 0.0, 0.5, 0.1] | [0.0, 0.0, 0.0, 0.049, 0.010] |
-| sitting | 0.111 | [0.1, 0.0, 0.1, 0.9, 0.0] | [0.011, 0.0, 0.011, 0.100, 0.0] |
-| by | 0.113 | [0.2, 0.0, 0.0, 0.2, 0.0] | [0.023, 0.0, 0.0, 0.023, 0.0] |
-| the | 0.098 | [0.0, 0.0, 0.0, 0.0, 0.0] | [0.0, 0.0, 0.0, 0.0, 0.0] |
-| river | 0.269 | [0.8, 0.0, 0.9, 0.0, 0.0] | [0.215, 0.0, 0.242, 0.0, 0.0] |
-| bank | 0.207 | [0.7, 0.1, 0.5, 0.0, 0.0] | [0.145, 0.021, 0.104, 0.0, 0.0] |
+| I | 0.117 | [0.1, 0.0, 0.0, 0.0, 0.95] | [0.012, 0.0, 0.0, 0.0, 0.111] |
+| am | 0.111 | [0.0, 0.0, 0.0, 0.5, 0.1] | [0.0, 0.0, 0.0, 0.056, 0.011] |
+| sitting | 0.120 | [0.1, 0.0, 0.1, 0.9, 0.0] | [0.012, 0.0, 0.012, 0.108, 0.0] |
+| by | 0.123 | [0.2, 0.0, 0.0, 0.2, 0.0] | [0.025, 0.0, 0.0, 0.025, 0.0] |
+| the | 0.111 | [0.0, 0.0, 0.0, 0.0, 0.0] | [0.0, 0.0, 0.0, 0.0, 0.0] |
+| river | 0.217 | [0.8, 0.0, 0.9, 0.0, 0.0] | [0.174, 0.0, 0.195, 0.0, 0.0] |
+| bank | 0.200 | [0.5, 0.5, 0.3, 0.0, 0.0] | [0.100, 0.100, 0.060, 0.0, 0.0] |
 
 ```
-Context Vector = [0.010 + 0.0 + 0.011 + 0.023 + 0.0 + 0.215 + 0.145,
-                  0.0 + 0.0 + 0.0 + 0.0 + 0.0 + 0.0 + 0.021,
-                  0.0 + 0.0 + 0.011 + 0.0 + 0.0 + 0.242 + 0.104,
-                  0.0 + 0.049 + 0.100 + 0.023 + 0.0 + 0.0 + 0.0,
-                  0.100 + 0.010 + 0.0 + 0.0 + 0.0 + 0.0 + 0.0]
-
-Context Vector = [0.404, 0.021, 0.357, 0.172, 0.110]
-                  Geographic, Financial, Nature, Action, Person
+Context Vector A = [0.323, 0.100, 0.267, 0.189, 0.122]
+                    Geographic, Financial, Nature, Action, Person
 ```
 
-Compare with the original embedding for "bank" `[0.7, 0.1, 0.5, 0.0, 0.0]`:
+Compare with the original ambiguous embedding `[0.5, 0.5, 0.3, 0.0, 0.0]`:
 
-| Dimension | Original | Context | Change | Interpretation |
-| --------- | -------- | ------- | ------ | -------------- |
-| Geographic | 0.7 | 0.404 | Diluted | Other words are less geographic |
-| Financial | 0.1 | 0.021 | Slightly reduced | Minimal financial context |
-| Nature | 0.5 | 0.357 | Diluted | Mixed with surrounding words |
-| Action | 0.0 | 0.172 | Boosted | "sitting" and "by" contributed action |
-| Person | 0.0 | 0.110 | Boosted | "I" contributed person perspective |
+| Dimension | Original | Context A | Change | Interpretation |
+| --------- | -------- | --------- | ------ | -------------- |
+| Geographic | 0.5 | 0.323 | Mixed | Pulled by "river", diluted by others |
+| Financial | 0.5 | 0.100 | ↓ Dropped | No financial neighbors in this sentence |
+| Nature | 0.3 | 0.267 | Held up | "river" kept nature alive |
+| Action | 0.0 | 0.189 | ↑ Boosted | "sitting" and "by" contributed action |
+| Person | 0.0 | 0.122 | ↑ Boosted | "I" contributed person perspective |
 
-The context vector absorbed influence from "river" (geographic, nature) and "sitting" (action), while the direct "bank" signal stayed strong. That is a contextualized representation.
+Financial collapsed; nature stayed relevant. The river sentence pushed "bank" toward a nature-oriented reading.
 
-Apply the same process to **"I am going to the bank to deposit money"**:
+### Same embedding, opposite context
+
+Now Sentence B — **same starting "bank" embedding**, different neighbors.
+
+The low-scoring words (`I`, `am`, `going`, `the`) barely move the result. The decisive neighbors are `deposit` and `money`, so we focus the math there (along with `bank` and `to`):
 
 | Word | Geographic | Financial | Nature | Action | Person |
 | ---- | ---------- | --------- | ------ | ------ | ------ |
-| bank | **0.2** | **0.8** | 0.1 | 0.1 | 0.0 |
+| to | 0.1 | 0.1 | 0.0 | 0.2 | 0.0 |
+| **bank** | **0.5** | **0.5** | **0.3** | 0.0 | 0.0 |
+| deposit | 0.0 | **0.95** | 0.0 | **0.9** | 0.0 |
+| money | 0.0 | **1.0** | 0.0 | 0.0 | 0.0 |
 
-- Attention would weight "money" (Financial: 0.9), "deposit" (Action: 0.95), and nearby function words more heavily
-- The final context vector for "bank" would have **high Financial**, low Nature
-- Completely different contextualization from Sentence A
+Scores against the same `Q_bank = [0.5, 0.5, 0.3, 0.0, 0.0]`:
+
+| Word | Score |
+| ---- | ----- |
+| to | 0.10 |
+| bank | 0.59 |
+| deposit | **0.47** |
+| money | **0.50** |
+
+After softmax (sum of `e^score` ≈ 6.17):
+
+| Word | Attention weight |
+| ---- | ---------------- |
+| bank | 1.80 / 6.17 = **0.293** |
+| to | 1.11 / 6.17 = **0.179** |
+| deposit | 1.61 / 6.17 = **0.261** |
+| money | 1.65 / 6.17 = **0.267** |
+
+Together, `deposit` + `money` get over half the attention mass.
+
+```
+Context Vector B = [0.164, 0.679, 0.088, 0.271, 0.000]
+                    Geographic, Financial, Nature, Action, Person
+```
+
+| Dimension | Original | Context A (river) | Context B (deposit) |
+| --------- | -------- | ----------------- | ------------------- |
+| Geographic | 0.5 | 0.323 | 0.164 |
+| Financial | 0.5 | **0.100** ↓ | **0.679** ↑ |
+| Nature | 0.3 | **0.267** | **0.088** ↓ |
+| Action | 0.0 | 0.189 | 0.271 |
+| Person | 0.0 | 0.122 | 0.000 |
+
+Same token embedding in both sentences. After attention:
+
+- River sentence → Financial collapses, Nature stays relevant
+- Deposit sentence → Financial rises, Nature collapses
+
+That is the central point — the embedding starts ambiguous; attention contextualizes it.
 
 ### Putting it together
 
 ```
-1. INPUT: word embedding (static, context-agnostic)
-   "bank" = [0.7, 0.1, 0.5, 0.0, 0.0]
+1. INPUT: same ambiguous embedding in both sentences
+   "bank" = [0.5, 0.5, 0.3, 0.0, 0.0]
                 │
                 ▼
-2. QUERY-KEY SIMILARITY: compute attention scores
-   Scores: [0.07, 0.00, 0.12, 0.14, 0.00, 1.01, 0.75]
+2. QUERY-KEY SIMILARITY: score against neighbors
+   Sentence A → "river" wins (0.67)
+   Sentence B → "money" / "deposit" rise (0.50, 0.47)
                 │
                 ▼
-3. SOFTMAX: convert scores to attention weights
-   Weights: [0.105, 0.098, 0.111, 0.113, 0.098, 0.269, 0.207]
+3. SOFTMAX: turn scores into attention weights
                 │
                 ▼
-4. WEIGHTED SUM: combine value vectors by weight
-   context = Σ(weight_i × value_i)
-   [0.404, 0.021, 0.357, 0.172, 0.110]
+4. WEIGHTED SUM: mix value vectors by weight
+   Context A = [0.323, 0.100, 0.267, 0.189, 0.122]  ← nature-oriented
+   Context B = [0.164, 0.679, 0.088, 0.271, 0.000]  ← finance-oriented
 ```
 
 In short:
 
-1. Static embeddings ignore context
+1. Static embeddings ignore context — the same ambiguous vector for every "bank"
 2. Attention scores measure relevance between words
 3. Softmax turns scores into weights (0–1, sum to 1)
 4. Context vectors are weighted combinations of all words, tailored to the query
-5. Same word, different context → different representation — the foundation of transformers
+5. Same embedding, different neighbors → different representation — the foundation of transformers
 
 For a query word `q`:
 
