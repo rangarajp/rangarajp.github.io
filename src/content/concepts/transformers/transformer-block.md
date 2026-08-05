@@ -1,8 +1,8 @@
 ---
-title: 'Transformer Bloack'
+title: 'Transformer Block'
 description: 'Putting It All Together'
 pubDate: 'Aug 4 2026'
-order: 2
+order: 6
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
