@@ -77,6 +77,22 @@ For each word we have three roles:
 
 For simplicity, assume `Q = K = V = embedding`. In real models these are learned linear transformations.
 
+**Note on learned weight matrices:** In practice, Query, Key, and Value are not the raw embeddings. Each is computed by multiplying the embedding with a learned weight matrix:
+
+```
+Q = W_Q × embedding
+K = W_K × embedding
+V = W_V × embedding
+```
+
+`W_Q`, `W_K`, and `W_V` are parameters the network learns during training. Different matrices let Q, K, and V capture different aspects of meaning:
+
+- **Query** — what to search for
+- **Key** — what to match against
+- **Value** — what to contribute
+
+That learned transformation makes self-attention much more expressive than using raw embeddings. For this walkthrough we keep them identical to keep the math clean, but in real Transformers they are always separate learned parameters.
+
 Focus on **"bank"**. The score against each word is the dot product `Q_bank · K_word`:
 
 | Word | Key vector | Dot product with Q_bank | Score |

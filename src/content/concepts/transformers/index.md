@@ -15,5 +15,6 @@ Read them in order for the full picture, or jump to any topic that interests you
 2. **Token embeddings** — map each token to a dense numerical vector
 3. **Positional encoding** — inject sequence order into those vectors
 4. **Attention** — let tokens weigh how relevant other tokens are in context
+5. **Multi-head attention** — run multiple attention patterns in parallel and combine them
 
 Together, these steps turn a sentence into a set of context-aware representations that downstream layers can reason over.
