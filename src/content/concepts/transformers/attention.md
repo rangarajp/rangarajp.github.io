@@ -8,7 +8,7 @@ heroImage: '../../../assets/blog-placeholder-3.jpg'
 
 Attention computes contextual relevance scores between tokens. Given a sequence of embeddings (with positional information already mixed in), each token looks at every other token and decides how much to weigh each one. The result is a new representation that depends on context — the same token can mean different things depending on what surrounds it.
 
-## Background
+## 1. Background
 
 Long sequences are hard to handle well. Take English-to-German translation: you cannot translate word by word. Some words depend on words that appeared earlier or later. Encoder-decoder architectures with RNN-style encoding and decoding were an early answer to that problem.
 
@@ -22,9 +22,9 @@ A big limitation of RNN encoder-decoder models is that they cannot directly acce
 
 **Attention** (as in the picture above) lets the decoder decide which parts of the encoder input to focus on while producing the output. **Self-attention** goes further — every token within a sequence can interact directly with every other token. Weights are computed by relating different positions inside a single sequence.
 
-## Self-attention
+## 2. Self-attention
 
-### Why embeddings alone are not enough
+### 2.1 Why embeddings alone are not enough
 
 Consider these two sentences:
 
@@ -45,7 +45,7 @@ embedding("bank") = [0.5, 0.5, 0.3, 0.0, 0.0]
 
 That single vector does not know what other words are nearby or which sense applies. Self-attention fixes this by looking at all words, scoring how relevant each is to "bank", and building a **context vector** tailored to this sentence. The token embedding starts the same; attention contextualizes it.
 
-### Attention scores
+### 2.2 Attention scores
 
 Walk through Sentence A with five embedding dimensions:
 
@@ -143,7 +143,7 @@ Interpretation:
 - **20.0%** goes to itself
 - The remaining ~58% is distributed among the other words
 
-### Context vector
+### 2.3 Context vector
 
 The context vector is each value vector weighted by its attention weight, then summed:
 
@@ -178,7 +178,7 @@ Compare with the original ambiguous embedding `[0.5, 0.5, 0.3, 0.0, 0.0]`:
 
 Financial collapsed; nature stayed relevant. The river sentence pushed "bank" toward a nature-oriented reading.
 
-### Same embedding, opposite context
+### 2.4 Same embedding, opposite context
 
 Now Sentence B — **same starting "bank" embedding**, different neighbors.
 
@@ -231,7 +231,7 @@ Same token embedding in both sentences. After attention:
 
 That is the central point — the embedding starts ambiguous; attention contextualizes it.
 
-### Putting it together
+### 2.5 Putting it together
 
 ```
 1. INPUT: same ambiguous embedding in both sentences

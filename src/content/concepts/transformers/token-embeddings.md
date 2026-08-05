@@ -8,13 +8,13 @@ heroImage: '../../../assets/blog-placeholder-3.jpg'
 
 Embeddings give tokens meaning by mapping them into dense vectors. Higher dimensions can capture richer relationships, but at a computational cost. Modern GPT models typically use embedding sizes from 768 to 12,288 dimensions.
 
-## Word2Vec
+## 1. Word2Vec
 
 Early embedding methods used Word2Vec. Embeddings were learned from a classification task: train a neural network to predict whether two words commonly appear together. The network takes two words and predicts `1` if they co-occur, or `0` if they do not.
 
 **Example sentence:** *i want to learn machine learning and human ethics.*
 
-### Training samples
+### 1.1 Training samples
 
 | Word 1 | Word 2 | Target |
 | ------ | ------ | ------ |
@@ -33,7 +33,7 @@ It helps to include random negative examples. Each word starts with random token
 
 ![Word2Vec](./images/token-embeddings-word2vec.png)
 
-## Embedding techniques
+## 2. Embedding techniques
 
 There are several families of embedding methods beyond Word2Vec. The diagram below compares common approaches.
 

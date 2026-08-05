@@ -23,9 +23,9 @@ Tokens can be:
 2. Parts of words — `token`, `ization`
 3. Punctuation — often its own token
 
-## Tokenizer approaches
+## 1. Tokenizer approaches
 
-### 1. Word tokens
+### 1.1 Word tokens
 
 The earliest approach: one token per word.
 
@@ -36,7 +36,7 @@ Input:  i want to learn ML
 Tokens: "i", "want", "to", "learn", "ML"
 ```
 
-### 2. Subword tokens
+### 1.2 Subword tokens
 
 Subword tokenization can represent unseen words by composing known pieces. Frequent words stay intact; rare words break into recognizable roots. This also reduces unknown-token problems.
 
@@ -51,7 +51,7 @@ In practice:
 - Rare words split into recognizable roots
 - Unknown words become less of a problem
 
-### 3. Character tokens
+### 1.3 Character tokens
 
 Every word is split into letters. The vocabulary is tiny (just the alphabet and symbols), but you lose a lot of word-level context.
 
@@ -62,7 +62,7 @@ Tokens: "i", "w", "a", "n", "t", ...
 
 ![Tokenizer Algorithms](./images/tokenization-approaches-algorithms.png)
 
-### 4. Byte Pair Encoding (BPE)
+### 1.4 Byte Pair Encoding (BPE)
 
 BPE is a subword method inspired by data compression. It iteratively merges the most frequent pairs of consecutive characters in a corpus until a target vocabulary size is reached.
 

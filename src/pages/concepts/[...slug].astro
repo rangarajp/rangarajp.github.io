@@ -255,9 +255,24 @@ const backLabel = seriesContext && !isHub ? seriesContext.series.title : 'All Co
 	.prose {
 		line-height: 1.8;
 	}
-	.prose :global(h2),
-	.prose :global(strong) {
-		margin-top: 2rem;
+	/* Article body: keep section titles smaller than the page h1 */
+	.prose :global(h2) {
+		font-size: 1.5rem;
+		margin-top: 2.5rem;
+		margin-bottom: 0.75rem;
+		font-weight: 700;
+	}
+	.prose :global(h3) {
+		font-size: 1.2rem;
+		margin-top: 1.75rem;
+		margin-bottom: 0.5rem;
+		font-weight: 600;
+	}
+	.prose :global(h4) {
+		font-size: 1.05rem;
+		margin-top: 1.25rem;
+		margin-bottom: 0.4rem;
+		font-weight: 600;
 	}
 	.prose :global(ol),
 	.prose :global(ul) {

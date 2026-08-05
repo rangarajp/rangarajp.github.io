@@ -9,7 +9,7 @@ Transformers process text as a sequence of tokens. Each building block below cov
 
 Read them in order for the full picture, or jump to any topic that interests you.
 
-## The pipeline
+## 1. The pipeline
 
 1. **Tokenization** — break raw text into tokens the model can consume
 2. **Token embeddings** — map each token to a dense numerical vector

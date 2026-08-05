@@ -24,7 +24,7 @@ Positional embeddings inform word order and contextual relationships. Ideally, t
 
 There are a few common approaches.
 
-## Naive representation
+## 1. Naive representation
 
 Why not just add the absolute position number?
 
@@ -39,9 +39,9 @@ Problems:
 - Position numbers grow large for long sequences
 - No relative relationship is captured — the model ideally needs signals like "previous token" or "5 tokens earlier"
 
-## Sinusoidal position encoding
+## 2. Sinusoidal position encoding
 
-### Why sine and cosine?
+### 2.1 Why sine and cosine?
 
 Polynomial or exponential functions grow quickly out of bounds. We want something that changes with position without increasing in magnitude.
 
@@ -55,7 +55,7 @@ Think of multiple clock hands:
 
 The second hand alone is not enough because it repeats every 60 seconds. Combine seconds + minutes + hours and you get a unique, richer representation of time that does not repeat. Sinusoidal encoding creates hundreds of these "clock hands."
 
-### The formula
+### 2.2 The formula
 
 ![Sinusoidal Encoding](./images/positional-encoding-formula.png)
 
@@ -94,7 +94,7 @@ PE(3) = [0.141, −0.990,  0.030,  0.9995]
 
 The first dimensions change rapidly; later dimensions change slowly (`0.01 → 0.02 → 0.03`). Each dimension `i` oscillates at a different rate — dim 1 changes fast, dim 2 less, and so on.
 
-### Linear shift property
+### 2.3 Linear shift property
 
 Sine and cosine create a linear transformation when moving from position `k` to `k + p`:
 
@@ -104,7 +104,7 @@ sin(p + k) = sin(p)cos(k) + cos(p)sin(k)
 
 This is why we need both sine and cosine — together they encode the linear relationship between positions.
 
-### Relative positions in practice
+### 2.4 Relative positions in practice
 
 Take two sentences:
 
@@ -113,7 +113,7 @@ Take two sentences:
 
 In both, *cat* and *ate* have a similar relative relationship. With sinusoidal encoding, this gives the same positional information rather than a distinct unique ID for each absolute position.
 
-### Sinusoidal encoding in one picture
+### 2.5 Sinusoidal encoding in one picture
 
 ```
 Position
@@ -142,11 +142,11 @@ Represent it as many clocks
 
 **Why efficient?** No learned parameters, cheap to precompute, simple addition to embeddings, same dimensionality, and mathematically structured relative-position information.
 
-## RoPE
+## 3. RoPE
 
 **Key shift:** sinusoidal positional encoding *adds* position to token embeddings. **RoPE** (*Rotary Position Embedding*) *rotates* the query and key vectors inside attention.
 
-### Attention without position
+### 3.1 Attention without position
 
 Attention for a token computes:
 
@@ -164,7 +164,7 @@ Qmᵀ Kn
 
 That score does not tell the model *where* tokens `m` and `n` occur — only how similar their query and key vectors are.
 
-### Rotating Q and K by position
+### 3.2 Rotating Q and K by position
 
 RoPE rotates the Q and K vectors based on their positions.
 
@@ -186,7 +186,7 @@ RoPE rotates information in the relevant dimensions and depends only on Q and K:
 - **Q and K** decide *where* to look
 - **V** carries *what* to retrieve
 
-### How RoPE works
+### 3.3 How RoPE works
 
 1. Create Q and K normally
 2. Split each Q/K vector into 2D pairs

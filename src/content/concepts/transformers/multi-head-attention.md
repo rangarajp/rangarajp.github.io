@@ -8,7 +8,7 @@ heroImage: '../../../assets/blog-placeholder-3.jpg'
 
 Single-head attention produces one weighted view of a token's neighbors. Multi-head attention runs several attention computations in parallel, each with its own weight matrices, then concatenates and projects the results. That lets the model capture different relationship types at once — geography and action, syntax and semantics — instead of forcing one head to compromise.
 
-## Background
+## 1. Background
 
 From [attention](/concepts/transformers/attention), a single head can contextualize an ambiguous word like "bank" by looking at its neighbors. The same embedding `[0.5, 0.5, 0.3, 0.0, 0.0]` produces different context vectors in different sentences:
 
@@ -25,7 +25,7 @@ A single head must prioritize one pattern. It cannot strongly split attention ac
 
 **Multi-head attention** fixes this: run N independent attention heads in parallel, each learning different relationship patterns.
 
-## The core idea
+## 2. The core idea
 
 Instead of computing attention once:
 
@@ -47,13 +47,13 @@ MultiHead(Q, K, V) = Concat(head_1, ..., head_N) W^O
 
 Each head learns different weights (`W_i^Q`, `W_i^K`, `W_i^V`), so each weights neighbors differently. Single-head gave one perspective; multi-head gives N in parallel.
 
-## Worked example: 2-head attention on "bank"
+## 3. Worked example: 2-head attention on "bank"
 
 Continue with Sentence A: **"I am sitting by the river bank"**
 
 Use the same embeddings as the attention walkthrough, but compute with two different heads.
 
-### Word embeddings
+### 3.1 Word embeddings
 
 | Word | Geographic | Financial | Nature | Action | Person |
 | ---- | ---------- | --------- | ------ | ------ | ------ |
@@ -70,7 +70,7 @@ Use the same embeddings as the attention walkthrough, but compute with two diffe
 - Attention weights: river (0.217), bank (0.200), by (0.123), sitting (0.120), I (0.117), am (0.111), the (0.111)
 - Context vector: `[0.323, 0.100, 0.267, 0.189, 0.122]`
 
-### Multi-head decomposition
+### 3.2 Multi-head decomposition
 
 What if that single context could be split into multiple learned perspectives?
 
@@ -79,9 +79,9 @@ What if that single context could be split into multiple learned perspectives?
 
 Weights start random. During training, Head 1 tends to learn "pay attention to geographic neighbors" while Head 2 learns "pay attention to action neighbors".
 
-## Head 1: geographic focus
+### 3.3 Head 1: geographic focus
 
-### Apply W₁^Q to "bank"
+#### Apply W₁^Q to "bank"
 
 Head 1 transforms the embedding to search for geographic relevance:
 
@@ -102,7 +102,7 @@ Q_1 = [0.5, 0.5, 0.3, 0.0, 0.0] × W_1^Q
 
 This query emphasizes Geographic and Nature.
 
-### Attention scores (Head 1)
+#### Attention scores (Head 1)
 
 Query for "bank" (Head 1): `[0.56, 0.40, 0.49, 0.01, 0.02]`
 
@@ -122,7 +122,7 @@ Dot product with key vectors (using `W_1^K`, also learned for geographic focus):
 
 Head 1 gives river a higher score (0.79) than single-head (0.67) because it is specialized for geographic focus.
 
-### Softmax (Head 1)
+#### Softmax (Head 1)
 
 | Word | Score | e^Score | Attention weight |
 | ---- | ----- | ------- | ---------------- |
@@ -145,7 +145,7 @@ Head 1 gives river a higher score (0.79) than single-head (0.67) because it is s
 
 This head emphasizes geographic relationships more than single-head.
 
-### Context vector (Head 1)
+#### Context vector (Head 1)
 
 Apply `W_1^V` to value embeddings and weight by attention:
 
@@ -175,9 +175,9 @@ Person:     0.105 + 0.010 + 0.000 + 0.000 + 0.000 + 0.000 + 0.000 = 0.115
 
 Geographic (0.307) and Nature (0.260) stay strong; Action is suppressed; Financial is modest. This is the geographic perspective on "bank".
 
-## Head 2: action / activity focus
+### 3.4 Head 2: action / activity focus
 
-### Apply W₂^Q to "bank"
+#### Apply W₂^Q to "bank"
 
 Head 2 uses a different matrix, searching for action / verb relevance:
 
@@ -198,7 +198,7 @@ Q_2 = [0.5, 0.5, 0.3, 0.0, 0.0] × W_2^Q
 
 This query emphasizes Action more than Head 1.
 
-### Attention scores (Head 2)
+#### Attention scores (Head 2)
 
 Query for "bank" (Head 2): `[0.25, 0.25, 0.12, 0.16, 0.12]`
 
@@ -218,7 +218,7 @@ Dot product with keys using `W_2^K` (learned for action focus):
 
 Head 2 gives sitting much higher relative weight than Head 1 (0.28 vs 0.12).
 
-### Softmax (Head 2)
+#### Softmax (Head 2)
 
 | Word | Score | e^Score | Attention weight |
 | ---- | ----- | ------- | ---------------- |
@@ -241,7 +241,7 @@ Head 2 gives sitting much higher relative weight than Head 1 (0.28 vs 0.12).
 
 Sitting is elevated compared to single-head, though the gap is less dramatic than Head 1's geographic focus.
 
-### Context vector (Head 2)
+#### Context vector (Head 2)
 
 Weighted sum of value vectors (using `W_2^V`):
 
@@ -267,7 +267,7 @@ Person:     0.105 + 0.011 + 0.000 + 0.000 + 0.000 + 0.000 + 0.000 = 0.116
 
 Action (0.194) is elevated vs Head 1 (0.173). Person is preserved. Geographic (0.207) is lower than Head 1 (0.307). This is the action perspective on "bank".
 
-## Concatenate head outputs
+### 3.5 Concatenate head outputs
 
 Two different context vectors for "bank":
 
@@ -282,7 +282,7 @@ Concat: [0.307, 0.085, 0.260, 0.173, 0.115, 0.207, 0.065, 0.160, 0.194, 0.116]
 
 The 10-dimensional vector keeps specialized information from both heads — more than either perspective alone.
 
-## Project back with W^O
+### 3.6 Project back with W^O
 
 The concatenated vector has 10 dimensions; the original embedding had 5. Apply a learned output projection `W^O` (10 × 5):
 
@@ -305,7 +305,7 @@ Final = [0.307, 0.085, 0.260, 0.173, 0.115, 0.207, 0.065, 0.160, 0.194, 0.116] �
 
 **Multi-head output for "bank":** `[0.293, 0.134, 0.256, 0.211, 0.125]`
 
-## Comparing original, single-head, and multi-head
+### 3.7 Comparing original, single-head, and multi-head
 
 | Dimension | Original | Single-head | Head 1 (geo) | Head 2 (action) | Multi-head final |
 | --------- | -------- | ----------- | ------------ | --------------- | ---------------- |
@@ -323,7 +323,7 @@ Final = [0.307, 0.085, 0.260, 0.173, 0.115, 0.207, 0.065, 0.160, 0.194, 0.116] �
    - Projection blends both → 0.293 geographic + 0.211 action
 4. **Key difference** — multi-head final Action (0.211) is higher than single-head (0.189). The action signal was not lost; the action head preserved it alongside the geographic signal.
 
-## What each head learned
+### 3.8 What each head learned
 
 **Head 1 (geographic focus):**
 
@@ -341,9 +341,9 @@ Final = [0.307, 0.085, 0.260, 0.173, 0.115, 0.207, 0.065, 0.160, 0.194, 0.116] �
 
 Neither head was told to specialize. Gradient descent optimizes `W^Q`, `W^K`, `W^V` for each head independently. Head 1 naturally learns geographic patterns; Head 2 learns action patterns. That emergent specialization is why multi-head attention is powerful.
 
-## Why multi-head matters
+## 4. Why multi-head matters
 
-### Single-head produces one view
+### 4.1 Single-head produces one view
 
 On "I am sitting by the river bank", single-head produces:
 
@@ -357,7 +357,7 @@ Why muted? One set of `W_Q`, `W_K`, `W_V` must compromise:
 - Attending to "sitting" → high action, low geographic
 - Cannot do both strongly at once
 
-### Multi-head: parallel patterns
+### 4.2 Multi-head: parallel patterns
 
 ```
 Head 1 asks: "How is 'bank' used geographically?" → focuses on river (0.22)
@@ -378,7 +378,7 @@ Both patterns computed in parallel. W^O combines them.
 - It is part of an activity (sitting context)
 - It is not purely financial (ambiguity preserved)
 
-## Real-world transformers
+## 5. Real-world transformers
 
 In production models (BERT, GPT, and others):
 
@@ -400,7 +400,7 @@ Example patterns heads may learn:
 
 All 12 heads run in parallel for every token — highly expressive.
 
-## The mathematics (compact form)
+## 6. The mathematics
 
 For N heads:
 
@@ -422,7 +422,7 @@ MultiHead = Concat(head_1, ..., head_N) W^O
 
 All learned via backpropagation during training.
 
-## Key takeaways
+## 7. Key takeaways
 
 1. **Single-head is a bottleneck** — one pattern per sentence
 2. **Multi-head allows parallel patterns** — each head specializes
@@ -432,7 +432,7 @@ All learned via backpropagation during training.
 6. **No explicit instruction** — heads learn what matters via gradient descent
 7. **Expressiveness** — many heads × many layers compounds the patterns the model can learn
 
-## Quick intuition check
+## 8. Quick intuition check
 
 **Why not one large head instead of multiple small heads?**
 
