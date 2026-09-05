@@ -89,18 +89,7 @@ advantage_i = (reward_i − mean(group_rewards)) / std(group_rewards)
 
 No separate critic network needed. This is cheaper and more stable for long reasoning traces, where a learned value function is hard to train accurately.
 
----
-
-> **Deep dive → [GRPO — Group Relative Policy Optimization](/concepts/reasoning-models/grpo)**
->
-> Covers: rollouts, group-relative advantages, the policy gradient loss, and the KL penalty with a concrete worked example. Includes a [mini-training experiment](/concepts/reasoning-models/grpo#8-mini-training-results-qwen3-0-6b-20-steps-cpu) that runs a full GRPO loop on Qwen3-0.6B (CPU, 20 steps) and shows:
-> - **+71% accuracy improvement** over the base model in 20 steps
-> - Why the KL formula matters: the naive `log π_θ − log π_ref` estimate caused model collapse (accuracy dropped from 0.10 → 0.03, garbled output); the correct non-negative approximation keeps the policy stable
-> - How the zero-variance skip guard prevents silent corruption when all rollouts score equally
->
-> Paired notebook: `notebooks/reasoning-models/grpo-training.ipynb`
-
----
+→ **Deep dive:** [GRPO — Group Relative Policy Optimization](/concepts/reasoning-models/grpo) — rollouts, advantages, the KL penalty, and a [mini-training experiment](/concepts/reasoning-models/grpo#8-mini-training-results-qwen3-06b-20-steps-cpu) on Qwen3-0.6B showing +71% accuracy in 20 steps on CPU. Notebook: [grpo-training.ipynb](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/reasoning-models/grpo-training.ipynb)
 
 ### 3.2 DeepSeek-R1 — the open recipe (DeepSeek, Jan 2025)
 
