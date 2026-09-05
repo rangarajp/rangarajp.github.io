@@ -1,0 +1,13 @@
+{
+  "python.defaultInterpreterPath": "C:\\Users\\rpandur\\rangarajp.github.io-1\\.venv-qwen\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
+  "python.venvPath": "C:\\Users\\rpandur\\rangarajp.github.io-1",
+  "python.venvFolders": [".venv-qwen"],
+  "jupyter.jupyterCommandLineArguments": [],
+  "notebook.kernelProviderAssociations": [
+    {
+      "viewType": "jupyter-notebook",
+      "kernelProvider": "ms-toolsai.jupyter"
+    }
+  ]
+}

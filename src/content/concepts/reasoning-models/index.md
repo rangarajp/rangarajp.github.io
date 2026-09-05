@@ -14,7 +14,7 @@ Read them in order for the full picture, or jump to any topic that interests you
 Topics to cover in this series:
 
 1. **Basics** — conventional training, what reasoning means, and how it is improved
-2. **Inference-time scaling** — CoT, parallel strategies, and sampling without retraining
+2. **Inference-time scaling** — CoT, sampling, self-consistency, Best-of-N, and self-refinement without retraining
 3. **Chain of thought** — prompting and supervised CoT as the baseline
 4. **Training for reasoning** — process rewards, outcome rewards, and RL on long traces
 5. **Search and verifiers** — Best-of-N, self-consistency, tree search, checkers
