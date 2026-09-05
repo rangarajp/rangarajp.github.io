@@ -22,3 +22,9 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# venv
+.venv*
+
+# notebooks
+.ipynb_checkpoints/

@@ -1,0 +1,5 @@
+# Optional deps for notebooks/reasoning-models/inference-time-scaling.ipynb
+torch>=2.2
+transformers>=4.51
+accelerate
+ipykernel
