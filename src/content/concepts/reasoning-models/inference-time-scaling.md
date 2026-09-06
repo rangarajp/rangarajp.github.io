@@ -6,30 +6,30 @@ order: 2
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-**Reasoning ability and answer accuracy can improve without retraining** by spending more compute at decode time. That idea is **inference-time scaling**: same weights, more tokens, samples, search, or revise loops while answering.
+Reasoning ability and answer accuracy can improve without retraining by spending more compute at decode time. That idea is inference-time scaling: same weights, more tokens, samples, search, or revise loops while answering.
 
-The central trade-off is simple — **higher accuracy in exchange for more compute** (latency, tokens, wall-clock time).
+The central trade-off is simple — higher accuracy in exchange for more compute (latency, tokens, wall-clock time).
 
-Toy traces below are from **`Qwen/Qwen3-0.6B-Base`** in `notebooks/reasoning-models/inference-time-scaling.ipynb`. Each experiment highlights **what changed** (prompt vs decode knobs vs aggregation vs refine). Broader benchmark notes (e.g. MATH-500) sit beside those runs where they matter.
+Toy traces below are from `Qwen/Qwen3-0.6B-Base` in `notebooks/reasoning-models/inference-time-scaling.ipynb`. Each experiment highlights what changed (prompt vs decode knobs vs aggregation vs refine). Broader benchmark notes (e.g. MATH-500) sit beside those runs where they matter.
 
 ## 1. Two ways to improve reasoning
 
-1. **Inference-time** — keep the same trained model; spend more tokens, samples, or search at decode time
-2. **Training-time** — change the model itself (SFT, distillation, RL) so better reasoning is baked into the weights
+1. Inference-time — keep the same trained model; spend more tokens, samples, or search at decode time
+2. Training-time — change the model itself (SFT, distillation, RL) so better reasoning is baked into the weights
 
 Inference-time methods come first in practice: no retraining, easy to A/B test, and an explicit cost–quality curve.
 
 ## 2. What happens when you sample
 
-At each step the model outputs **logits** over the vocabulary. Next-token probabilities come from **softmax** over those logits. Sampling strategies only change *how* you draw from that distribution — not the weights.
+At each step the model outputs logits over the vocabulary. Next-token probabilities come from softmax over those logits. Sampling strategies only change *how* you draw from that distribution — not the weights.
 
 | Knob | Role |
 | ---- | ---- |
-| **Temperature** | Scales logits before softmax — higher → flatter / more diverse text; lower → peakier / more deterministic |
-| **Top-k** | Keep only the *k* highest-probability tokens, then sample |
-| **Top-p (nucleus)** | Keep the smallest set of tokens whose probabilities sum to ≥ *p*; filters low-mass tail tokens that often produce nonsense |
+| Temperature | Scales logits before softmax — higher → flatter / more diverse text; lower → peakier / more deterministic |
+| Top-k | Keep only the *k* highest-probability tokens, then sample |
+| Top-p (nucleus) | Keep the smallest set of tokens whose probabilities sum to ≥ *p*; filters low-mass tail tokens that often produce nonsense |
 
-A small helper should let you **plug these in without rewriting callers** (notebook: `generate` / `generate_scored`):
+A small helper lets you plug these in without rewriting callers (notebook: `generate` / `generate_scored`):
 
 ```python
 def generate(prompt, *, do_sample=False, temperature=0.8, top_k=None, top_p=None, num_return_sequences=1):
@@ -43,7 +43,7 @@ def generate_scored(...):
 
 ## 3. Parallel experiments — what we change
 
-Shared setup: one model, one chocolate problem. Correct answer **6**.
+Shared setup: one model, one chocolate problem. Correct answer 6.
 
 ```python
 PROBLEM = (
@@ -55,7 +55,7 @@ PROBLEM = (
 
 ### 3.1 Experiment A — baseline (direct ask)
 
-**What changes:** short prompt, **greedy** decode.
+Short prompt, greedy decode.
 
 ```python
 prompt_direct = f"Question: {PROBLEM}\nAnswer:"
@@ -63,11 +63,11 @@ out = generate(prompt_direct, max_new_tokens=40, do_sample=False)[0]
 # → parsed answer 4 (wrong)
 ```
 
-Fast, but wrong (**4**). Everything below keeps the **same weights** and spends more decode compute.
+Fast, but wrong (4). Everything below keeps the same weights and spends more decode compute.
 
 ### 3.2 Experiment B — Chain of thought (prompt change)
 
-**What changes:** the **prompt** only — still greedy. “Explain step by step” forces intermediate tokens (more runtime, often better accuracy).
+The prompt only — still greedy. "Explain step by step" forces intermediate tokens (more runtime, often better accuracy).
 
 ```python
 prompt_cot = (
@@ -81,7 +81,7 @@ out = generate(prompt_cot, max_new_tokens=120, do_sample=False)[0]
 
 ### 3.3 Experiment C — top-k + top-p sampling (decode change)
 
-**What changes:** same CoT prompt; turn on **sampling**. Goal = diversity for later vote / select / refine.
+Same CoT prompt; turn on sampling. Goal is diversity for later vote / select / refine.
 
 ```python
 outs = generate(
@@ -97,7 +97,7 @@ outs = generate(
 
 ### 3.4 Experiment D — Self-consistency (aggregate answers)
 
-**What changes:** **N samples** + **majority vote** on extracted finals (Wang et al.).
+N samples + majority vote on extracted finals (Wang et al.).
 
 ```python
 samples = generate(prompt_cot, do_sample=True, top_k=40, top_p=0.9, num_return_sequences=N)
@@ -108,7 +108,7 @@ majority = Counter(a for a in answers if a).most_common(1)[0][0]
 
 ### 3.5 Experiment E — Best-of-N (select one trace)
 
-**What changes:** same samples; **score and pick one** path instead of voting. Scorer quality matters (length alone often fails).
+Same samples; score and pick one path instead of voting. Scorer quality matters (length alone often fails).
 
 ```python
 best = max(samples, key=score_length)  # toy — often wrong
@@ -116,31 +116,31 @@ best = max(samples, key=score_length)  # toy — often wrong
 
 ### 3.6 Experiment F — MATH-500 (same recipe, larger set)
 
-**What changes:** evaluation scale — CoT + self-consistency over MATH-500. Typical finding: accuracy rises vs a no-sampling baseline; runtime grows with N and trace length.
+Evaluation scale — CoT + self-consistency over MATH-500. Typical finding: accuracy rises vs a no-sampling baseline; runtime grows with N and trace length.
 
 ## 4. Self-refinement — correct, then revise
 
-Parallel methods draw many answers at once. **Self-refinement** is sequential:
+Parallel methods draw many answers at once. Self-refinement is sequential:
 
-1. **Draft** an answer  
-2. **Score / critique** it (or rank candidates)  
-3. **Revise** if needed — optionally loop  
+1. Draft an answer
+2. Score / critique it (or rank candidates)
+3. Revise if needed — optionally loop
 
-You can plug different **correctors / scorers** into the same loop:
+You can plug different correctors / scorers into the same loop:
 
 | Strategy | What it does | Strength | Weakness |
 | -------- | ------------ | -------- | -------- |
-| **Rule-based** | Cheap checks (parseable answer, arithmetic patterns in the trace) | Fast, deterministic | Brittle; domain-specific rules |
-| **Length** | Prefer longer completions | Trivial to implement | Length ≠ correctness |
-| **Avg log-prob** | Prefer sequences with higher mean token log-prob | Uses the model’s own uncertainty | Confident ≠ correct; length bias |
-| **LLM-as-judge** | Same (or stronger) model picks / critiques candidates | Flexible natural-language criteria | Extra calls; small models are noisy judges |
-| **Refine loop** | Critique → rewrite with feedback | Can fix a bad draft without N samples | Error can compound; more latency |
+| Rule-based | Cheap checks (parseable answer, arithmetic patterns in the trace) | Fast, deterministic | Brittle; domain-specific rules |
+| Length | Prefer longer completions | Trivial to implement | Length ≠ correctness |
+| Avg log-prob | Prefer sequences with higher mean token log-prob | Uses the model's own uncertainty | Confident ≠ correct; length bias |
+| LLM-as-judge | Same (or stronger) model picks / critiques candidates | Flexible natural-language criteria | Extra calls; small models are noisy judges |
+| Refine loop | Critique → rewrite with feedback | Can fix a bad draft without N samples | Error can compound; more latency |
 
-Best-of-N is “score once, pick once.” Self-refinement is “score/critique, then **generate again** with that signal.”
+Best-of-N is "score once, pick once." Self-refinement is "score/critique, then generate again with that signal."
 
 ### 4.1 Experiment G — Compare scorers on the same candidates
 
-**What changes:** after sampling, rank with **rule / length / avg log-prob** and compare picks.
+After sampling, rank with rule / length / avg log-prob and compare picks.
 
 ```python
 scored = generate_scored(prompt_cot, do_sample=True, top_k=40, top_p=0.9, num_return_sequences=5)
@@ -155,11 +155,11 @@ pick_rule = max(texts, key=score_rule_based)
 pick_lp   = max(scored, key=lambda p: p[1])[0]  # highest avg log-prob
 ```
 
-Same candidates, different “correctors” → often **different** selected answers. That is why the scorer is part of the method, not an afterthought.
+Same candidates, different correctors → often different selected answers. That is why the scorer is part of the method, not an afterthought.
 
 ### 4.2 Experiment H — LLM-as-judge
 
-**What changes:** ask the model to output `Judge: <n>` over short candidate summaries.
+Ask the model to output `Judge: <n>` over short candidate summaries.
 
 ```python
 judge_prompt = (
@@ -171,11 +171,11 @@ judge_prompt = (
 judge_out = generate(judge_prompt, max_new_tokens=16, do_sample=False)[0]
 ```
 
-Tiny base models are unreliable judges; production systems often use a stronger judge or a trained reward model. The **pattern** is the same: extra decode compute to select.
+Tiny base models are unreliable judges; production systems often use a stronger judge or a trained reward model. The pattern is the same: extra decode compute to select.
 
 ### 4.3 Experiment I — Critique → revise (one round)
 
-**What changes:** start from a **weak draft**, generate a critique, then regenerate with that feedback.
+Start from a weak draft, generate a critique, then regenerate with that feedback.
 
 ```python
 draft = generate(f"Question: {PROBLEM}\nAnswer:", do_sample=False)[0]
@@ -195,11 +195,11 @@ if "REVISE" in critique.upper() or score_rule_based(draft) < 3:
     )[0]
 ```
 
-**What changed vs Best-of-N:** you spend compute on a **second generation conditioned on feedback**, not only on ranking fixed samples.
+Compared to Best-of-N: the compute goes into a second generation conditioned on feedback, not only ranking fixed samples.
 
 ### 4.4 Experiment J — Multi-round refine
 
-**What changes:** repeat critique → revise for a few rounds; keep the best state by a scorer (here: rule-based).
+Repeat critique → revise for a few rounds; keep the best state by a scorer (here: rule-based).
 
 ```python
 def self_refine(problem: str, rounds: int = 2):
@@ -220,7 +220,7 @@ Stop early when `Verdict: OK` or when the rule score stops improving — another
 | Exp | Experiment | Family | What we change | Code focus |
 | --- | ---------- | ------ | -------------- | ---------- |
 | A | Baseline (direct ask) | Baseline | — | greedy short prompt |
-| B | Chain of thought | CoT | Prompt | “Explain step by step” |
+| B | Chain of thought | CoT | Prompt | "Explain step by step" |
 | C | Top-k + top-p sampling | Sampling | Decode | `do_sample`, `top_k`, `top_p` |
 | D | Self-consistency | Parallel | Aggregate | majority vote |
 | E | Best-of-N | Parallel | Select | `max(..., key=score)` |
@@ -232,10 +232,10 @@ Stop early when `Verdict: OK` or when the rule score stops improving — another
 
 ## 6. Summary
 
-1. Inference-time scaling improves reasoning **without retraining** by spending more decode compute  
-2. **Softmax(logits)** + **temperature / top-k / top-p** reshape sampling behind one flexible generate helper  
-3. **Parallel** path: sample many → vote (self-consistency) or score (Best-of-N)  
-4. **Sequential** path: draft → **rule / length / avg log-prob / LLM-as-judge** → revise (self-refinement)  
-5. Scorers and judges are part of the method — a bad scorer (e.g. length-only) can undo good samples  
-6. Toy runs and MATH-500-style evals share the trade-off: **accuracy up, compute up**  
-7. Next in this series: deeper **Chain of thought**, then training-time methods, search, and verifiers  
+1. Inference-time scaling improves reasoning without retraining by spending more decode compute
+2. Softmax(logits) + temperature / top-k / top-p reshape sampling behind one flexible generate helper
+3. Parallel path: sample many → vote (self-consistency) or score (Best-of-N)
+4. Sequential path: draft → rule / length / avg log-prob / LLM-as-judge → revise (self-refinement)
+5. Scorers and judges are part of the method — a bad scorer (e.g. length-only) can undo good samples
+6. Toy runs and MATH-500-style evals share the trade-off: accuracy up, compute up
+7. Next in this series: deeper chain of thought, then training-time methods, search, and verifiers
