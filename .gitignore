@@ -28,3 +28,7 @@ pnpm-debug.log*
 
 # notebooks
 .ipynb_checkpoints/
+jupyter.log
+
+# models
+models/
