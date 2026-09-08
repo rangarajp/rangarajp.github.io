@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1244" height="942" viewBox="0 0 1244 942" style="background:white">
+<defs>
+  <marker id="arr-black"  markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#555"/></marker>
+  <marker id="arr-green"  markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#82b366"/></marker>
+  <marker id="arr-orange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#d79b00"/></marker>
+  <marker id="arr-red"    markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#b85450"/></marker>
+</defs>
+<text x="453.6" y="36.0" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#333">LLM System Reliability Pipeline</text>
+<text x="302.4" y="54.0" text-anchor="middle" font-family="Arial" font-size="11" font-style="italic" fill="#6c8ebf">① Happy path</text>
+<text x="525.6" y="54.0" text-anchor="middle" font-family="Arial" font-size="11" font-style="italic" fill="#d79b00">② Output retry</text>
+<text x="738.0" y="54.0" text-anchor="middle" font-family="Arial" font-size="11" font-style="italic" fill="#d79b00">③ Fallback chain</text>
+<text x="943.2" y="54.0" text-anchor="middle" font-family="Arial" font-size="11" font-style="italic" fill="#b85450">④ Last resort</text>
+<rect x="20" y="90" width="100" height="20" rx="4" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1"/>
+<text x="70" y="103" text-anchor="middle" font-family="Arial" font-size="9" fill="#333">Main path</text>
+<rect x="20" y="118" width="100" height="20" rx="4" fill="#ffe6cc" stroke="#d79b00" stroke-width="1"/>
+<text x="70" y="131" text-anchor="middle" font-family="Arial" font-size="9" fill="#333">Fallback / retry</text>
+<rect x="20" y="146" width="100" height="20" rx="4" fill="#f8cecc" stroke="#b85450" stroke-width="1"/>
+<text x="70" y="159" text-anchor="middle" font-family="Arial" font-size="9" fill="#333">Failure</text>
+<rect x="20" y="174" width="100" height="20" rx="4" fill="#d5e8d4" stroke="#82b366" stroke-width="1"/>
+<text x="70" y="187" text-anchor="middle" font-family="Arial" font-size="9" fill="#333">Return ✅</text>
+<polygon points="70,202 120,212 70,222 20,212" fill="#fff2cc" stroke="#d6b656" stroke-width="1"/>
+<text x="70" y="215" text-anchor="middle" font-family="Arial" font-size="9" fill="#333">Decision</text>
+<ellipse cx="302.4" cy="86.4" rx="57.6" ry="18.0" fill="#f5f5f5" stroke="#666666" stroke-width="1.5"/>
+<text x="302.4" y="86.4" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="bold" fill="#333">User Request</text>
+<polygon points="302.4,133.2 385.2,162.0 302.4,190.8 219.59999999999997,162.0" fill="#fff2cc" stroke="#d6b656" stroke-width="1.5"/>
+<text x="302.4" y="154.85" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" fill="#333">Layer 6 — Budget</text>
+<text x="302.4" y="169.15" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" fill="#333">/ Quota Check</text>
+<rect x="453.6" y="149.0" width="144.0" height="28.8" rx="6" ry="6" fill="#f8cecc" stroke="#b85450" stroke-width="1.5"/>
+<text x="525.6" y="163.4" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="bold" fill="#333">❌ 429 Quota Exceeded</text>
+<rect x="219.6" y="226.8" width="165.6" height="57.6" rx="6" ry="6" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.5"/>
+<text x="302.4" y="241.3" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">Layer 4 — Router</text>
+<text x="302.4" y="255.60000000000002" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">classify: FAST · MID · DEEP</text>
+<text x="302.4" y="269.90000000000003" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">keyword / LLM judge</text>
+<polygon points="302.4,320.40000000000003 385.2,352.8 302.4,385.2 219.59999999999997,352.8" fill="#fff2cc" stroke="#d6b656" stroke-width="1.5"/>
+<text x="302.4" y="345.65000000000003" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" fill="#333">Layer 5 — Circuit</text>
+<text x="302.4" y="359.95000000000005" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" fill="#333">Breaker (per provider)</text>
+<rect x="219.6" y="424.8" width="165.6" height="57.6" rx="6" ry="6" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.5"/>
+<text x="302.4" y="439.3" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">Layer 1+2 — Primary Call</text>
+<text x="302.4" y="453.6" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">reasoning model</text>
+<text x="302.4" y="467.90000000000003" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">timeout · retry ≤ 2×</text>
+<rect x="219.6" y="525.6" width="165.6" height="57.6" rx="6" ry="6" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.5"/>
+<text x="302.4" y="540.1" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">Layer 3 — Output Validator</text>
+<text x="302.4" y="554.4" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">LLM infers format:</text>
+<text x="302.4" y="568.7" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">number · json · table · bullets</text>
+<polygon points="302.4,626.4000000000001 385.2,655.2 302.4,684.0 219.59999999999997,655.2" fill="#fff2cc" stroke="#d6b656" stroke-width="1.5"/>
+<text x="302.4" y="655.2" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" fill="#333">Valid?</text>
+<ellipse cx="302.4" cy="752.4" rx="61.2" ry="18.0" fill="#d5e8d4" stroke="#82b366" stroke-width="1.5"/>
+<text x="302.4" y="752.4" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="bold" fill="#333">✅ Return Response</text>
+<rect x="453.6" y="626.4" width="144.0" height="57.6" rx="6" ry="6" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.5"/>
+<text x="525.6" y="640.9" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">Tighten prompt</text>
+<text x="525.6" y="655.1999999999999" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">append failure reason</text>
+<text x="525.6" y="669.5" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">retry ≤ 3×</text>
+<rect x="655.2" y="424.8" width="165.6" height="57.6" rx="6" ry="6" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.5"/>
+<text x="738.0" y="446.45000000000005" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">Secondary Model Call</text>
+<text x="738.0" y="460.75000000000006" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">base model — always local</text>
+<polygon points="738.0,525.6 820.8,554.4 738.0,583.1999999999999 655.2,554.4" fill="#fff2cc" stroke="#d6b656" stroke-width="1.5"/>
+<text x="738.0" y="547.25" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" fill="#333">Secondary</text>
+<text x="738.0" y="561.55" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" fill="#333">success?</text>
+<ellipse cx="738.0" cy="648.0" rx="82.8" ry="21.6" fill="#d5e8d4" stroke="#82b366" stroke-width="1.5"/>
+<text x="738.0" y="640.85" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">✅ Return Response</text>
+<text x="738.0" y="655.15" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">(source: secondary)</text>
+<rect x="655.2" y="720.0" width="165.6" height="50.4" rx="6" ry="6" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.5"/>
+<text x="738.0" y="738.0500000000001" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">Cache Lookup</text>
+<text x="738.0" y="752.35" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">(exact-match)</text>
+<polygon points="943.2,720.0 1015.2,748.8 943.2,777.5999999999999 871.2,748.8" fill="#fff2cc" stroke="#d6b656" stroke-width="1.5"/>
+<text x="943.2" y="741.65" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" fill="#333">Cache</text>
+<text x="943.2" y="755.9499999999999" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" fill="#333">Hit?</text>
+<ellipse cx="914.4" cy="849.6" rx="72.0" ry="21.6" fill="#d5e8d4" stroke="#82b366" stroke-width="1.5"/>
+<text x="914.4" y="842.45" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">✅ Return Cached</text>
+<text x="914.4" y="856.75" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">(stale warning)</text>
+<rect x="1044.0" y="720.0" width="144.0" height="57.6" rx="6" ry="6" fill="#f8cecc" stroke="#b85450" stroke-width="1.5"/>
+<text x="1116.0" y="741.65" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">Degraded Response</text>
+<text x="1116.0" y="755.9499999999999" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">"unavailable, retry"</text>
+<ellipse cx="1116.0" cy="849.6" rx="79.2" ry="21.6" fill="#d5e8d4" stroke="#82b366" stroke-width="1.5"/>
+<text x="1116.0" y="842.45" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">✅ Return Response</text>
+<text x="1116.0" y="856.75" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="11" font-weight="normal" fill="#333">(always something)</text>
+<polyline points="302.4,104.4 302.4,133.2" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr-black)"/>
+<polyline points="302.4,190.8 302.4,226.8" fill="none" stroke="#82b366" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<text x="306.4" y="204.8" font-family="Arial" font-size="9" fill="#82b366" font-weight="bold">ok</text>
+<polyline points="385.2,162.0 453.6,163.4" fill="none" stroke="#b85450" stroke-width="1.5" marker-end="url(#arr-red)"/>
+<text x="423.4" y="158.7" font-family="Arial" font-size="9" fill="#b85450" font-weight="bold">over limit</text>
+<polyline points="302.4,284.4 302.4,320.4" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr-black)"/>
+<polyline points="302.4,385.2 302.4,424.8" fill="none" stroke="#82b366" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<text x="306.4" y="401.0" font-family="Arial" font-size="9" fill="#82b366" font-weight="bold">CLOSED</text>
+<polyline points="385.2,352.8 432.0,352.8 432.0,453.6 655.2,453.6 655.2,453.6" fill="none" stroke="#d79b00" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+<text x="436.0" y="399.2" font-family="Arial" font-size="9" fill="#d79b00" font-weight="bold">OPEN ⚡</text>
+<polyline points="302.4,482.4 302.4,525.6" fill="none" stroke="#82b366" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<text x="306.4" y="500.0" font-family="Arial" font-size="9" fill="#82b366" font-weight="bold">success</text>
+<polyline points="385.2,453.6 432.0,453.6 432.0,453.6 655.2,453.6" fill="none" stroke="#b85450" stroke-width="1.5" marker-end="url(#arr-red)"/>
+<text x="436.0" y="449.6" font-family="Arial" font-size="9" fill="#b85450" font-weight="bold">fail/timeout</text>
+<polyline points="302.4,583.2 302.4,626.4" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr-black)"/>
+<polyline points="302.4,684.0 302.4,734.4" fill="none" stroke="#82b366" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<text x="306.4" y="705.2" font-family="Arial" font-size="9" fill="#82b366" font-weight="bold">valid ✓</text>
+<polyline points="385.2,655.2 453.6,655.2" fill="none" stroke="#d79b00" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+<text x="423.4" y="651.2" font-family="Arial" font-size="9" fill="#d79b00" font-weight="bold">invalid</text>
+<polyline points="453.6,626.4 424.8,626.4 424.8,554.4 385.2,554.4" fill="none" stroke="#d79b00" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+<text x="428.8" y="586.4" font-family="Arial" font-size="9" fill="#d79b00" font-weight="bold">retry</text>
+<polyline points="597.6,626.4 633.6,626.4 633.6,504.0 655.2,504.0 738.0,482.4" fill="none" stroke="#b85450" stroke-width="1.5" marker-end="url(#arr-red)"/>
+<text x="637.6" y="561.2" font-family="Arial" font-size="9" fill="#b85450" font-weight="bold">max retries</text>
+<polyline points="738.0,482.4 738.0,525.6" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr-black)"/>
+<polyline points="738.0,583.2 738.0,626.4" fill="none" stroke="#82b366" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<text x="742.0" y="600.8" font-family="Arial" font-size="9" fill="#82b366" font-weight="bold">success</text>
+<polyline points="738.0,583.2 738.0,626.4 738.0,720.0" fill="none" stroke="#b85450" stroke-width="1.5" marker-end="url(#arr-red)"/>
+<text x="742.0" y="600.8" font-family="Arial" font-size="9" fill="#b85450" font-weight="bold">fail</text>
+<polyline points="820.8,554.4 835.2,554.4 835.2,745.2 655.2,745.2" fill="none" stroke="#b85450" stroke-width="1.5" marker-end="url(#arr-red)"/>
+<text x="839.2" y="645.8" font-family="Arial" font-size="9" fill="#b85450" font-weight="bold">fail</text>
+<polyline points="820.8,745.2 871.2,748.8" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr-black)"/>
+<polyline points="914.4,777.6 914.4,799.2 900.0,799.2 914.4,828.0" fill="none" stroke="#82b366" stroke-width="1.5" marker-end="url(#arr-green)"/>
+<text x="911.2" y="795.2" font-family="Arial" font-size="9" fill="#82b366" font-weight="bold">hit</text>
+<polyline points="1015.2,748.8 1044.0,748.8" fill="none" stroke="#b85450" stroke-width="1.5" marker-end="url(#arr-red)"/>
+<text x="1033.6" y="744.8" font-family="Arial" font-size="9" fill="#b85450" font-weight="bold">miss</text>
+<polyline points="1116.0,777.6 1116.0,828.0" fill="none" stroke="#555" stroke-width="1.5" marker-end="url(#arr-black)"/>
+</svg>
