@@ -151,15 +151,20 @@ The context vector is each value vector weighted by its attention weight, then s
 context_vector = Σ attention_weight_i × V_i
 ```
 
-| Word | Attention wt | Value vector | Weighted vector |
-| ---- | ------------ | ------------ | --------------- |
-| I | 0.117 | [0.1, 0.0, 0.0, 0.0, 0.95] | [0.012, 0.0, 0.0, 0.0, 0.111] |
-| am | 0.111 | [0.0, 0.0, 0.0, 0.5, 0.1] | [0.0, 0.0, 0.0, 0.056, 0.011] |
-| sitting | 0.120 | [0.1, 0.0, 0.1, 0.9, 0.0] | [0.012, 0.0, 0.012, 0.108, 0.0] |
-| by | 0.123 | [0.2, 0.0, 0.0, 0.2, 0.0] | [0.025, 0.0, 0.0, 0.025, 0.0] |
-| the | 0.111 | [0.0, 0.0, 0.0, 0.0, 0.0] | [0.0, 0.0, 0.0, 0.0, 0.0] |
-| river | 0.217 | [0.8, 0.0, 0.9, 0.0, 0.0] | [0.174, 0.0, 0.195, 0.0, 0.0] |
-| bank | 0.200 | [0.5, 0.5, 0.3, 0.0, 0.0] | [0.100, 0.100, 0.060, 0.0, 0.0] |
+Each row is one word's individual contribution (attention weight × value vector). The context vector is the sum of all rows.
+
+| Word | Attention wt | Value vector | Weighted vector (wt × value) |
+| ---- | ------------ | ------------ | ----------------------------- |
+| I | 0.117 | [0.1, 0.0, 0.0, 0.0, 0.95] | [0.012, 0.000, 0.000, 0.000, 0.111] |
+| am | 0.111 | [0.0, 0.0, 0.0, 0.5, 0.1] | [0.000, 0.000, 0.000, 0.056, 0.011] |
+| sitting | 0.120 | [0.1, 0.0, 0.1, 0.9, 0.0] | [0.012, 0.000, 0.012, 0.108, 0.000] |
+| by | 0.123 | [0.2, 0.0, 0.0, 0.2, 0.0] | [0.025, 0.000, 0.000, 0.025, 0.000] |
+| the | 0.111 | [0.0, 0.0, 0.0, 0.0, 0.0] | [0.000, 0.000, 0.000, 0.000, 0.000] |
+| river | 0.217 | [0.8, 0.0, 0.9, 0.0, 0.0] | [0.174, 0.000, 0.195, 0.000, 0.000] |
+| bank | 0.200 | [0.5, 0.5, 0.3, 0.0, 0.0] | [0.100, 0.100, 0.060, 0.000, 0.000] |
+| **Sum ↓** | | | **[0.323, 0.100, 0.267, 0.189, 0.122]** |
+
+The last row is the **Context Vector A** — the column-wise sum of all weighted vectors:
 
 ```
 Context Vector A = [0.323, 0.100, 0.267, 0.189, 0.122]
@@ -228,6 +233,26 @@ Same token embedding in both sentences. After attention:
 
 - River sentence → Financial collapses, Nature stays relevant
 - Deposit sentence → Financial rises, Nature collapses
+
+![How attention transforms the same bank embedding in different contexts](./images/attention-bank-context-transformation.png)
+
+This is the same interpretation used in the [step-by-step attention video](https://www.youtube.com/watch?v=eMlx5fFNoYc):
+
+1. `e_bank` is the same starting embedding in both sentences.
+2. Query–key scores decide which neighbours are relevant.
+3. Their value vectors form an attention update:
+
+   ```text
+   Δh_bank = Σᵢ attention_weight_i × V_i
+   ```
+
+4. A real Transformer projects this update through `W_O` and adds it to the original representation through the residual connection:
+
+   ```text
+   h'_bank = e_bank + W_O × Δh_bank
+   ```
+
+In the simplified calculations above, **Context Vector A/B** is `Δh_bank`, the weighted sum of the value vectors. In the full Transformer, it does not replace the original `"bank"` embedding; it updates it. `"river"` therefore moves the representation toward a geographic/nature direction, while `"deposit"` and `"money"` move the same starting representation toward a financial direction.
 
 That is the central point — the embedding starts ambiguous; attention contextualizes it.
 
