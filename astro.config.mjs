@@ -3,11 +3,19 @@
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig, fontProviders } from 'astro/config';
+import { satteri } from '@astrojs/markdown-satteri';
+import { satteriKatex } from 'satteri-katex';
 
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://rangarajp.github.io',
 	integrations: [mdx(), sitemap()],
+	markdown: {
+		processor: satteri({
+			features: { math: true },
+			mdastPlugins: [satteriKatex()],
+		}),
+	},
 	fonts: [
 		{
 			provider: fontProviders.local(),

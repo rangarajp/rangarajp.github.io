@@ -12,10 +12,14 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/markdown-satteri": "^0.4.1",
     "@astrojs/mdx": "^7.0.4",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
     "astro": "^7.1.4",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "satteri-katex": "^0.1.1",
     "sharp": "^0.35.0"
   }
 }
