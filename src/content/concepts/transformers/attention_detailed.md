@@ -373,3 +373,5 @@ For our example: the general `bank` representation asks its context for useful c
 So far we have described one attention head. But one way of looking at a sentence is not enough — one head might focus on word meaning while another focuses on grammar, references, or position.
 
 Transformers therefore run several attention heads in parallel. That leads us to Multi-Head Attention.
+
+![Query, Key, and Value — detailed overview](./images/attention_kqv_detailed.png)
