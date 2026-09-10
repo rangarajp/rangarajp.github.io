@@ -84,14 +84,18 @@ input {
 	font-size: 16px;
 }
 table {
-	width: 100%;
+	width: auto;
+	max-width: 100%;
 	border-collapse: collapse;
+	font-size: 0.88em;
+	line-height: 1.4;
 }
 th,
 td {
 	border: 1px solid rgb(var(--gray-light));
-	padding: 0.4em 0.75em;
+	padding: 0.3em 0.6em;
 	text-align: left;
+	white-space: nowrap;
 }
 thead th {
 	background-color: rgba(var(--gray-light), 0.5);

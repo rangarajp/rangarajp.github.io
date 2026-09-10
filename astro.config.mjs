@@ -3,17 +3,18 @@
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig, fontProviders } from 'astro/config';
-import { satteri } from '@astrojs/markdown-satteri';
-import { satteriKatex } from 'satteri-katex';
+import { unified } from '@astrojs/markdown-remark';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://rangarajp.github.io',
 	integrations: [mdx(), sitemap()],
 	markdown: {
-		processor: satteri({
-			features: { math: true },
-			mdastPlugins: [satteriKatex()],
+		processor: unified({
+			remarkPlugins: [remarkMath],
+			rehypePlugins: [rehypeKatex],
 		}),
 	},
 	fonts: [
