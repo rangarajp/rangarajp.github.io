@@ -368,10 +368,16 @@ Query asks what I need. Key helps decide whether a token is relevant. Value cont
 
 For our example: the general `bank` representation asks its context for useful clues. `river` pushes it toward the river-side meaning; `deposit` and `money` push it toward the financial meaning.
 
+## Summary
+
+The diagram below captures the full picture — from the same starting embedding to two different contextual representations via Query, Key, and Value:
+
+![Query, Key, and Value — detailed overview](./images/attention_kqv_detailed.png)
+
+Query asks what I need. Key helps decide whether a token is relevant. Value contains the information that token contributes. The same `bank` embedding produces a river-side meaning or a financial meaning depending entirely on what the surrounding context matches.
+
 ## What comes next?
 
 So far we have described one attention head. But one way of looking at a sentence is not enough — one head might focus on word meaning while another focuses on grammar, references, or position.
 
 Transformers therefore run several attention heads in parallel. That leads us to Multi-Head Attention.
-
-![Query, Key, and Value — detailed overview](./images/attention_kqv_detailed.png)
