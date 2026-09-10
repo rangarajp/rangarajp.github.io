@@ -1,340 +1,375 @@
 ---
 title: 'Query, Key, and Value'
-description: 'How learned Query, Key, and Value projections turn embedding similarity into learned contextual relevance.'
-pubDate: 'Sep 9 2026'
+description: 'How Transformers turn the same starting word embedding into a context-aware meaning using learned Query, Key, and Value projections.'
+pubDate: 'Sep 10 2026'
 order: 5
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-In [Attention](./attention), we built a context vector by making one simplifying assumption:
+In the previous article, we simplified attention by assuming:
+
+$$Q = K = V = X$$
+
+That was useful for understanding the basic idea: a word looks at the other words, decides which ones matter, and uses them to build a context-aware representation.
+
+Now we will remove that simplification and see why real Transformers learn three different representations: Query, Key, and Value.
+
+We will use one word throughout this article: **bank**
+
+Consider these two sentences:
+
+- I am sitting by the river **bank**.
+- I went to the **bank** to deposit money.
+
+The word `bank` begins with the same learned token embedding in both sentences. But after attention, we want its representation to become different:
 
 ```text
-Q = K = V = token embedding
+bank  +  river context          →  bank beside a river
+bank  +  deposit/money context  →  financial institution
 ```
 
-That assumption exposed the core mechanics:
+This is the main goal: understand how Query, Key, and Value make that change possible.
 
-1. Compare the current token with the other tokens.
-2. Convert the scores into attention weights.
-3. Use those weights to combine information from the tokens.
-4. Produce a context-dependent representation.
+## 1. Start with the embedding of `bank`
 
-Real Transformers do not use the same representation for all three jobs. They learn three projections:
+Every token is represented by a vector of numbers. Let the starting representation of `bank` be $x_{\text{bank}}$ — a point in a large embedding space containing many learned properties of the word.
 
-$$Q = XW_Q, \qquad K = XW_K, \qquad V = XW_V$$
-
-This article continues with the same ambiguous word:
-
-- "I am sitting by the river **bank**."
-- "I am going to the **bank** to deposit money."
-
-The starting embedding for `bank` is the same. Query, Key, and Value determine which neighbouring tokens matter and what information they contribute.
-
-![Overview of Query, Key, and Value using the bank example](./images/qkv-bank-overview.png)
-
-## 1. Why embeddings alone are not enough
-
-The original embedding represents the general meaning of `bank`, including both geographical and financial associations:
+For intuition only, imagine a tiny embedding:
 
 ```text
-x_bank = [0.5, 0.5, 0.3, 0.0, 0.0]
-          Geo  Fin  Nature Action Person
+x_bank = [0.5, 0.5, 0.3, ...]
 ```
 
-If we compare raw embeddings directly, the score $x_{\text{bank}} \cdot x_{\text{river}}$ answers a broad question: how similar are `bank` and `river` in the original embedding space?
+The real vector may contain hundreds or thousands of numbers.
 
-Attention needs a more task-specific question: can `river` help determine the intended meaning of `bank`?
+This starting vector represents the general word `bank`. It has not yet been adapted to this particular sentence. So we need the surrounding words to help.
 
-Similarity and relevance are not identical:
+```text
+river  ───────────────► bank
+                          ↓
+                    river-side meaning
 
-- `bank` and `river` are different concepts, but `river` is highly relevant to disambiguating `bank`.
-- `bank` and `money` may not be close in every semantic dimension, but money is strong evidence for the financial meaning.
-- A grammatical token may be useful to one attention head even if it is not semantically similar.
+deposit ──┐
+          ├───────────► bank
+money ────┘               ↓
+                    financial meaning
+```
 
-Learned projections let the model create a separate space in which usefulness — not only raw similarity — determines the score.
+## 2. Why not simply compare the original embeddings?
 
-![Raw embedding similarity compared with learned Query-Key relevance](./images/qkv-relevance-space.png)
+In our simplified attention article, we compared `bank` directly with `river`:
 
-## 2. One embedding, three representations
+$$x_{\text{bank}} \cdot x_{\text{river}}$$
 
-For each token representation $x_i$, an attention head computes:
+This asks roughly: how well do these two vectors align in the original embedding space?
+
+But attention needs something more flexible. `bank` and `river` are different concepts. What matters here is not whether the words are globally similar. What matters is: is `river` useful for understanding what `bank` means in this sentence?
+
+Likewise, `deposit` and `money` are useful clues for the financial meaning of `bank`. So instead of forcing the original embedding space to do everything, the Transformer learns new spaces specifically for attention — that is what the Query and Key projections provide.
+
+## 3. One embedding becomes Query, Key, and Value
+
+For every token representation $x_i$, a Transformer attention head creates three new vectors:
 
 $$q_i = x_i W_Q \qquad k_i = x_i W_K \qquad v_i = x_i W_V$$
 
-The three outputs have distinct roles:
+where $W_Q$, $W_K$, and $W_V$ are learned matrices.
 
-| Representation | Role | Bank example |
+A useful mental model:
+
+| Vector | Simple question | For our `bank` example |
 |---|---|---|
-| Query $q_i$ | What information does this token need? | "Which context helps determine my meaning?" |
-| Key $k_i$ | What can this token be matched on? | `river`: "I offer geographical evidence." |
-| Value $v_i$ | What information should this token contribute? | `river`: geographical/nature information |
+| Query $q_i$ | What am I looking for? | `bank`: Which words help clarify my meaning? |
+| Key $k_i$ | What can I be matched on? | `river`: I may be a useful geographical clue. |
+| Value $v_i$ | What information can I contribute? | `river`: Information that shifts the representation toward the river-side meaning. |
 
-The English descriptions are only intuition. The model stores vectors, not literal questions or rules.
+These descriptions are only intuition. The model stores numbers, and training learns useful patterns in those numbers.
 
-### The matrices are learned
+## 4. What do the matrices $W_Q$, $W_K$, $W_V$ do?
 
-$W_Q$, $W_K$, and $W_V$ start as random parameter matrices. During training:
+Suppose a token embedding has $d_{\text{model}}$ numbers. For example:
 
-1. The model predicts the next token or optimizes another training objective.
-2. The loss measures how wrong the prediction was.
-3. Backpropagation calculates how each matrix contributed to the error.
-4. Gradient descent adjusts the matrices.
+$$x_{\text{bank}} \in \mathbb{R}^{1 \times 768}$$
 
-Across many examples, some attention heads become useful for patterns such as ambiguous word → disambiguating clue, pronoun → referent, verb → subject or object, adjective → noun.
+For one attention head with 64-dimensional Query and Key:
 
-These relationships emerge from training; they are not manually encoded.
+$$W_Q \in \mathbb{R}^{768 \times 64} \qquad \Rightarrow \qquad q_{\text{bank}} = x_{\text{bank}}W_Q \in \mathbb{R}^{1 \times 64}$$
 
-## 3. Query: what is `bank` looking for?
+Similarly for Key and Value:
 
-The Query projection transforms the `bank` representation:
+$$W_K \in \mathbb{R}^{768 \times 64} \qquad W_V \in \mathbb{R}^{768 \times 64}$$
 
-$$q_{\text{bank}} = x_{\text{bank}} W_Q$$
-
-For one hypothetical attention head, the resulting vector may behave as if it asks: which surrounding token helps determine what kind of bank this is?
-
-Another attention head can produce a different Query from the same `bank` embedding — it might search for grammatical relationships rather than word-sense clues.
-
-This is the first benefit of $W_Q$: the token does not have one fixed notion of what matters.
-
-## 4. Key: what does each token advertise?
-
-Every token also produces a Key:
-
-$$k_i = x_i W_K$$
-
-For the river sentence:
+So you can think of the three matrices as three different learned lenses:
 
 ```text
-river   → Key: strong geographical/context clue
-sitting → Key: action information
-the     → Key: grammatical information
-bank    → Key: information about itself
+                         W_Q
+                      ┌───────► Query
+                      │
+Token representation ─┼─ W_K ─► Key
+                      │
+                      └─ W_V ─► Value
 ```
 
-The Key does not contain the information that will ultimately be copied into `bank`. Its job is to make the token easy — or difficult — to select for a particular Query.
+The same starting token is viewed differently depending on the job we need it to perform.
 
-This separation enables asymmetric relationships. The Query for `bank` can match the Key for `river` even though the Query and Key were produced by different matrices.
+## 5. Query and Key decide what is relevant
 
-## 5. Query–Key matching learns relevance
+In the sentence "I am sitting by the river bank", `bank` produces a Query and every token produces a Key. The Query of `bank` is compared with each Key.
 
-To measure how useful token $j$ is to token $i$, attention computes:
+Suppose the scores from one attention head look like this:
+
+| Token | Query-Key score |
+|---|---:|
+| `I` | 0.1 |
+| `am` | 0.1 |
+| `sitting` | 0.3 |
+| `by` | 0.2 |
+| `the` | 0.1 |
+| **`river`** | **2.8** |
+| `bank` | 0.5 |
+
+`river` gets the largest score. Query and Key determine who should pay attention to whom.
+
+```text
+Query(bank)
+    │
+    ├──── Key(I)       → low match
+    ├──── Key(sitting) → low match
+    ├──── Key(the)     → low match
+    └──── Key(river)   → HIGH MATCH
+```
+
+## 6. Why this is better than comparing embeddings directly
+
+Previously, relevance depended on the original embedding geometry:
+
+$$x_{\text{bank}} \cdot x_{\text{river}}$$
+
+Now we have:
+
+$$(x_{\text{bank}}W_Q) \cdot (x_{\text{river}}W_K)$$
+
+Since $W_Q$ and $W_K$ are trainable, the model can learn a space where useful relationships receive high scores:
+
+```text
+Before: "Are bank and river similar in the original embedding space?"
+After:  "Is river useful for what bank is looking for right now?"
+```
+
+That is the main reason Query and Key exist.
+
+## 7. Turn the scores into attention weights
+
+First, attention scales the score:
 
 $$s_{ij} = \frac{q_i \cdot k_j}{\sqrt{d_k}}$$
 
-For the `bank` Query:
+where $d_k$ is the number of dimensions in the Query and Key vectors. Then softmax converts all the scores for one Query into weights that add up to 1:
 
-$$s_{\text{bank,river}} = \frac{q_{\text{bank}} \cdot k_{\text{river}}}{\sqrt{d_k}}$$
+$$\alpha_{ij} = \operatorname{softmax}_j(s_{ij})$$
 
-A larger score means that the Key is a better match for what the Query is seeking.
+For our `bank` Query, imagine the result is:
 
-### River sentence
-
-Suppose one head produces these illustrative unscaled scores:
-
-| Key token | $q_{\text{bank}} \cdot k_i$ |
+| Token | Attention weight |
 |---|---:|
-| I | 0.1 |
-| am | 0.1 |
-| sitting | 0.3 |
-| by | 0.2 |
-| the | 0.1 |
-| **river** | **2.8** |
-| bank | 0.5 |
+| `I` | 0.075 |
+| `am` | 0.075 |
+| `sitting` | 0.087 |
+| `by` | 0.081 |
+| `the` | 0.075 |
+| **`river`** | **0.507** |
+| `bank` | 0.100 |
 
-`river` is the strongest match. The model has learned a projection space in which the relation "geographical clue for an ambiguous bank" receives a high score.
+At this point we know where `bank` should get information from. But we still have not decided what information should actually flow from `river` to `bank` — that is the job of Value.
 
-This differs from the simplified article:
+## 8. Value decides what information flows
 
-```text
-Earlier:  x_bank · x_river
-Now:     (x_bank W_Q) · (x_river W_K)
-```
+Every token also has a Value vector:
 
-The earlier calculation used fixed similarity from the embedding space. The new calculation learns what should count as relevant.
+$$v_i = x_i W_V \qquad v_{\text{river}} = x_{\text{river}} W_V$$
 
-## 6. Scaling and softmax produce attention weights
-
-Dot products can grow as the Query–Key dimension $d_k$ increases. Dividing by $\sqrt{d_k}$ keeps their magnitude controlled:
-
-$$\tilde{s}_{ij} = \frac{q_i \cdot k_j}{\sqrt{d_k}}$$
-
-Softmax converts the scaled scores into non-negative weights that sum to one:
-
-$$\alpha_{ij} = \operatorname{softmax}_j\!\left(\frac{q_i \cdot k_j}{\sqrt{d_k}}\right)$$
-
-Using the illustrative scores above with $d_k = 2$:
-
-| Token | Attention weight from `bank` |
-|---|---:|
-| I | 0.075 |
-| am | 0.075 |
-| sitting | 0.087 |
-| by | 0.081 |
-| the | 0.075 |
-| **river** | **0.507** |
-| bank | 0.100 |
-
-Query and Key have now answered: where should `bank` obtain information from, and in what proportion? They have not answered what information should flow — that is the Value's job.
-
-## 7. Value: what information should flow?
-
-Each token produces a Value:
-
-$$v_i = x_i W_V$$
-
-The Value is the payload contributed if the token receives attention.
+The Key and Value have different jobs:
 
 ```text
-Query + Key → who is relevant?
-Value       → what information is transferred?
+Key(river)   → "Should bank select me?"
+Value(river) → "If selected, what information should I contribute?"
 ```
 
-The representation useful for finding a token need not be the same representation useful for updating another token. For example:
+A representation useful for finding `river` does not have to be the same representation useful for updating `bank`.
 
-- `k_river` can advertise "useful geographical clue."
-- `v_river` can carry a learned mixture of geographical and nature information.
-- A different attention head can derive a different Key and Value from the same `river` representation.
+## 9. Build the context vector for `bank`
 
-## 8. Attention combines the Values
+Multiply each Value by its attention weight and sum:
 
-The context output for `bank` is the weighted sum:
+$$c_{\text{bank}} = \sum_j \alpha_{\text{bank},j} \, v_j$$
 
-$$a_{\text{bank}} = \sum_j \alpha_{\text{bank},j} \, v_j$$
+For our example:
 
-For the river sentence:
+$$c_{\text{bank}} = 0.507 \, v_{\text{river}} + 0.100 \, v_{\text{bank}} + 0.087 \, v_{\text{sitting}} + \cdots$$
 
-$$a_{\text{bank}} = 0.507 \, v_{\text{river}} + 0.100 \, v_{\text{bank}} + 0.087 \, v_{\text{sitting}} + \cdots$$
+Because `river` has the largest attention weight, its Value contributes strongly to the context vector.
 
-The important upgrade from the previous article is:
+The key upgrade from simplified attention:
 
 ```text
-Simplified: context = Σ attention_weight_i × x_i
-Learned:    context = Σ attention_weight_i × (x_i W_V)
+Simplified:   context = Σ attention weight × original embedding
+Learned QKV:  context = Σ attention weight × Value vector
 ```
 
-The model is no longer mixing the original embeddings directly — it mixes learned Value representations.
+Or mathematically: $c_i = \sum_j \alpha_{ij}(x_j W_V)$
 
-## 9. Output projection and residual update
+## 10. How `bank` becomes a river bank
 
-The weighted Value sum does not normally replace the `bank` representation. For multi-head attention, each head first produces its attention output; the heads are concatenated and projected by $W_O$:
-
-$$o_{\text{bank}} = \operatorname{Concat}(a_{\text{bank}}^{(1)}, \ldots, a_{\text{bank}}^{(h)}) W_O$$
-
-The Transformer then uses a residual connection:
-
-$$h'_{\text{bank}} = h_{\text{bank}} + o_{\text{bank}}$$
-
-Layer normalization is also applied; its exact position depends on whether the architecture uses pre-normalization or post-normalization.
-
-This distinction matters:
-
-- $h_{\text{bank}}$ preserves the incoming representation.
-- Attention computes a context-dependent update $o_{\text{bank}}$.
-- Their sum $h'_{\text{bank}}$ is the updated representation passed onward.
-
-![Complete Query-Key-Value attention flow for bank](./images/qkv-attention-flow.png)
-
-## 10. Same `bank`, different context
-
-In the river sentence, the `bank` Query strongly matches the `river` Key:
+Starting from the general representation $x_{\text{bank}}$, attention discovers that `river` is highly relevant:
 
 ```text
-bank Query → river Key → high attention → river Value contributes strongly
+bank Query → river Key gets a high match
+           → high attention weight
+           → river Value contributes strongly
+           → context vector for bank
 ```
 
-The update moves the representation toward a geographical/nature interpretation.
-
-In the financial sentence, suppose the illustrative scores are:
-
-| Key token | $q_{\text{bank}} \cdot k_i$ | Attention weight ($d_k = 2$) |
-|---|---:|---:|
-| I | 0.1 | 0.052 |
-| going | 0.2 | 0.056 |
-| to | 0.1 | 0.052 |
-| the | 0.1 | 0.052 |
-| bank | 0.4 | 0.065 |
-| **deposit** | **2.5** | **0.286** |
-| **money** | **3.1** | **0.437** |
-
-`deposit` and `money` together receive 72.3% of the attention. Their Values dominate the update:
+Conceptually:
 
 ```text
-bank Query → deposit/money Keys → high attention
-                                      │
-                                      ▼
-                            financial Value update
+General BANK
+    +
+context dominated by RIVER
+    ↓
+BANK understood as "the side of a river"
 ```
 
-The base `bank` embedding is the same in both sentences. Different Keys produce different weights, and different weighted Values produce different updates.
+The original token embedding is not a special `river-bank` embedding. Attention uses the sentence to create a context-dependent representation.
 
-### Important: causal masking
+## 11. The same `bank` can become a financial bank
 
-The comparison above assumes bidirectional attention, as used by encoder models, where a token can attend to words on either side.
+In "I went to the bank to deposit money", the `bank` Query may match strongly with the Keys of `deposit` and `money`:
 
-In a decoder-only LLM such as GPT:
+```text
+bank Query ──── deposit Key → high match
+           └─── money Key   → high match
+```
 
-- a token can attend only to itself and earlier tokens,
-- `bank` cannot attend to later `deposit` and `money` tokens,
-- those later tokens can attend back to `bank`.
+Their Values now dominate the context vector:
 
-To demonstrate financial disambiguation at the `bank` position in a causal model, place the clues first: "After depositing the money, I walked to the **bank**." Now `bank` can attend to both `depositing` and `money`.
+$$c_{\text{bank}} = \alpha_{\text{bank,deposit}} \, v_{\text{deposit}} + \alpha_{\text{bank,money}} \, v_{\text{money}} + \cdots$$
 
-## 11. Matrix view
+So the starting word is the same while its contextual representation becomes different:
 
-For a sequence containing $n$ tokens with model dimension $d_{\text{model}}$:
+```text
+                        + river context      → river-side BANK
+General BANK ──────────
+                        + deposit/money      → financial BANK
+```
+
+The embedding gives the token a starting meaning. Attention changes that representation according to the surrounding context.
+
+## 12. One important note about GPT-style models
+
+The example above is easiest to understand using bidirectional attention, where a token can look at words on both sides.
+
+Decoder-only models such as GPT use causal attention — a token can only attend to itself and earlier tokens. So in "I went to the **bank** to deposit money", `bank` cannot look forward to `deposit` or `money`.
+
+For a GPT-style example, write the sentence as: "After depositing the money, I went to the bank." Now when the model processes `bank`, `depositing` and `money` are already in the past context and can influence its representation.
+
+This does not change how Q, K, and V work. It only changes which Keys a Query is allowed to see.
+
+## 13. The whole operation in matrix form
+
+A Transformer performs these calculations for all tokens together. If the sequence contains $n$ tokens:
 
 $$X \in \mathbb{R}^{n \times d_{\text{model}}}$$
 
-A single attention head commonly uses:
+For one attention head:
 
-$$W_Q, W_K \in \mathbb{R}^{d_{\text{model}} \times d_k} \qquad W_V \in \mathbb{R}^{d_{\text{model}} \times d_v}$$
+$$Q = XW_Q \qquad K = XW_K \qquad V = XW_V$$
 
-Therefore $Q, K \in \mathbb{R}^{n \times d_k}$ and $V \in \mathbb{R}^{n \times d_v}$.
+with $Q, K \in \mathbb{R}^{n \times d_k}$ and $V \in \mathbb{R}^{n \times d_v}$.
 
-The complete operation is:
+The attention calculation is:
 
-$$\operatorname{Attention}(Q,K,V) = \operatorname{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right) V$$
+$$\operatorname{Attention}(Q,K,V) = \operatorname{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 
-Read it from left to right:
-
-1. $QK^T$ — calculate who is relevant to whom.
-2. Divide by $\sqrt{d_k}$ — keep scores numerically stable.
-3. Softmax — convert every row into attention weights.
-4. Multiply by $V$ — combine the information carried by the selected tokens.
-
-For decoder-only models, disallowed future positions are masked before softmax.
-
-## 12. What the three matrices make possible
-
-Separate projections give attention four important capabilities:
-
-- Role separation: searching, matching, and information transfer are different operations.
-- Learned relevance: the model learns which relationships are useful instead of relying on raw embedding similarity.
-- Asymmetric matching: what one token seeks can differ from what another token advertises.
-- Multiple perspectives: each attention head learns its own $W_Q$, $W_K$, and $W_V$.
-
-The last point leads directly to [Multi-Head Attention](./multi-head-attention): one head can learn word-sense clues while another tracks grammar, reference, position, or other relationships.
-
-## Summary
+Reading it as a sequence of steps:
 
 ```text
-Input representation x_i
-        │
-        ├── W_Q → Query: what does this token need?
-        ├── W_K → Key: what can this token match on?
-        └── W_V → Value: what information can it contribute?
-
-Query × Keyᵀ
-        ↓
-scaled scores + mask
-        ↓
-softmax weights
-        ↓
-weighted sum of Values
-        ↓
-W_O projection + residual connection
-        ↓
-contextualized token representation
+QKᵀ → which tokens are relevant to each other?
+  ↓
+scale + softmax → how much attention should each token receive?
+  ↓
+× V → what information should actually be combined?
+  ↓
+context vectors
 ```
 
-Query determines what to look for. Key determines what can be matched. Value determines what information is transferred.
+## 14. Example with 7 tokens
+
+Our river sentence has 7 tokens: `I | am | sitting | by | the | river | bank`
+
+With $d_{\text{model}} = 768$ and $d_k = d_v = 64$ for one head:
+
+| Matrix | Shape |
+|---|---|
+| $X$ | $7 \times 768$ |
+| $W_Q, W_K, W_V$ | $768 \times 64$ |
+| $Q, K, V$ | $7 \times 64$ |
+| $QK^T$ | $7 \times 7$ |
+
+The $7 \times 7$ matrix means every one of the 7 Queries is being compared with every one of the 7 Keys:
+
+```text
+                 Keys
+          I  am sitting by the river bank
+Queries I  •   •    •    •  •    •    •
+       am  •   •    •    •  •    •    •
+  sitting  •   •    •    •  •    •    •
+       by  •   •    •    •  •    •    •
+      the  •   •    •    •  •    •    •
+    river  •   •    •    •  •    •    •
+     bank  •   •    •    •  •   ★★★   •
+```
+
+The highlighted cell is $q_{\text{bank}} \cdot k_{\text{river}}$.
+
+## 15. Where are $W_Q$, $W_K$, and $W_V$ learned?
+
+The matrices are model parameters — not manually written rules. During training:
+
+1. The model makes predictions.
+2. A loss function measures the error.
+3. Backpropagation calculates how the parameters contributed to that error.
+4. Gradient descent updates $W_Q$, $W_K$, and $W_V$.
+5. Across large amounts of text, useful attention patterns emerge.
+
+A head may become useful for relationships such as ambiguous word → contextual clue, pronoun → referent, verb → subject, noun → adjective. These are learned patterns, not hard-coded rules.
+
+## 16. The mental model to keep
+
+```text
+                    W_Q
+Token ───────────────► Query
+representation          │
+                        │ asks "Who matters?"
+                        ▼
+Token ─── W_K ───────► Keys
+representations         │
+                        ▼
+                  attention weights
+                        │
+                        │ choose how much
+                        ▼
+Token ─── W_V ───────► Values
+representations         │
+                        ▼
+                   context vector
+```
+
+Query asks what I need. Key helps decide whether a token is relevant. Value contains the information that token contributes.
+
+For our example: the general `bank` representation asks its context for useful clues. `river` pushes it toward the river-side meaning; `deposit` and `money` push it toward the financial meaning.
+
+## What comes next?
+
+So far we have described one attention head. But one way of looking at a sentence is not enough — one head might focus on word meaning while another focuses on grammar, references, or position.
+
+Transformers therefore run several attention heads in parallel. That leads us to Multi-Head Attention.
