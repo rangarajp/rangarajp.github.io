@@ -3,6 +3,15 @@ import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import { SITE_TITLE } from '../../consts';
+
+const builds = [
+	{
+		title: 'Transformer from Scratch',
+		href: '/build-from-scratch/transformers',
+		description:
+			'English→French encoder–decoder Transformer in PyTorch: embeddings, attention, masks, and training.',
+	},
+];
 ---
 
 <!doctype html>
@@ -15,15 +24,46 @@ import { SITE_TITLE } from '../../consts';
 		<main>
 			<h1>Build from Scratch</h1>
 			<p>Implementing things from the ground up.</p>
-			<p class="empty">Nothing here yet.</p>
+			<nav class="builds">
+				{builds.map((build) => (
+					<a href={build.href} class="build-card">
+						<h2>{build.title}</h2>
+						<p>{build.description}</p>
+					</a>
+				))}
+			</nav>
 		</main>
 		<Footer />
 	</body>
 </html>
 
 <style>
-	.empty {
+	.builds {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 1.5rem;
+		margin-top: 2rem;
+	}
+	.build-card {
+		display: block;
+		padding: 1.5rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 8px;
+		text-decoration: none;
+		color: inherit;
+		transition: box-shadow 0.2s, border-color 0.2s;
+	}
+	.build-card:hover {
+		border-color: var(--accent);
+		box-shadow: var(--box-shadow);
+	}
+	.build-card h2 {
+		font-size: 1.3rem;
+		margin-bottom: 0.4rem;
+	}
+	.build-card p {
 		color: rgb(var(--gray));
-		font-style: italic;
+		margin: 0;
+		font-size: 0.95rem;
 	}
 </style>

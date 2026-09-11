@@ -19,3 +19,8 @@ Read them in order for the full picture, or jump to any topic that interests you
 6. **Transformer block** — stack attention, residuals, normalization, and the feed-forward network into one layer
 
 Together, these steps turn a sentence into a set of context-aware representations that downstream layers can reason over.
+
+## Implement it
+
+Ready to code the full encoder–decoder? See
+[Transformer from Scratch](/build-from-scratch/transformers) — PyTorch modules for config, dataset/masks, model, and training, with a dimension diagram matching this series.

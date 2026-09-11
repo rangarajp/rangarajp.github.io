@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1600" viewBox="0 0 1900 1600">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#475569"/></marker>
+    <marker id="blueArrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#10739e"/></marker>
+    <style>
+      .title{font:700 25px Arial;fill:#1f2937}.sub{font:14px Arial;fill:#4b5563}.section{font:700 20px Arial}.head{font:700 13px Arial;fill:#1f2937}.text{font:12px Arial;fill:#334155}.dim{font:700 12px Arial;fill:#111827}.arrow{stroke:#475569;stroke-width:2;fill:none;marker-end:url(#arrow)}.cross{stroke:#10739e;stroke-width:3;fill:none;marker-end:url(#blueArrow)}
+    </style>
+  </defs>
+  <rect width="1900" height="1600" fill="#fff"/>
+  <text x="950" y="38" text-anchor="middle" class="title">Transformer Architecture with Expanded Multi-Head Attention</text>
+  <text x="950" y="66" text-anchor="middle" class="sub">batch=128 | sequence=100 | d_model=512 | heads=8 | d_k=64 | d_ff=2048 | vocabulary=30000</text>
+
+  <!-- Encoder frame and upper blocks -->
+  <rect x="40" y="90" width="1180" height="1450" rx="20" fill="#eef6ff" stroke="#6c8ebf" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="630" y="125" text-anchor="middle" class="section" fill="#245b92">ENCODER</text>
+  <rect x="480" y="165" width="300" height="70" rx="10" fill="#b1ddf0" stroke="#10739e"/><text x="630" y="186" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="630" y="210" text-anchor="middle" class="head">Encoder Memory</text><text x="630" y="229" text-anchor="middle" class="text">Input: (128,100,512)</text>
+  <rect x="490" y="255" width="280" height="60" rx="9" fill="#fff2cc" stroke="#d6b656"/><text x="630" y="273" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="630" y="294" text-anchor="middle" class="head">LayerNorm + Dropout + Residual</text><text x="630" y="311" text-anchor="middle" class="text">Input: (128,100,512)</text>
+  <rect x="480" y="335" width="300" height="70" rx="10" fill="#d5e8d4" stroke="#82b366"/><text x="630" y="356" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="630" y="380" text-anchor="middle" class="head">Feed Forward</text><text x="630" y="400" text-anchor="middle" class="text">Layer size: 512 -> 2048 -> 512</text>
+  <rect x="490" y="425" width="280" height="60" rx="9" fill="#fff2cc" stroke="#d6b656"/><text x="630" y="443" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="630" y="464" text-anchor="middle" class="head">LayerNorm + Dropout + Residual</text><text x="630" y="481" text-anchor="middle" class="text">Input: (128,100,512)</text>
+  <path d="M630 425 V405" class="arrow"/><path d="M630 335 V315" class="arrow"/><path d="M630 255 V235" class="arrow"/>
+
+  <!-- Expanded MHA -->
+  <rect x="90" y="515" width="1080" height="700" rx="16" fill="#fff" stroke="#334155" stroke-width="3"/>
+  <text x="630" y="548" text-anchor="middle" class="section" fill="#1f2937">MULTI-HEAD SELF-ATTENTION</text>
+  <rect x="480" y="575" width="300" height="70" rx="10" fill="#b1ddf0" stroke="#10739e"/><text x="630" y="596" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="630" y="620" text-anchor="middle" class="head">Multi-Head Attention Output</text><text x="630" y="639" text-anchor="middle" class="text">Layer size: 512</text>
+  <rect x="490" y="665" width="280" height="60" rx="9" fill="#b1ddf0" stroke="#10739e"/><text x="630" y="683" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="630" y="704" text-anchor="middle" class="head">Wo</text><text x="630" y="721" text-anchor="middle" class="text">Weight: (512,512)</text>
+  <rect x="490" y="745" width="280" height="60" rx="9" fill="#d5e8d4" stroke="#82b366"/><text x="630" y="763" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="630" y="784" text-anchor="middle" class="head">Concatenate 8 Heads</text><text x="630" y="801" text-anchor="middle" class="text">8 x 64 = 512</text>
+  <path d="M630 745 V725" class="arrow"/><path d="M630 665 V645" class="arrow"/><path d="M630 575 V485" class="arrow"/>
+
+  <rect x="135" y="825" width="990" height="135" rx="14" fill="#fafafa" stroke="#6c8ebf" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="630" y="850" text-anchor="middle" class="head">8 parallel heads - each output (128,100,64)</text>
+  <g class="text">
+    <rect x="160" y="875" width="100" height="55" rx="8" fill="#dae8fc" stroke="#6c8ebf"/><text x="210" y="898" text-anchor="middle" class="head">Head 1</text><text x="210" y="918" text-anchor="middle">(128,100,64)</text>
+    <rect x="280" y="875" width="100" height="55" rx="8" fill="#d5e8d4" stroke="#82b366"/><text x="330" y="898" text-anchor="middle" class="head">Head 2</text><text x="330" y="918" text-anchor="middle">(128,100,64)</text>
+    <rect x="400" y="875" width="100" height="55" rx="8" fill="#ffe6cc" stroke="#d79b00"/><text x="450" y="898" text-anchor="middle" class="head">Head 3</text><text x="450" y="918" text-anchor="middle">(128,100,64)</text>
+    <rect x="520" y="875" width="100" height="55" rx="8" fill="#e1d5e7" stroke="#9673a6"/><text x="570" y="898" text-anchor="middle" class="head">Head 4</text><text x="570" y="918" text-anchor="middle">(128,100,64)</text>
+    <rect x="640" y="875" width="100" height="55" rx="8" fill="#dae8fc" stroke="#6c8ebf"/><text x="690" y="898" text-anchor="middle" class="head">Head 5</text><text x="690" y="918" text-anchor="middle">(128,100,64)</text>
+    <rect x="760" y="875" width="100" height="55" rx="8" fill="#d5e8d4" stroke="#82b366"/><text x="810" y="898" text-anchor="middle" class="head">Head 6</text><text x="810" y="918" text-anchor="middle">(128,100,64)</text>
+    <rect x="880" y="875" width="100" height="55" rx="8" fill="#ffe6cc" stroke="#d79b00"/><text x="930" y="898" text-anchor="middle" class="head">Head 7</text><text x="930" y="918" text-anchor="middle">(128,100,64)</text>
+    <rect x="1000" y="875" width="100" height="55" rx="8" fill="#e1d5e7" stroke="#9673a6"/><text x="1050" y="898" text-anchor="middle" class="head">Head 8</text><text x="1050" y="918" text-anchor="middle">(128,100,64)</text>
+  </g>
+  <path d="M630 825 V805" class="arrow"/>
+
+  <rect x="420" y="985" width="420" height="70" rx="10" fill="#fff2cc" stroke="#d6b656"/><text x="630" y="1006" text-anchor="middle" class="dim">Output: (128,8,100,64)</text><text x="630" y="1030" text-anchor="middle" class="head">Scaled Dot-Product Attention</text><text x="630" y="1050" text-anchor="middle" class="text">Scores (128,8,100,100) | softmax(scores) @ V</text>
+  <path d="M630 985 V960" class="arrow"/>
+
+  <rect x="135" y="1080" width="300" height="75" rx="10" fill="#dae8fc" stroke="#6c8ebf"/><text x="285" y="1101" text-anchor="middle" class="dim">Output Q: (128,8,100,64)</text><text x="285" y="1125" text-anchor="middle" class="head">Wq</text><text x="285" y="1147" text-anchor="middle" class="text">X @ Wq^T | Wq: (512,512)</text>
+  <rect x="480" y="1080" width="300" height="75" rx="10" fill="#d5e8d4" stroke="#82b366"/><text x="630" y="1101" text-anchor="middle" class="dim">Output K: (128,8,100,64)</text><text x="630" y="1125" text-anchor="middle" class="head">Wk</text><text x="630" y="1147" text-anchor="middle" class="text">X @ Wk^T | Wk: (512,512)</text>
+  <rect x="825" y="1080" width="300" height="75" rx="10" fill="#ffe6cc" stroke="#d79b00"/><text x="975" y="1101" text-anchor="middle" class="dim">Output V: (128,8,100,64)</text><text x="975" y="1125" text-anchor="middle" class="head">Wv</text><text x="975" y="1147" text-anchor="middle" class="text">X @ Wv^T | Wv: (512,512)</text>
+  <rect x="480" y="1170" width="300" height="60" rx="9" fill="#f5f5f5" stroke="#666"/><text x="630" y="1188" text-anchor="middle" class="dim">Output X: (128,100,512)</text><text x="630" y="1212" text-anchor="middle" class="head">Post-Positional Encoding X</text>
+  <path d="M630 1170 V1160 H285 V1155" class="arrow"/><path d="M630 1170 V1155" class="arrow"/><path d="M630 1170 V1160 H975 V1155" class="arrow"/>
+  <path d="M285 1080 V1065 H550 V1055" class="arrow"/><path d="M630 1080 V1055" class="arrow"/><path d="M975 1080 V1065 H710 V1055" class="arrow"/>
+
+  <rect x="500" y="1260" width="260" height="65" rx="9" fill="#e1d5e7" stroke="#9673a6"/><text x="630" y="1281" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="630" y="1305" text-anchor="middle" class="head">Positional Encoding</text><text x="630" y="1322" text-anchor="middle" class="text">Encoding size: (1,100,512)</text>
+  <rect x="500" y="1350" width="260" height="65" rx="9" fill="#dae8fc" stroke="#6c8ebf"/><text x="630" y="1371" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="630" y="1395" text-anchor="middle" class="head">Input Embedding</text><text x="630" y="1412" text-anchor="middle" class="text">Weight: (30000,512)</text>
+  <rect x="515" y="1440" width="230" height="65" rx="9" fill="#f5f5f5" stroke="#666"/><text x="630" y="1461" text-anchor="middle" class="dim">Output: (128,100)</text><text x="630" y="1485" text-anchor="middle" class="head">Source Token IDs</text><text x="630" y="1502" text-anchor="middle" class="text">Vocabulary size: 30000</text>
+  <path d="M630 1440 V1415" class="arrow"/><path d="M630 1350 V1325" class="arrow"/><path d="M630 1260 V1230" class="arrow"/>
+
+  <!-- Compact decoder -->
+  <rect x="1260" y="90" width="600" height="1450" rx="20" fill="#fff8ed" stroke="#d79b00" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="1560" y="125" text-anchor="middle" class="section" fill="#9a6200">DECODER</text>
+  <rect x="1410" y="165" width="300" height="70" rx="35" fill="#b1ddf0" stroke="#10739e"/><text x="1560" y="186" text-anchor="middle" class="dim">Output: (128,100,30000)</text><text x="1560" y="210" text-anchor="middle" class="head">Output Probabilities</text><text x="1560" y="229" text-anchor="middle" class="text">Vocabulary size: 30000</text>
+  <rect x="1410" y="265" width="300" height="70" rx="10" fill="#d5e8d4" stroke="#82b366"/><text x="1560" y="286" text-anchor="middle" class="dim">Output: (128,100,30000)</text><text x="1560" y="310" text-anchor="middle" class="head">Linear + LogSoftmax</text><text x="1560" y="330" text-anchor="middle" class="text">Weight: (30000,512)</text>
+  <rect x="1420" y="365" width="280" height="65" rx="9" fill="#e1d5e7" stroke="#9673a6"/><text x="1560" y="386" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="1560" y="410" text-anchor="middle" class="head">Final LayerNorm</text><text x="1560" y="427" text-anchor="middle" class="text">Input: (128,100,512)</text>
+  <rect x="1410" y="475" width="300" height="70" rx="10" fill="#d5e8d4" stroke="#82b366"/><text x="1560" y="496" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="1560" y="520" text-anchor="middle" class="head">Feed Forward + Residual</text><text x="1560" y="540" text-anchor="middle" class="text">512 -> 2048 -> 512</text>
+  <rect x="1410" y="590" width="300" height="70" rx="10" fill="#f8cecc" stroke="#b85450"/><text x="1560" y="611" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="1560" y="635" text-anchor="middle" class="head">Cross-Attention + Residual</text><text x="1560" y="655" text-anchor="middle" class="text">Q: decoder | K,V: encoder</text>
+  <rect x="1410" y="705" width="300" height="70" rx="10" fill="#ffe6cc" stroke="#d79b00"/><text x="1560" y="726" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="1560" y="750" text-anchor="middle" class="head">Masked Self-Attention + Residual</text><text x="1560" y="770" text-anchor="middle" class="text">Mask: (128,1,100,100)</text>
+  <rect x="1430" y="840" width="260" height="65" rx="9" fill="#e1d5e7" stroke="#9673a6"/><text x="1560" y="861" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="1560" y="885" text-anchor="middle" class="head">Positional Encoding</text><text x="1560" y="902" text-anchor="middle" class="text">Encoding size: (1,100,512)</text>
+  <rect x="1430" y="940" width="260" height="65" rx="9" fill="#ffe6cc" stroke="#d79b00"/><text x="1560" y="961" text-anchor="middle" class="dim">Output: (128,100,512)</text><text x="1560" y="985" text-anchor="middle" class="head">Output Embedding</text><text x="1560" y="1002" text-anchor="middle" class="text">Weight: (30000,512)</text>
+  <rect x="1425" y="1040" width="270" height="65" rx="9" fill="#f5f5f5" stroke="#666"/><text x="1560" y="1061" text-anchor="middle" class="dim">Output: (128,100)</text><text x="1560" y="1085" text-anchor="middle" class="head">Target Outputs Shifted Right</text><text x="1560" y="1102" text-anchor="middle" class="text">Vocabulary size: 30000</text>
+  <path d="M1560 1040 V1005" class="arrow"/><path d="M1560 940 V905" class="arrow"/><path d="M1560 840 V775" class="arrow"/><path d="M1560 705 V660" class="arrow"/><path d="M1560 590 V545" class="arrow"/><path d="M1560 475 V430" class="arrow"/><path d="M1560 365 V335" class="arrow"/><path d="M1560 265 V235" class="arrow"/>
+  <path d="M780 200 H1230 V625 H1410" class="cross"/><text x="1120" y="608" class="head" fill="#10739e">K, V</text>
+</svg>

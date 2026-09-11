@@ -1,0 +1,253 @@
+---
+import { Image } from 'astro:assets';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_TITLE } from '../../consts';
+import diagram from '../../assets/build-from-scratch/transformer-complete-dimensions.png';
+
+const codeBase =
+	'https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/transformers';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead
+			title={`Transformer from Scratch - ${SITE_TITLE}`}
+			description="Build an English-to-French Transformer encoder-decoder from scratch in PyTorch."
+		/>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<article class="prose">
+				<header class="article-header">
+					<nav class="breadcrumbs" aria-label="Breadcrumb">
+						<a href="/build-from-scratch">Build from Scratch</a>
+						<span class="separator">/</span>
+						<span aria-current="page">Transformer</span>
+					</nav>
+					<a href="/build-from-scratch" class="back-link">&larr; Build from Scratch</a>
+					<h1>Transformer from Scratch</h1>
+					<p class="description">
+						A PyTorch English→French sequence-to-sequence Transformer matching the
+						original paper dimensions.
+					</p>
+				</header>
+
+				<p>
+					Theory lives under
+					<a href="/concepts/transformers">Concepts → Transformers</a>. This page walks
+					the runnable implementation in
+					<code>notebooks/transformers/</code>.
+				</p>
+
+				<figure>
+					<Image
+						src={diagram}
+						alt="Transformer architecture with expanded multi-head attention and tensor dimensions"
+						widths={[800, 1200, 1600]}
+						sizes="(max-width: 900px) 100vw, 900px"
+					/>
+					<figcaption>
+						Encoder–decoder flow with expanded multi-head attention. Shapes assume
+						batch=128, sequence=100, d_model=512, heads=8.
+					</figcaption>
+				</figure>
+
+				<h2>What you build</h2>
+				<ul>
+					<li>Word-level tokenizers for English and French (OPUS Books)</li>
+					<li>Encoder–decoder Transformer with 6 layers, 8 heads, d_model=512</li>
+					<li>Padding masks (encoder + cross-attention) and causal masks (decoder self-attention)</li>
+					<li>Training loop with validation loss and per-epoch checkpoints</li>
+				</ul>
+
+				<h2>1. Config</h2>
+				<p>
+					Hyperparameters and checkpoint paths live in
+					<a href={`${codeBase}/config.py`}>config.py</a>:
+				</p>
+				<ul>
+					<li><code>batch_size=128</code>, <code>seq_len=100</code></li>
+					<li><code>d_model=512</code>, <code>n_heads=8</code>, <code>n_layers=6</code></li>
+					<li><code>lang_src='en'</code>, <code>lang_tgt='fr'</code></li>
+				</ul>
+
+				<h2>2. Dataset and masks</h2>
+				<p>
+					<a href={`${codeBase}/dataset.py`}>dataset.py</a> builds fixed-length sequences
+					and attention masks:
+				</p>
+				<ul>
+					<li>
+						<strong>Encoder input:</strong> <code>&lt;sos&gt; … tokens … &lt;eos&gt;</code> + pad
+					</li>
+					<li>
+						<strong>Decoder input:</strong> <code>&lt;sos&gt; … tokens</code> + pad (teacher forcing)
+					</li>
+					<li>
+						<strong>Label:</strong> tokens + <code>&lt;eos&gt;</code> + pad
+					</li>
+					<li>
+						<strong>Encoder mask:</strong> padding only → <code>(batch, 1, 1, seq_len)</code>
+					</li>
+					<li>
+						<strong>Decoder mask:</strong> padding <em>and</em> causal lower-triangular →
+						<code>(batch, 1, seq_len, seq_len)</code>
+					</li>
+				</ul>
+				<p>
+					Causal masking is what stops the decoder from attending to future target tokens
+					during training.
+				</p>
+
+				<h2>3. Model</h2>
+				<p>
+					<a href={`${codeBase}/model.py`}>model.py</a> stacks the paper blocks with explicit
+					shapes in comments:
+				</p>
+				<ol>
+					<li>Input / output embeddings scaled by √d_model</li>
+					<li>Sinusoidal positional encoding</li>
+					<li>
+						Multi-head attention: <code>Wq</code>, <code>Wk</code>, <code>Wv</code>, concat, then
+						<code>Wo</code>
+					</li>
+					<li>Encoder layers: self-attention + FFN with residual + LayerNorm</li>
+					<li>
+						Decoder layers: masked self-attention → cross-attention (Q from decoder, K/V from
+						encoder memory) → FFN
+					</li>
+					<li>Final linear projection + log-softmax over the target vocabulary</li>
+				</ol>
+				<p>
+					Cross-attention does <strong>not</strong> reuse encoder <code>Wk</code>/<code>Wv</code>.
+					Each decoder cross-attention block projects the shared encoder output with its own
+					<code>Wk</code> and <code>Wv</code>.
+				</p>
+
+				<h2>4. Training</h2>
+				<p>
+					<a href={`${codeBase}/train.py`}>train.py</a> wires everything together:
+				</p>
+				<ol>
+					<li>Load <code>Helsinki-NLP/opus_books</code> (<code>en-fr</code>)</li>
+					<li>Build or reuse WordLevel tokenizers</li>
+					<li>90/10 train–val split</li>
+					<li>Adam + NLLLoss (pad ignored) + gradient clipping</li>
+					<li>Save weights each epoch under <code>weights/</code></li>
+				</ol>
+				<pre><code>cd notebooks/transformers
+python train.py</code></pre>
+
+				<h2>Code index</h2>
+				<ul>
+					<li><a href={`${codeBase}/config.py`}>config.py</a> — hyperparameters</li>
+					<li><a href={`${codeBase}/dataset.py`}>dataset.py</a> — batching and masks</li>
+					<li><a href={`${codeBase}/model.py`}>model.py</a> — architecture</li>
+					<li><a href={`${codeBase}/train.py`}>train.py</a> — training loop</li>
+					<li>
+						<a href={`${codeBase}/transformer-dimensions.drawio`}>transformer-dimensions.drawio</a>
+						— editable dimension diagram
+					</li>
+				</ul>
+
+				<p>
+					For the mental model behind each block, start at
+					<a href="/concepts/transformers">Transformers Overview</a>.
+				</p>
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	.article-header {
+		margin-bottom: 2rem;
+		padding-bottom: 1.5rem;
+		border-bottom: 1px solid rgb(var(--gray-light));
+	}
+	.breadcrumbs {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.35rem;
+		margin-bottom: 0.75rem;
+		font-size: 0.85rem;
+		color: rgb(var(--gray));
+	}
+	.breadcrumbs a {
+		color: rgb(var(--gray));
+		text-decoration: none;
+	}
+	.breadcrumbs a:hover {
+		color: var(--accent);
+	}
+	.separator {
+		color: rgb(var(--gray-light));
+	}
+	.back-link {
+		display: inline-block;
+		margin-bottom: 1rem;
+		font-size: 0.9rem;
+		color: rgb(var(--gray));
+		text-decoration: none;
+	}
+	.back-link:hover {
+		color: var(--accent);
+	}
+	.article-header h1 {
+		font-size: 2.4rem;
+		margin-bottom: 0.5rem;
+	}
+	.description {
+		font-size: 1.1rem;
+		color: rgb(var(--gray));
+		margin: 0;
+	}
+	.prose {
+		line-height: 1.8;
+	}
+	.prose :global(h2) {
+		font-size: 1.5rem;
+		margin-top: 2.5rem;
+		margin-bottom: 0.75rem;
+		font-weight: 700;
+	}
+	.prose :global(ol),
+	.prose :global(ul) {
+		padding-left: 1.5rem;
+	}
+	.prose :global(li) {
+		margin-bottom: 0.5rem;
+	}
+	.prose :global(pre) {
+		background-color: rgb(var(--gray-dark));
+		color: #f8f8f2;
+		padding: 1.25rem;
+		border-radius: 8px;
+		overflow-x: auto;
+		font-size: 0.9rem;
+		line-height: 1.5;
+	}
+	.prose :global(code) {
+		font-size: 0.9em;
+	}
+	.prose :global(figure) {
+		margin: 1.75rem 0;
+	}
+	.prose :global(img) {
+		width: 100%;
+		height: auto;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 8px;
+	}
+	.prose :global(figcaption) {
+		margin-top: 0.5rem;
+		font-size: 0.9rem;
+		color: rgb(var(--gray));
+	}
+</style>

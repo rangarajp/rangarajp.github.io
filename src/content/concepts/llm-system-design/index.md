@@ -15,12 +15,12 @@ Read them in order for the full picture, or jump to any topic that interests you
 
 Topics covered in this series:
 
-1. **How LLM systems differ** — the new primitives: context window, latent reasoning, probabilistic output, and why they break traditional design assumptions
-2. **Designing for reliability** — fallback chains, model routing by task, gateway logic, circuit breakers, and token budget enforcement
-3. **Anatomy of an LLM application** — prompt, context, memory, output parser, tools; how the pieces connect
-4. **RAG — retrieval-augmented generation** — document chunking, embedding, retrieval, reranking, and when RAG beats fine-tuning
-5. **Agentic systems** — tools, loops, planning, state, and multi-agent coordination
-6. **Latency and cost** — prompt caching, model selection, batching, streaming, and the token budget
+1. **[How LLM systems differ](/concepts/llm-system-design/basics)** — the new primitives: context window, latent reasoning, probabilistic output, and why they break traditional design assumptions
+2. **[Designing for reliability](/concepts/llm-system-design/reliability)** — fallback chains, model routing by task, gateway logic, circuit breakers, and token budget enforcement
+3. **[Designing for latency](/concepts/llm-system-design/latency)** — latency metrics, streaming, batching, caching, critical-path optimization, and inference-aware architecture
+4. **Anatomy of an LLM application** — prompt, context, memory, output parser, tools; how the pieces connect
+5. **RAG — retrieval-augmented generation** — document chunking, embedding, retrieval, reranking, and when RAG beats fine-tuning
+6. **Agentic systems** — tools, loops, planning, state, and multi-agent coordination
 7. **Evaluation** — measuring quality without ground truth; offline vs online eval, LLM-as-judge, and regression testing
 8. **Production and governance** — observability, guardrails, fallbacks, and enterprise AI constraints
 
