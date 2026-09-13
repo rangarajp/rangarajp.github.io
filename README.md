@@ -1,3 +1,19 @@
+# rangarajp.github.io
+
+## Python notebooks (uv, not pip)
+
+Uses **`.venv-qwen`**. `uv` defaults to `.venv`, so this repo links `.venv` → `.venv-qwen`.
+
+```powershell
+.\setup-python.ps1          # sync + ensure the link
+uv add some-package         # goes into .venv-qwen
+.\start-jupyter.ps1
+```
+
+If `uv add` created a separate `.venv`, run `.\setup-python.ps1` again to relink.
+
+---
+
 # Astro Starter Kit: Blog
 
 ```sh

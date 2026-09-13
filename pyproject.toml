@@ -1,0 +1,26 @@
+[project]
+name = "rangarajp-notebooks"
+version = "0.1.0"
+description = "Python env for notebooks (Qwen / transformers / Jupyter)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "accelerate==1.14.0",
+    "bertviz==1.4.1",
+    "boto3==1.43.93",
+    "datasets==5.0.1",
+    "ipykernel==7.3.0",
+    "ipywidgets>=8.1",
+    "jupyter>=1.1",
+    "matplotlib==3.11.2",
+    "notebook==7.6.2",
+    "numpy==2.5.2",
+    "tokenizers==0.23.2",
+    "torch==2.14.0",
+    "tqdm==4.70.0",
+    "transformers==5.16.1",
+]
+
+[tool.uv]
+package = false
+link-mode = "copy"

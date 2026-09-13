@@ -1,0 +1,2 @@
+﻿# Avoid Windows/OneDrive hardlink failures (os error 396)
+link-mode = "copy"
