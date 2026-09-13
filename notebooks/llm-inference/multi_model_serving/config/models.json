@@ -1,0 +1,22 @@
+{
+    "models": [
+        {
+            "id": "qwen2.5-0.5b",
+            "name": "Qwen2.5-0.5B-Instruct",
+            "path": "Qwen2.5-0.5B-Instruct",
+            "type": "llm",
+            "framework": "transformers",
+            "version": "1.0.0",
+            "description": "Qwen2.5 0.5B Instruct — local causal LM (under MODELS_DIR)"
+        },
+        {
+            "id": "tinyllama-1.1b",
+            "name": "TinyLlama-1.1B-Chat-v1.0",
+            "path": "TinyLlama-1.1B-Chat-v1.0",
+            "type": "llm",
+            "framework": "transformers",
+            "version": "1.0.0",
+            "description": "TinyLlama 1.1B Chat — local causal LM (under MODELS_DIR)"
+        }
+    ]
+}

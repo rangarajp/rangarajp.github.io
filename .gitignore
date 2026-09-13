@@ -17,11 +17,17 @@ pnpm-debug.log*
 .env
 .env.production
 
+# machine-local path config (never publish)
+notebooks/llm-inference/local_paths.json
+
 # macOS-specific files
 .DS_Store
 
 # jetbrains setting folder
 .idea/
+
+# VS Code local settings (may contain machine paths)
+.vscode/
 
 # venv
 .venv*

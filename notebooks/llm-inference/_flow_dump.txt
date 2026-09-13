@@ -1,0 +1,184 @@
+>>> [GPU] ← model.generate() finished
+>>> [ModelWorker] generate() — returning 1 result(s)
+>>> [ModelWorker] result put on result_queue
+>>> [ModelExecutor] ← result received from ModelWorker
+>>> [LLMEngine] ← result received from ModelExecutor
+>>> [FastAPI] ← returning GenerateResponse
+============================================================
+ DONE     POST /basic_generate
+============================================================
+
+INFO:     127.0.0.1:37784 - "POST /basic_generate HTTP/1.1" 200 OK
+
+============================================================
+ REQUEST  POST /generate
+============================================================
+>>> [FastAPI] /generate — 4 prompts
+>>> [FastAPI] → LLMEngine.generate()  [uses WorkloadManager batching]
+>>> [LLMEngine] generate(4 prompts) — uses WorkloadManager
+>>> [WorkloadManager] add_request → incoming_queue  id=4e010141… prompt='The capital of France is'
+>>> [WorkloadManager] add_request → incoming_queue  id=e7720f6e… prompt='The capital of India is'
+>>> [WorkloadManager] add_request → incoming_queue  id=2a54b380… prompt='The capital of Japan is'
+>>> [WorkloadManager] add_request → incoming_queue  id=b586257b… prompt='The largest planet is'
+>>> [WorkloadManager] get_next_batch(batch) — pulled 4, active=4
+>>> [LLMEngine] batch loop — 4 seq(s) → ModelExecutor.execute_batch()
+>>> [ModelExecutor] execute_batch — sending 4 item(s) to worker (is_streaming=False)
+>>> [ModelExecutor] waiting on result_queue…
+>>> [ModelWorker] task received — is_streaming=False, batch_size=4
+>>> [ModelWorker] generate() — batch size=4
+--- SKIP [ModelManager] model already loaded at worker startup; not reloaded per request
+>>> [GPU] model.generate() on cuda  input_shape=(4, 5)
+>>> [GPU] ← model.generate() finished
+>>> [ModelWorker] generate() — returning 4 result(s)
+>>> [ModelWorker] result put on result_queue
+>>> [ModelExecutor] ← result received from ModelWorker
+>>> [WorkloadManager] update_sequence_output id=4e010141… finished=True tokens=1
+>>> [WorkloadManager] update_sequence_output id=e7720f6e… finished=True tokens=1
+>>> [WorkloadManager] update_sequence_output id=2a54b380… finished=True tokens=1
+>>> [WorkloadManager] update_sequence_output id=b586257b… finished=True tokens=1
+>>> [WorkloadManager] remove_finished_sequence id=4e010141…
+>>> [WorkloadManager] remove_finished_sequence id=e7720f6e…
+>>> [WorkloadManager] remove_finished_sequence id=2a54b380…
+>>> [WorkloadManager] remove_finished_sequence id=b586257b…
+>>> [LLMEngine] ← returning 4 generated texts
+>>> [FastAPI] ← returning BatchGenerateResponse
+============================================================
+ DONE     POST /generate
+============================================================
+
+INFO:     127.0.0.1:38646 - "POST /generate HTTP/1.1" 200 OK
+
+============================================================
+ REQUEST  POST /basic_generate
+============================================================
+>>> [FastAPI] /basic_generate — prompt='What is KV cache?'
+>>> [FastAPI] → LLMEngine.basic_generate()
+--- SKIP [WorkloadManager] basic_generate bypasses queue/batching; goes straight to ModelExecutor
+>>> [LLMEngine] basic_generate(prompt='What is KV cache?')
+--- SKIP [WorkloadManager] basic_generate builds Sequence locally; no add_request / get_next_batch
+>>> [LLMEngine] → ModelExecutor.execute_batch([sequence])
+>>> [ModelExecutor] execute_batch — sending 1 item(s) to worker (is_streaming=False)
+>>> [ModelExecutor] waiting on result_queue…
+>>> [ModelWorker] task received — is_streaming=False, batch_size=1
+>>> [ModelWorker] generate() — batch size=1
+--- SKIP [ModelManager] model already loaded at worker startup; not reloaded per request
+>>> [GPU] model.generate() on cuda  input_shape=(1, 5)
+>>> [GPU] ← model.generate() finished
+>>> [ModelWorker] generate() — returning 1 result(s)
+>>> [ModelWorker] result put on result_queue
+>>> [ModelExecutor] ← result received from ModelWorker
+>>> [LLMEngine] ← result received from ModelExecutor
+>>> [FastAPI] ← returning GenerateResponse
+============================================================
+ DONE     POST /basic_generate
+============================================================
+
+INFO:     127.0.0.1:48804 - "POST /basic_generate HTTP/1.1" 200 OK
+
+============================================================
+ REQUEST  POST /basic_generate
+============================================================
+>>> [FastAPI] /basic_generate — prompt='What is attention?'
+>>> [FastAPI] → LLMEngine.basic_generate()
+--- SKIP [WorkloadManager] basic_generate bypasses queue/batching; goes straight to ModelExecutor
+>>> [LLMEngine] basic_generate(prompt='What is attention?')
+--- SKIP [WorkloadManager] basic_generate builds Sequence locally; no add_request / get_next_batch
+>>> [LLMEngine] → ModelExecutor.execute_batch([sequence])
+>>> [ModelExecutor] execute_batch — sending 1 item(s) to worker (is_streaming=False)
+>>> [ModelExecutor] waiting on result_queue…
+>>> [ModelWorker] task received — is_streaming=False, batch_size=1
+>>> [ModelWorker] generate() — batch size=1
+--- SKIP [ModelManager] model already loaded at worker startup; not reloaded per request
+>>> [GPU] model.generate() on cuda  input_shape=(1, 4)
+>>> [GPU] ← model.generate() finished
+>>> [ModelWorker] generate() — returning 1 result(s)
+>>> [ModelWorker] result put on result_queue
+>>> [ModelExecutor] ← result received from ModelWorker
+>>> [LLMEngine] ← result received from ModelExecutor
+>>> [FastAPI] ← returning GenerateResponse
+============================================================
+ DONE     POST /basic_generate
+============================================================
+
+INFO:     127.0.0.1:48806 - "POST /basic_generate HTTP/1.1" 200 OK
+
+============================================================
+ REQUEST  POST /basic_generate
+============================================================
+>>> [FastAPI] /basic_generate — prompt='What is speculative decoding?'
+>>> [FastAPI] → LLMEngine.basic_generate()
+--- SKIP [WorkloadManager] basic_generate bypasses queue/batching; goes straight to ModelExecutor
+>>> [LLMEngine] basic_generate(prompt='What is speculative decoding?')
+--- SKIP [WorkloadManager] basic_generate builds Sequence locally; no add_request / get_next_batch
+>>> [LLMEngine] → ModelExecutor.execute_batch([sequence])
+>>> [ModelExecutor] execute_batch — sending 1 item(s) to worker (is_streaming=False)
+>>> [ModelExecutor] waiting on result_queue…
+>>> [ModelWorker] task received — is_streaming=False, batch_size=1
+>>> [ModelWorker] generate() — batch size=1
+--- SKIP [ModelManager] model already loaded at worker startup; not reloaded per request
+>>> [GPU] model.generate() on cuda  input_shape=(1, 5)
+>>> [GPU] ← model.generate() finished
+>>> [ModelWorker] generate() — returning 1 result(s)
+>>> [ModelWorker] result put on result_queue
+>>> [ModelExecutor] ← result received from ModelWorker
+>>> [LLMEngine] ← result received from ModelExecutor
+>>> [FastAPI] ← returning GenerateResponse
+============================================================
+ DONE     POST /basic_generate
+============================================================
+
+INFO:     127.0.0.1:48808 - "POST /basic_generate HTTP/1.1" 200 OK
+
+============================================================
+ REQUEST  POST /basic_generate
+============================================================
+>>> [FastAPI] /basic_generate — prompt='What is continuous batching?'
+>>> [FastAPI] → LLMEngine.basic_generate()
+--- SKIP [WorkloadManager] basic_generate bypasses queue/batching; goes straight to ModelExecutor
+>>> [LLMEngine] basic_generate(prompt='What is continuous batching?')
+--- SKIP [WorkloadManager] basic_generate builds Sequence locally; no add_request / get_next_batch
+>>> [LLMEngine] → ModelExecutor.execute_batch([sequence])
+>>> [ModelExecutor] execute_batch — sending 1 item(s) to worker (is_streaming=False)
+>>> [ModelExecutor] waiting on result_queue…
+>>> [ModelWorker] task received — is_streaming=False, batch_size=1
+>>> [ModelWorker] generate() — batch size=1
+--- SKIP [ModelManager] model already loaded at worker startup; not reloaded per request
+>>> [GPU] model.generate() on cuda  input_shape=(1, 5)
+>>> [GPU] ← model.generate() finished
+>>> [ModelWorker] generate() — returning 1 result(s)
+>>> [ModelWorker] result put on result_queue
+>>> [ModelExecutor] ← result received from ModelWorker
+>>> [LLMEngine] ← result received from ModelExecutor
+>>> [FastAPI] ← returning GenerateResponse
+============================================================
+ DONE     POST /basic_generate
+============================================================
+
+INFO:     127.0.0.1:48810 - "POST /basic_generate HTTP/1.1" 200 OK
+
+============================================================
+ REQUEST  POST /basic_generate
+============================================================
+>>> [FastAPI] /basic_generate — prompt='Explain KV cache in 3 sentences.'
+>>> [FastAPI] → LLMEngine.basic_generate()
+--- SKIP [WorkloadManager] basic_generate bypasses queue/batching; goes straight to ModelExecutor
+>>> [LLMEngine] basic_generate(prompt='Explain KV cache in 3 sentences.')
+--- SKIP [WorkloadManager] basic_generate builds Sequence locally; no add_request / get_next_batch
+>>> [LLMEngine] → ModelExecutor.execute_batch([sequence])
+>>> [ModelExecutor] execute_batch — sending 1 item(s) to worker (is_streaming=False)
+>>> [ModelExecutor] waiting on result_queue…
+>>> [ModelWorker] task received — is_streaming=False, batch_size=1
+>>> [ModelWorker] generate() — batch size=1
+--- SKIP [ModelManager] model already loaded at worker startup; not reloaded per request
+>>> [GPU] model.generate() on cuda  input_shape=(1, 9)
+>>> [GPU] ← model.generate() finished
+>>> [ModelWorker] generate() — returning 1 result(s)
+>>> [ModelWorker] result put on result_queue
+>>> [ModelExecutor] ← result received from ModelWorker
+>>> [LLMEngine] ← result received from ModelExecutor
+>>> [FastAPI] ← returning GenerateResponse
+============================================================
+ DONE     POST /basic_generate
+============================================================
+
+INFO:     127.0.0.1:53162 - "POST /basic_generate HTTP/1.1" 200 OK

@@ -1,0 +1,7 @@
+{
+  "MODELS_DIR": "/path/to/models",
+  "MULTI_MODEL_NOTEBOOK_DIR": "/path/to/notebooks/multi_model_serving",
+  "SINGLE_MODEL_NOTEBOOK_DIR": "/path/to/notebooks/single_model_llm_serving",
+  "QWEN_MODEL": "Qwen2.5-0.5B-Instruct",
+  "TINYLLAMA_MODEL": "TinyLlama-1.1B-Chat-v1.0"
+}

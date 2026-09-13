@@ -10,11 +10,24 @@ import atexit
 import signal
 import os
 
-# Local Qwen checkpoint (override with env MODEL_PATH if needed)
-MODEL_PATH = os.environ.get(
-    "MODEL_PATH",
-    "/home/mbrdiuser/3D_RP/llm_inference/models/Qwen2.5-0.5B-Instruct",
-)
+# Local Qwen checkpoint (override with env MODEL_PATH, or local_paths.json)
+def _default_model_path() -> str:
+    env = os.environ.get("MODEL_PATH")
+    if env:
+        return env
+    try:
+        import sys
+        from pathlib import Path
+
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from local_paths import model_path
+
+        return str(model_path("QWEN_MODEL"))
+    except Exception:
+        return "Qwen2.5-0.5B-Instruct"
+
+
+MODEL_PATH = _default_model_path()
 
 # Create FastAPI app
 app = FastAPI()

@@ -9,6 +9,8 @@ heroImage: '../../../assets/blog-placeholder-3.jpg'
 Companion notebook: `notebooks/llm-inference/basic_vLLM_v1.ipynb`  
 Model: `Qwen2.5-0.5B-Instruct` (vLLM 0.6.x, PyTorch 2.4, CUDA 11.8)
 
+Local checkpoint root comes from gitignored `notebooks/llm-inference/local_paths.json` (copy from `local_paths.example.json`). Do not commit absolute machine paths.
+
 ---
 
 ## 1. What inference really is
@@ -173,8 +175,9 @@ Manually managing K/V tensors, handling multiple concurrent users, and keeping t
 
 ```python
 from vllm import LLM, SamplingParams
+from local_paths import model_path  # notebooks/llm-inference/local_paths.py
 
-MODEL_PATH = "/path/to/models/Qwen2.5-0.5B-Instruct"
+MODEL_PATH = str(model_path("QWEN_MODEL"))  # folder under MODELS_DIR in local_paths.json
 
 llm = LLM(
     model=MODEL_PATH,

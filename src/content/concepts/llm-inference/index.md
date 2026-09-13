@@ -21,3 +21,11 @@ Topics to cover in this series:
 6. **Serving trade-offs** — latency vs throughput, context length, and memory walls
 
 Together, these ideas explain how inference engines turn a trained transformer into a practical API.
+
+## Related posts in this folder
+
+- [vLLM Basics and Why KV Cache Matters](./vllm-basics-kv-cache)
+- [LLM Serving Engine Internals](./serving-engine-internals)
+- [Serving Multiple Models](./serving-multi-models)
+
+Local lab paths: use gitignored `notebooks/llm-inference/local_paths.json` (from `local_paths.example.json`). Absolute machine paths are not published in these posts.
