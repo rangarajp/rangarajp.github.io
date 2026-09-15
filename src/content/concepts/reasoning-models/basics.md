@@ -12,21 +12,21 @@ Standard LLMs are strong at statistical pattern recognition. Reasoning methods s
 
 Conventional LLM training occurs in several stages:
 
-1. **Pretraining** — the model learns language patterns from vast amounts of text (books, websites, articles, and more) via next-token prediction
-2. **Instruction fine-tuning** — improves how the model responds to user prompts
-3. **Preference tuning** — aligns outputs with human preferences (style, helpfulness, safety)
+1. *Pretraining* — the model learns language patterns from vast amounts of text (books, websites, articles, and more) via next-token prediction
+2. *Instruction fine-tuning* — improves how the model responds to user prompts
+3. *Preference tuning* — aligns outputs with human preferences (style, helpfulness, safety)
 
-Reasoning methods are applied **on top of** a conventional LLM — after these stages have already produced a capable language model.
+Reasoning methods are applied *on top of* a conventional LLM — after these stages have already produced a capable language model.
 
 ### 1.1 Same user message, two training stages
 
-**User:**
+*User:*
 
 ```
 How do I boil an egg?
 ```
 
-**Pretrained LLM** (next-token completion — not yet a chat assistant):
+*Pretrained LLM* (next-token completion — not yet a chat assistant):
 
 ```
 How do I boil an egg? How do I scramble an egg? How do I poach an egg?
@@ -35,7 +35,7 @@ For more recipes, see chapter 4. Soft-boiled eggs are popular in…
 
 It continues the text like a webpage or book — more questions, lists, or related prose — because it was trained to predict the next token, not to help a user.
 
-**Post-trained LLM** (instruction + preference tuning):
+*Post-trained LLM* (instruction + preference tuning):
 
 ```
 User: How do I boil an egg?
@@ -51,15 +51,15 @@ Pretraining builds language knowledge; post-training teaches the model to *use* 
 
 ## 2. What reasoning means in LLMs
 
-Reasoning in LLMs means improving a model so that it **explicitly generates intermediate steps** (chain of thought) before producing a final answer. That often increases accuracy on multistep tasks.
+Reasoning in LLMs means improving a model so that it *explicitly generates intermediate steps* (chain of thought) before producing a final answer. That often increases accuracy on multistep tasks.
 
 Standard chat models often jump straight to an answer. Reasoning models are optimized to spend extra test-time compute on those intermediate tokens when the problem needs it.
 
 ### 2.1 Example: share and count
 
-**Problem:** Ram has 3 chocolates. Sam has 5 chocolates. They put them in one basket and each eats 1. How many chocolates are left?
+*Problem:* Ram has 3 chocolates. Sam has 5 chocolates. They put them in one basket and each eats 1. How many chocolates are left?
 
-**Without reasoning** (instant answer):
+*Without reasoning* (instant answer):
 
 ```
 Answer: 6
@@ -67,7 +67,7 @@ Answer: 6
 
 Lucky guess — or a wrong one. No checkable path.
 
-**With reasoning** (step by step):
+*With reasoning* (step by step):
 
 ```
 Step 1: Ram has 3 chocolates.
@@ -82,7 +82,7 @@ Same final number, but the model wrote intermediate tokens that make the answer 
 
 ## 3. Pattern matching, not rules
 
-Reasoning in LLMs is different from rule-based reasoning, and it likely also works differently from human reasoning. The current consensus is that reasoning in LLMs still relies on **statistical pattern matching**.
+Reasoning in LLMs is different from rule-based reasoning, and it likely also works differently from human reasoning. The current consensus is that reasoning in LLMs still relies on *statistical pattern matching*.
 
 Pattern matching here means statistical associations learned from data: fluent text generation without explicit logical inference engines or hard-coded rules. The “steps” look like reasoning; under the hood they are still next-token predictions shaped by training.
 
@@ -90,9 +90,9 @@ Pattern matching here means statistical associations learned from data: fluent t
 
 Improving reasoning in LLMs can be done in a few ways:
 
-1. **Inference-time compute scaling** — improve reasoning without retraining (for example, chain-of-thought prompting, more samples, or search at decode time)
-2. **Reinforcement learning** — train models explicitly with reward signals for better traces or final answers
-3. **Supervised fine-tuning and distillation** — train on examples from stronger reasoning models
+1. *Inference-time compute scaling* — improve reasoning without retraining (for example, chain-of-thought prompting, more samples, or search at decode time)
+2. *Reinforcement learning* — train models explicitly with reward signals for better traces or final answers
+3. *Supervised fine-tuning and distillation* — train on examples from stronger reasoning models
 
 Building reasoning models from scratch is useful in practice: it surfaces capabilities, limitations, and computational trade-offs more clearly than using a black-box API alone.
 

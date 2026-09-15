@@ -16,6 +16,11 @@ Inference of generative models are not straight forward. Inference requires
 • Infrastructure: No matter how efficient, it need scaling. GPU, Storage, Networking, Scaling etc. Infra - all available resources into one single unified pool of compute
 • Tooling: Providing engineers working on inference with the right level of abstraction to balance control with productivity
 
+<figure>
+
 ![Runtime, infrastructure, and tooling](./images/basics-runtime_infra.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Runtime, infrastructure, and tooling</figcaption>
+</figure>
 
 In short, Inference Engineering is about making models faster, less expensive and more reliable without sacrificing quality.

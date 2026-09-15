@@ -8,20 +8,20 @@ heroImage: '../../../assets/blog-placeholder-3.jpg'
 
 A traditional API either works or throws an exception — simple to monitor and easy to handle. LLM systems break that assumption in three distinct ways.
 
-**Infrastructure failures** — the model doesn't respond at all:
+*Infrastructure failures* — the model doesn't respond at all:
 - Endpoint down or unreachable
 - Rate limit exceeded
 - Network timeout
 - Server overloaded
 
-**Output failures** — the model responds but the response is wrong:
+*Output failures* — the model responds but the response is wrong:
 - Returns a narrative when you needed a number
 - Hallucinated fields in a JSON object
 - Truncated mid-sentence
 - Plausible-sounding but factually incorrect
 - These return HTTP 200 — invisible to infrastructure monitoring
 
-**Quality drift** — no single request fails, but quality degrades over time:
+*Quality drift* — no single request fails, but quality degrades over time:
 - Model version silently updated by provider
 - Prompt that worked last month stops working
 - Distribution shift in user inputs
@@ -498,7 +498,12 @@ class TokenBudget:
 
 ## Full reliability flowchart
 
+<figure>
+
 ![LLM Reliability Pipeline](./images/reliability-pipeline.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> LLM Reliability Pipeline</figcaption>
+</figure>
 
 
 

@@ -12,10 +12,10 @@ Single-head attention produces one weighted view of a token's neighbors. Multi-h
 
 From [attention](/concepts/transformers/attention), a single head can contextualize an ambiguous word like "bank" by looking at its neighbors. The same embedding `[0.5, 0.5, 0.3, 0.0, 0.0]` produces different context vectors in different sentences:
 
-- **Sentence A (river context):** `[0.323, 0.100, 0.267, 0.189, 0.122]` — nature-oriented
-- **Sentence B (deposit context):** `[0.164, 0.679, 0.088, 0.271, 0.000]` — finance-oriented
+- *Sentence A (river context):* `[0.323, 0.100, 0.267, 0.189, 0.122]` — nature-oriented
+- *Sentence B (deposit context):* `[0.164, 0.679, 0.088, 0.271, 0.000]` — finance-oriented
 
-The limitation is that one head produces **one** weighted combination. What if "bank" needs to attend simultaneously to:
+The limitation is that one head produces *one* weighted combination. What if "bank" needs to attend simultaneously to:
 
 - Geographic / nature aspects (neighbor: "river")
 - Action / activity aspects (neighbor: "sitting")
@@ -23,7 +23,7 @@ The limitation is that one head produces **one** weighted combination. What if "
 
 A single head must prioritize one pattern. It cannot strongly split attention across fundamentally different relationship types.
 
-**Multi-head attention** fixes this: run N independent attention heads in parallel, each learning different relationship patterns.
+*Multi-head attention* fixes this: run N independent attention heads in parallel, each learning different relationship patterns.
 
 ## 2. The core idea
 
@@ -65,7 +65,7 @@ Use the same embeddings as the attention walkthrough, but compute with two diffe
 | river | 0.8 | 0.0 | 0.9 | 0.0 | 0.0 |
 | **bank** | **0.5** | **0.5** | **0.3** | 0.0 | 0.0 |
 
-**Recall:** single-head attention on "bank" produced:
+*Recall:* single-head attention on "bank" produced:
 
 - Attention weights: river (0.217), bank (0.200), by (0.123), sitting (0.120), I (0.117), am (0.111), the (0.111)
 - Context vector: `[0.323, 0.100, 0.267, 0.189, 0.122]`
@@ -74,8 +74,8 @@ Use the same embeddings as the attention walkthrough, but compute with two diffe
 
 What if that single context could be split into multiple learned perspectives?
 
-- **Head 1** learns `W_1^Q`, `W_1^K`, `W_1^V` that specialize in **geographic / spatial** relationships
-- **Head 2** learns `W_2^Q`, `W_2^K`, `W_2^V` that specialize in **action / verb** relationships
+- *Head 1* learns `W_1^Q`, `W_1^K`, `W_1^V` that specialize in *geographic / spatial* relationships
+- *Head 2* learns `W_2^Q`, `W_2^K`, `W_2^V` that specialize in *action / verb* relationships
 
 Weights start random. During training, Head 1 tends to learn "pay attention to geographic neighbors" while Head 2 learns "pay attention to action neighbors".
 
@@ -118,7 +118,7 @@ Dot product with key vectors (using `W_1^K`, also learned for geographic focus):
 | river | [0.72, 0.00, 0.81, 0.00, 0.00] | **0.79** | Highest — geographic + nature |
 | bank | [0.45, 0.45, 0.27, 0.00, 0.00] | **0.52** | Self-reference with geographic aspect |
 
-**Raw scores (Head 1):** `[0.08, 0.00, 0.12, 0.16, 0.00, 0.79, 0.52]`
+*Raw scores (Head 1):* `[0.08, 0.00, 0.12, 0.16, 0.00, 0.79, 0.52]`
 
 Head 1 gives river a higher score (0.79) than single-head (0.67) because it is specialized for geographic focus.
 
@@ -134,9 +134,9 @@ Head 1 gives river a higher score (0.79) than single-head (0.67) because it is s
 | river | 0.79 | 2.20 | **0.22** |
 | bank | 0.52 | 1.68 | **0.17** |
 
-**Sum:** `1.08 + 1.00 + 1.13 + 1.17 + 1.00 + 2.20 + 1.68 = 9.26`
+*Sum:* `1.08 + 1.00 + 1.13 + 1.17 + 1.00 + 2.20 + 1.68 = 9.26`
 
-**Attention weights (Head 1):**
+*Attention weights (Head 1):*
 
 - river: 22% (geographic-focused)
 - bank: 17% (self)
@@ -171,7 +171,7 @@ Action:     0.000 + 0.050 + 0.099 + 0.024 + 0.000 + 0.000 + 0.000 = 0.173
 Person:     0.105 + 0.010 + 0.000 + 0.000 + 0.000 + 0.000 + 0.000 = 0.115
 ```
 
-**Head 1 context:** `[0.307, 0.085, 0.260, 0.173, 0.115]`
+*Head 1 context:* `[0.307, 0.085, 0.260, 0.173, 0.115]`
 
 Geographic (0.307) and Nature (0.260) stay strong; Action is suppressed; Financial is modest. This is the geographic perspective on "bank".
 
@@ -214,7 +214,7 @@ Dot product with keys using `W_2^K` (learned for action focus):
 | river | [0.72, 0.00, 0.81, 0.02, 0.00] | 0.24 | Nature, not action-focused |
 | bank | [0.45, 0.45, 0.27, 0.00, 0.00] | **0.25** | Self, some action relevance |
 
-**Raw scores (Head 2):** `[0.11, 0.10, 0.28, 0.08, 0.00, 0.24, 0.25]`
+*Raw scores (Head 2):* `[0.11, 0.10, 0.28, 0.08, 0.00, 0.24, 0.25]`
 
 Head 2 gives sitting much higher relative weight than Head 1 (0.28 vs 0.12).
 
@@ -230,9 +230,9 @@ Head 2 gives sitting much higher relative weight than Head 1 (0.28 vs 0.12).
 | river | 0.24 | 1.27 | 0.12 |
 | bank | 0.25 | 1.28 | **0.13** |
 
-**Sum:** `1.12 + 1.11 + 1.32 + 1.08 + 1.00 + 1.27 + 1.28 = 9.18`
+*Sum:* `1.12 + 1.11 + 1.32 + 1.08 + 1.00 + 1.27 + 1.28 = 9.18`
 
-**Attention weights (Head 2):**
+*Attention weights (Head 2):*
 
 - sitting: 13% (action-focused)
 - bank: 13% (self)
@@ -263,7 +263,7 @@ Action:     0.000 + 0.055 + 0.117 + 0.022 + 0.000 + 0.000 + 0.000 = 0.194
 Person:     0.105 + 0.011 + 0.000 + 0.000 + 0.000 + 0.000 + 0.000 = 0.116
 ```
 
-**Head 2 context:** `[0.207, 0.065, 0.160, 0.194, 0.116]`
+*Head 2 context:* `[0.207, 0.065, 0.160, 0.194, 0.116]`
 
 Action (0.194) is elevated vs Head 1 (0.173). Person is preserved. Geographic (0.207) is lower than Head 1 (0.307). This is the action perspective on "bank".
 
@@ -303,7 +303,7 @@ Final = [0.307, 0.085, 0.260, 0.173, 0.115, 0.207, 0.065, 0.160, 0.194, 0.116] �
       = [0.293, 0.134, 0.256, 0.211, 0.125]
 ```
 
-**Multi-head output for "bank":** `[0.293, 0.134, 0.256, 0.211, 0.125]`
+*Multi-head output for "bank":* `[0.293, 0.134, 0.256, 0.211, 0.125]`
 
 ### 3.7 Comparing original, single-head, and multi-head
 
@@ -315,24 +315,24 @@ Final = [0.307, 0.085, 0.260, 0.173, 0.115, 0.207, 0.065, 0.160, 0.194, 0.116] �
 | Action | 0.0 | 0.189 | 0.173 | 0.194 | **0.211** |
 | Person | 0.0 | 0.122 | 0.115 | 0.116 | **0.125** |
 
-1. **Original** — ambiguous: equal Geographic and Financial (0.5 each)
-2. **Single-head** — one pattern: "river" pulls Geographic to 0.323; Financial drops to 0.100
-3. **Multi-head** — both patterns:
+1. *Original* — ambiguous: equal Geographic and Financial (0.5 each)
+2. *Single-head* — one pattern: "river" pulls Geographic to 0.323; Financial drops to 0.100
+3. *Multi-head* — both patterns:
    - Head 1 (geographic) sees river clearly → 0.307 geographic
    - Head 2 (action) sees sitting clearly → 0.194 action
    - Projection blends both → 0.293 geographic + 0.211 action
-4. **Key difference** — multi-head final Action (0.211) is higher than single-head (0.189). The action signal was not lost; the action head preserved it alongside the geographic signal.
+4. *Key difference* — multi-head final Action (0.211) is higher than single-head (0.189). The action signal was not lost; the action head preserved it alongside the geographic signal.
 
 ### 3.8 What each head learned
 
-**Head 1 (geographic focus):**
+*Head 1 (geographic focus):*
 
 - "river" (22%) is most geographically relevant
 - "bank" (17%) self-attention confirms geographic aspects
 - "by" (12%) location preposition
 - Result: pulls "bank" toward river / nature meanings
 
-**Head 2 (action focus):**
+*Head 2 (action focus):*
 
 - "sitting" (13%) action-central verb
 - "bank" (13%) self-attention for action aspect
@@ -366,10 +366,10 @@ Head 2 asks: "How is 'bank' used in an action?"   → focuses on sitting (0.13)
 Both patterns computed in parallel. W^O combines them.
 ```
 
-**Result:** multi-head final `[0.293, 0.134, 0.256, 0.211, 0.125]`
+*Result:* multi-head final `[0.293, 0.134, 0.256, 0.211, 0.125]`
 
 - Geographic: 0.293 (vs single 0.323) — slight trade-off
-- Action: **0.211** (vs single 0.189) — action signal survives better
+- Action: *0.211* (vs single 0.189) — action signal survives better
 - Financial: 0.134 (vs single 0.100) — still represents ambiguity
 
 "bank"'s multi-head representation now captures:
@@ -412,7 +412,7 @@ Attention(Q, K, V) = softmax(QKᵀ / √d_k) V
 MultiHead = Concat(head_1, ..., head_N) W^O
 ```
 
-**Parameters to learn:**
+*Parameters to learn:*
 
 - `W_1^Q`, `W_1^K`, `W_1^V`
 - `W_2^Q`, `W_2^K`, `W_2^V`
@@ -424,13 +424,13 @@ All learned via backpropagation during training.
 
 ## 7. Key takeaways
 
-1. **Single-head is a bottleneck** — one pattern per sentence
-2. **Multi-head allows parallel patterns** — each head specializes
-3. **Heads learn different aspects** — geographic, action, syntax, semantic similarity, whatever the task needs
-4. **Concatenation preserves information** from all heads
-5. **Output projection** combines heads into the final representation
-6. **No explicit instruction** — heads learn what matters via gradient descent
-7. **Expressiveness** — many heads × many layers compounds the patterns the model can learn
+1. *Single-head is a bottleneck* — one pattern per sentence
+2. *Multi-head allows parallel patterns* — each head specializes
+3. *Heads learn different aspects* — geographic, action, syntax, semantic similarity, whatever the task needs
+4. *Concatenation preserves information* from all heads
+5. *Output projection* combines heads into the final representation
+6. *No explicit instruction* — heads learn what matters via gradient descent
+7. *Expressiveness* — many heads × many layers compounds the patterns the model can learn
 
 ## 8. Quick intuition check
 
@@ -442,6 +442,6 @@ Multiple heads force specialization; a single large head tends to average and mi
 
 Mostly yes, though some redundancy can appear. The network learns to use heads efficiently via the `W^O` projection.
 
-**How many heads is optimal?**
+*How many heads is optimal?*
 
 Empirically, often 8–16 for many tasks. More heads add capacity and parameters — a trade-off between expressiveness and compute cost.

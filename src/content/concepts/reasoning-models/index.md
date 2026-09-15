@@ -13,12 +13,12 @@ Read them in order for the full picture, or jump to any topic that interests you
 
 Topics to cover in this series:
 
-1. **Basics** — conventional training, what reasoning means, and how it is improved
-2. **Inference-time scaling** — CoT, sampling, self-consistency, Best-of-N, and self-refinement without retraining
-3. **Chain of thought** — prompting and supervised CoT as the baseline
-4. **Training for reasoning** — the three eras: pretraining → SFT + preference RL → reasoning RL with verifiers
-5. **GRPO** — group relative policy optimization: rollouts, rewards, advantages, and KL penalty
-6. **Search and verifiers** — Best-of-N, self-consistency, tree search, checkers
-7. **Trade-offs** — latency, cost, overthinking, and when reasoning helps or hurts
+1. *Basics* — conventional training, what reasoning means, and how it is improved
+2. *Inference-time scaling* — CoT, sampling, self-consistency, Best-of-N, and self-refinement without retraining
+3. *Chain of thought* — prompting and supervised CoT as the baseline
+4. *Training for reasoning* — the three eras: pretraining → SFT + preference RL → reasoning RL with verifiers
+5. *GRPO* — group relative policy optimization: rollouts, rewards, advantages, and KL penalty
+6. *Search and verifiers* — Best-of-N, self-consistency, tree search, checkers
+7. *Trade-offs* — latency, cost, overthinking, and when reasoning helps or hurts
 
 Together, these ideas explain how models move from “instant answers” to “think then answer.”

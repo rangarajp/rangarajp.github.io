@@ -6,7 +6,7 @@ order: 4
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-A single-model server is simple: load weights once, answer every request with that model. Real platforms often need **several** models behind one API — different sizes, chat templates, or tasks — without keeping every checkpoint resident on GPU.
+A single-model server is simple: load weights once, answer every request with that model. Real platforms often need *several* models behind one API — different sizes, chat templates, or tasks — without keeping every checkpoint resident on GPU.
 
 This post walks a small multi-model stack: one HTTP process, a model store, an LRU cache (capacity 2), and workers for two local chat models.
 
@@ -19,7 +19,12 @@ This post walks a small multi-model stack: one HTTP process, a model store, an L
 
 ## 1. Architecture
 
+<figure>
+
 ![Multi-model serving architecture](./images/multi-model-serving-architecture.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Multi-model serving architecture</figcaption>
+</figure>
 
 | Box in the diagram | Code | Job |
 | ------------------ | ---- | --- |
@@ -33,11 +38,11 @@ This post walks a small multi-model stack: one HTTP process, a model store, an L
 Request path (numbers match the figure):
 
 1. Client sends `{model_id, prompt}` to the API server  
-2. Manager checks the **model cache**  
-3. On miss → load **metadata** from the store  
-4. Engine **creates** the right worker  
-5. Worker is **added** to the cache; if full, **evict** least-recently used  
-6. Manager **executes** on the worker  
+2. Manager checks the *model cache*  
+3. On miss → load *metadata* from the store  
+4. Engine *creates* the right worker  
+5. Worker is *added* to the cache; if full, *evict* least-recently used  
+6. Manager *executes* on the worker  
 7. Result returns through the API  
 
 ```text
@@ -144,13 +149,13 @@ When we exercised different scenarios against the running server, these were the
 
 ### List models (cache empty)
 
-**Input**
+*Input*
 
 ```http
 GET /models
 ```
 
-**Output**
+*Output*
 
 ```text
 200
@@ -351,7 +356,12 @@ This sits next to [LLM Serving Engine Internals](./serving-engine-internals) (on
 
 The lab is **one instance** that can load Qwen or TinyLlama with an LRU cache. Production multi-model platforms add a second concern: **which host should answer for which model?**
 
+<figure>
+
 ![Multi-model serving — instance internals and cluster routing](./images/multi-model-cluster-routing.png)
+
+<figcaption><span class="figure-label">Figure 2.</span> Multi-model serving — instance internals and cluster routing</figcaption>
+</figure>
 
 ### Inside one multi-model instance (top of figure)
 

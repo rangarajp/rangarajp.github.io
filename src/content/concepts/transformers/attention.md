@@ -12,15 +12,25 @@ Attention computes contextual relevance scores between tokens. Given a sequence 
 
 Long sequences are hard to handle well. Take English-to-German translation: you cannot translate word by word. Some words depend on words that appeared earlier or later. Encoder-decoder architectures with RNN-style encoding and decoding were an early answer to that problem.
 
+<figure>
+
 ![Why Attention](./images/attention-background-translation.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Why Attention</figcaption>
+</figure>
 
 A big limitation of RNN encoder-decoder models is that they cannot directly access earlier hidden states. We assume the current hidden state captures everything that matters, which leads to loss of context on long sequences. RNN-style models worked for short translations, but longer texts still could not reach back to earlier words directly.
 
-**Bahdanau attention** was an early fix: it let the decoder selectively access different parts of the input sequence at each decoding step.
+*Bahdanau attention* was an early fix: it let the decoder selectively access different parts of the input sequence at each decoding step.
+
+<figure>
 
 ![Bahdanau Attention](./images/attention-bahdanau.png)
 
-**Attention** (as in the picture above) lets the decoder decide which parts of the encoder input to focus on while producing the output. **Self-attention** goes further — every token within a sequence can interact directly with every other token. Weights are computed by relating different positions inside a single sequence.
+<figcaption><span class="figure-label">Figure 2.</span> Bahdanau Attention</figcaption>
+</figure>
+
+*Attention* (as in the picture above) lets the decoder decide which parts of the encoder input to focus on while producing the output. *Self-attention* goes further — every token within a sequence can interact directly with every other token. Weights are computed by relating different positions inside a single sequence.
 
 ## 2. Self-attention
 
@@ -28,13 +38,13 @@ A big limitation of RNN encoder-decoder models is that they cannot directly acce
 
 Consider these two sentences:
 
-- **Sentence A:** "I am sitting by the river **bank**"
-- **Sentence B:** "I am going to the **bank** to deposit money"
+- *Sentence A:* "I am sitting by the river *bank*"
+- *Sentence B:* "I am going to the *bank* to deposit money"
 
 Both contain the word "bank", but the meaning differs:
 
-- Sentence A: **bank** = riverbank (geographic, nature-related)
-- Sentence B: **bank** = financial institution (business, money-related)
+- Sentence A: *bank* = riverbank (geographic, nature-related)
+- Sentence B: *bank* = financial institution (business, money-related)
 
 A traditional word embedding is the same in both sentences — ambiguous between the two senses:
 
@@ -43,7 +53,7 @@ embedding("bank") = [0.5, 0.5, 0.3, 0.0, 0.0]
                      Geographic, Financial, Nature, Action, Person
 ```
 
-That single vector does not know what other words are nearby or which sense applies. Self-attention fixes this by looking at all words, scoring how relevant each is to "bank", and building a **context vector** tailored to this sentence. The token embedding starts the same; attention contextualizes it.
+That single vector does not know what other words are nearby or which sense applies. Self-attention fixes this by looking at all words, scoring how relevant each is to "bank", and building a *context vector* tailored to this sentence. The token embedding starts the same; attention contextualizes it.
 
 ### 2.2 Attention scores
 
@@ -67,17 +77,17 @@ Walk through Sentence A with five embedding dimensions:
 | river | **0.8** | 0.0 | **0.9** | 0.0 | 0.0 |
 | **bank** | **0.5** | **0.5** | **0.3** | 0.0 | 0.0 |
 
-**Key point:** "bank" starts ambiguous — equal Geographic and Financial (0.5 each). Nothing in the embedding itself says this is a riverbank.
+*Key point:* "bank" starts ambiguous — equal Geographic and Financial (0.5 each). Nothing in the embedding itself says this is a riverbank.
 
 For each word we have three roles:
 
-- **Query (Q):** "What am I looking for?"
-- **Key (K):** "What do I offer?"
-- **Value (V):** "What information can I provide?"
+- *Query (Q):* "What am I looking for?"
+- *Key (K):* "What do I offer?"
+- *Value (V):* "What information can I provide?"
 
 For simplicity, assume `Q = K = V = embedding`. In real models these are learned linear transformations.
 
-**Note on learned weight matrices:** In practice, Query, Key, and Value are not the raw embeddings. Each is computed by multiplying the embedding with a learned weight matrix:
+*Note on learned weight matrices:* In practice, Query, Key, and Value are not the raw embeddings. Each is computed by multiplying the embedding with a learned weight matrix:
 
 ```
 Q = W_Q × embedding
@@ -234,7 +244,12 @@ Same token embedding in both sentences. After attention:
 - River sentence → Financial collapses, Nature stays relevant
 - Deposit sentence → Financial rises, Nature collapses
 
+<figure>
+
 ![How attention transforms the same bank embedding in different contexts](./images/attention-bank-context-transformation.png)
+
+<figcaption><span class="figure-label">Figure 3.</span> How attention transforms the same bank embedding in different contexts</figcaption>
+</figure>
 
 This is the same interpretation used in the [step-by-step attention video](https://www.youtube.com/watch?v=eMlx5fFNoYc):
 

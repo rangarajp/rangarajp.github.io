@@ -10,7 +10,12 @@ Tokens are the units a model uses for both inputs and outputs. When you send tex
 
 You can try this interactively with the [OpenAI tokenizer](https://platform.openai.com/tokenizer).
 
+<figure>
+
 ![Tokenization from OpenAI](./images/tokenization-openai-example.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Tokenization from OpenAI</figcaption>
+</figure>
 
 As a rough rule of thumb:
 
@@ -29,7 +34,7 @@ Tokens can be:
 
 The earliest approach: one token per word.
 
-**Challenge:** new or rare words cannot be represented well. Related forms like `problem` and `problematic` get entirely different tokens, which drives vocabulary size up.
+*Challenge:* new or rare words cannot be represented well. Related forms like `problem` and `problematic` get entirely different tokens, which drives vocabulary size up.
 
 ```
 Input:  i want to learn ML
@@ -60,7 +65,12 @@ Input:  i want to learn ML
 Tokens: "i", "w", "a", "n", "t", ...
 ```
 
+<figure>
+
 ![Tokenizer Algorithms](./images/tokenization-approaches-algorithms.png)
+
+<figcaption><span class="figure-label">Figure 2.</span> Tokenizer Algorithms</figcaption>
+</figure>
 
 ### 1.4 Byte Pair Encoding (BPE)
 
@@ -68,21 +78,21 @@ BPE is a subword method inspired by data compression. It iteratively merges the 
 
 #### Steps
 
-**Sample corpus:** `"ab"`, `"bc"`, `"bcd"`, `"cde"`
+*Sample corpus:* `"ab"`, `"bc"`, `"bcd"`, `"cde"`
 
-1. **Initialize** — split into individual characters:
+1. *Initialize* — split into individual characters:
 
    ```
    {"a", "b", "c", "d", "e"}
    ```
 
-2. **Count character frequencies:**
+2. *Count character frequencies:*
 
    ```
    {"a": 1, "b": 3, "c": 3, "d": 2, "e": 1}
    ```
 
-3. **Count adjacent pairs:**
+3. *Count adjacent pairs:*
 
    ```
    {"ab": 1, "bc": 2, "cd": 2, "de": 1}
@@ -90,7 +100,7 @@ BPE is a subword method inspired by data compression. It iteratively merges the 
 
    `"bc"` and `"cd"` both appear twice. Merge `"bc"` first (tie-break; either pair is valid).
 
-4. **Merge into a new subword:**
+4. *Merge into a new subword:*
 
    ```
    Vocabulary: {"a", "b", "c", "d", "e", "bc"}
@@ -99,15 +109,15 @@ BPE is a subword method inspired by data compression. It iteratively merges the 
 
    Frequencies of `b` and `c` drop because those occurrences were absorbed into `"bc"`.
 
-5. **Repeat** until the vocabulary reaches the desired size
+5. *Repeat* until the vocabulary reaches the desired size
 
-6. **Final subword units** might look like:
+6. *Final subword units* might look like:
 
    ```
    {"a", "b", "c", "d", "e", "bc", "cd", "de", "ab", "bcd", "cde"}
    ```
 
-7. **Encode the original corpus:**
+7. *Encode the original corpus:*
 
    | Text | Tokens |
    | ---- | ------ |

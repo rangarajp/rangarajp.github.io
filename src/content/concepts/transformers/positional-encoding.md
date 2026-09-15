@@ -8,12 +8,12 @@ heroImage: '../../../assets/blog-placeholder-3.jpg'
 
 In English, word order matters. Compare:
 
-- **Dog chased the cat**
-- **Cat chased the dog**
+- *Dog chased the cat*
+- *Cat chased the dog*
 
 These are completely different sentences, but a transformer processes all tokens in parallel — so without extra information, both could look the same. We need positional awareness.
 
-**Self-attention** knows the relationship between tokens, but not their order. Attention answers *what* is relevant; positional encoding answers *where*.
+*Self-attention* knows the relationship between tokens, but not their order. Attention answers *what* is relevant; positional encoding answers *where*.
 
 Positional embeddings inform word order and contextual relationships. Ideally, they should:
 
@@ -57,7 +57,12 @@ The second hand alone is not enough because it repeats every 60 seconds. Combine
 
 ### 2.2 The formula
 
+<figure>
+
 ![Sinusoidal Encoding](./images/positional-encoding-formula.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Sinusoidal Encoding</figcaption>
+</figure>
 
 | Variable | Meaning |
 | -------- | ------- |
@@ -72,7 +77,7 @@ PE(pos, 2i)   = sin(pos × w_i)
 PE(pos, 2i+1) = cos(pos × w_i)
 ```
 
-**Example:** assume dimension = 4
+*Example:* assume dimension = 4
 
 For `i = 0`:
 
@@ -134,17 +139,17 @@ Represent it as many clocks
     Combined values give a positional fingerprint
 ```
 
-**Why a sin/cos pair?** It represents rotation, stays bounded, and shifting position by `k` becomes a simple linear transformation.
+*Why a sin/cos pair?* It represents rotation, stays bounded, and shifting position by `k` becomes a simple linear transformation.
 
-**Why many frequencies?** One clock repeats; many clocks capture position across different distance scales.
+*Why many frequencies?* One clock repeats; many clocks capture position across different distance scales.
 
-**Why 10000?** It spreads those frequencies over a wide range of wavelengths — the number itself is not sacred.
+*Why 10000?* It spreads those frequencies over a wide range of wavelengths — the number itself is not sacred.
 
-**Why efficient?** No learned parameters, cheap to precompute, simple addition to embeddings, same dimensionality, and mathematically structured relative-position information.
+*Why efficient?* No learned parameters, cheap to precompute, simple addition to embeddings, same dimensionality, and mathematically structured relative-position information.
 
 ## 3. RoPE
 
-**Key shift:** sinusoidal positional encoding *adds* position to token embeddings. **RoPE** (*Rotary Position Embedding*) *rotates* the query and key vectors inside attention.
+*Key shift:* sinusoidal positional encoding *adds* position to token embeddings. *RoPE* (*Rotary Position Embedding*) *rotates* the query and key vectors inside attention.
 
 ### 3.1 Attention without position
 
@@ -183,8 +188,8 @@ Qm′ᵀ Kn′
 
 RoPE rotates information in the relevant dimensions and depends only on Q and K:
 
-- **Q and K** decide *where* to look
-- **V** carries *what* to retrieve
+- *Q and K* decide *where* to look
+- *V* carries *what* to retrieve
 
 ### 3.3 How RoPE works
 

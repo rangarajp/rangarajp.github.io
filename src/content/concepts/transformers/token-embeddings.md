@@ -12,7 +12,7 @@ Embeddings give tokens meaning by mapping them into dense vectors. Higher dimens
 
 Early embedding methods used Word2Vec. Embeddings were learned from a classification task: train a neural network to predict whether two words commonly appear together. The network takes two words and predicts `1` if they co-occur, or `0` if they do not.
 
-**Example sentence:** *i want to learn machine learning and human ethics.*
+*Example sentence:* *i want to learn machine learning and human ethics.*
 
 ### 1.1 Training samples
 
@@ -31,10 +31,20 @@ Early embedding methods used Word2Vec. Embeddings were learned from a classifica
 
 It helps to include random negative examples. Each word starts with random token weights. Over training, the network updates those weights into useful embeddings.
 
+<figure>
+
 ![Word2Vec](./images/token-embeddings-word2vec.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Word2Vec</figcaption>
+</figure>
 
 ## 2. Embedding techniques
 
 There are several families of embedding methods beyond Word2Vec. The diagram below compares common approaches.
 
+<figure>
+
 ![Embedding Techniques](./images/token-embeddings-techniques.png)
+
+<figcaption><span class="figure-label">Figure 2.</span> Embedding Techniques</figcaption>
+</figure>

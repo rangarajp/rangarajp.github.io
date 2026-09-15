@@ -12,8 +12,8 @@ heroImage: '../../../assets/blog-placeholder-3.jpg'
 
 From the [multi-head attention post](https://rangarajp.github.io/concepts/transformers/multi-head-attention/), we learned that:
 
-1. **Single-head attention** produces a contextualized vector for each token
-2. **Multi-head attention** runs multiple specialized attention patterns in parallel
+1. *Single-head attention* produces a contextualized vector for each token
+2. *Multi-head attention* runs multiple specialized attention patterns in parallel
 3. For our "bank" token in "I am sitting by the river bank", we got:
 
 ```
@@ -21,15 +21,20 @@ Multi-Head Output: [0.293, 0.134, 0.256, 0.211, 0.125]
                     Geographic, Financial, Nature, Action, Person
 ```
 
-**The question now:** We have context vectors from attention. What happens next?
+*The question now:* We have context vectors from attention. What happens next?
 
-**The answer:** A Transformer Block takes that output and passes it through additional components:
-1. **Residual Connection** — preserve the original input
-2. **Layer Normalization** — stabilize values
-3. **Feed-Forward Network** — add more capacity for reasoning
-4. **Another Residual Connection + Layer Norm** — stabilize again
+*The answer:* A Transformer Block takes that output and passes it through additional components:
+1. *Residual Connection* — preserve the original input
+2. *Layer Normalization* — stabilize values
+3. *Feed-Forward Network* — add more capacity for reasoning
+4. *Another Residual Connection + Layer Norm* — stabilize again
+
+<figure>
 
 ![Transformer Block](./images/transformer-block.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Transformer Block</figcaption>
+</figure>
 
 This entire block repeats 6-12 times (stacked layers) in real transformers. Let's walk through one complete block.
 
@@ -63,7 +68,7 @@ Input: x (the original embedding)
     Output: y (contextualized + reasoned representation)
 ```
 
-**Key insight:** Each component builds on the previous one. Nothing is lost; information flows through, is enriched, then stabilized.
+*Key insight:* Each component builds on the previous one. Nothing is lost; information flows through, is enriched, then stabilized.
 
 ---
 
@@ -71,7 +76,7 @@ Input: x (the original embedding)
 
 Let's continue with our "bank" token from the previous posts.
 
-**Original embedding (from Token Embeddings post):**
+*Original embedding (from Token Embeddings post):*
 ```
 [0.5, 0.5, 0.3, 0.0, 0.0]
  Geographic, Financial, Nature, Action, Person
@@ -82,13 +87,13 @@ Let's continue with our "bank" token from the previous posts.
 [0.293, 0.134, 0.256, 0.211, 0.125]
 ```
 
-This is our **attn_output**. Now we apply the first residual connection.
+This is our *attn_output*. Now we apply the first residual connection.
 
 ---
 
 ## 3. Residual Connection #1
 
-A residual connection is simple: **add the input to the output**.
+A residual connection is simple: *add the input to the output*.
 
 $$\text{residual\_1} = x + \text{attn\_output}$$
 
@@ -99,11 +104,11 @@ attn_output:    [0.293, 0.134, 0.256, 0.211, 0.125]
 residual_1:     [0.793, 0.634, 0.556, 0.211, 0.125]
 ```
 
-**Why add them back?**
+*Why add them back?*
 
-In deep networks (12+ layers), gradients can "vanish" — they get smaller as they backpropagate through layers. Adding the original input creates a **shortcut path** for gradients to flow directly backward. This makes training much faster and more stable.
+In deep networks (12+ layers), gradients can "vanish" — they get smaller as they backpropagate through layers. Adding the original input creates a *shortcut path* for gradients to flow directly backward. This makes training much faster and more stable.
 
-**Think of it this way:** Without residuals, each layer must transform the input completely. With residuals, each layer just needs to make a **small modification** to the input.
+*Think of it this way:* Without residuals, each layer must transform the input completely. With residuals, each layer just needs to make a *small modification* to the input.
 
 ---
 
@@ -153,13 +158,13 @@ normalized_1[3] = (0.211 - 0.464) / 0.255 = -0.991
 normalized_1[4] = (0.125 - 0.464) / 0.255 = -1.329
 ```
 
-**Verify:**
+*Verify:*
 - Mean of normalized values: (1.290 + 0.667 + 0.361 - 0.991 - 1.329) / 5 ≈ 0 ✓
 - Std dev: ≈ 1.0 ✓
 
-**normalized_1: [1.290, 0.667, 0.361, -0.991, -1.329]**
+*normalized_1: [1.290, 0.667, 0.361, -0.991, -1.329]*
 
-**Why normalize?**
+*Why normalize?*
 
 Without it, attention and FFN outputs can have wildly different magnitudes across layers. Normalization keeps values in a consistent range, preventing:
 - Exploding gradients (values get very large)
@@ -170,7 +175,7 @@ Without it, attention and FFN outputs can have wildly different magnitudes acros
 
 ## 5. Feed-Forward Network
 
-The Feed-Forward Network (FFN) is a two-layer dense network that adds **non-linear reasoning capacity**.
+The Feed-Forward Network (FFN) is a two-layer dense network that adds *non-linear reasoning capacity*.
 
 Structure: **Dense(d_model → d_ff) → Activation → Dense(d_ff → d_model)**
 
@@ -223,7 +228,7 @@ activated = [0.440, 0.520, 0.330, 0.210, 0.380, 0.290, 0.150, 0.410, 0.310, 0.36
 (All positive, so no change)
 ```
 
-ReLU kills negative values, introducing **non-linearity**. This is crucial — without activation, stacking dense layers would just be equivalent to one large matrix multiplication (still linear).
+ReLU kills negative values, introducing *non-linearity*. This is crucial — without activation, stacking dense layers would just be equivalent to one large matrix multiplication (still linear).
 
 ### Step 5.3: Contraction Layer
 
@@ -255,13 +260,13 @@ ffn_output[0] = 0.440×0.3 + 0.520×0.1 + 0.330×0.2 + ... + 0.360×0.2 + 0.05
 ffn_output ≈ [0.489, 0.421, 0.367, 0.298, 0.445]
 ```
 
-**Why expand then contract?**
+*Why expand then contract?*
 
-- **Expansion (5 → 10):** Creates hidden representations that capture non-linear interactions
-- **Activation:** Introduces non-linearity
-- **Contraction (10 → 5):** Projects back to original dimension
+- *Expansion (5 → 10):* Creates hidden representations that capture non-linear interactions
+- *Activation:* Introduces non-linearity
+- *Contraction (10 → 5):* Projects back to original dimension
 
-This bottleneck design adds **reasoning capacity** without inflating the model size too much.
+This bottleneck design adds *reasoning capacity* without inflating the model size too much.
 
 ---
 
@@ -326,11 +331,11 @@ Let's compare this to what we started with:
 | Action | 0.0 | -1.199 |
 | Person | 0.0 | -1.408 |
 
-**What happened:**
-- Geographic information was **boosted** (0.5 → 1.503) via attention, then enriched by FFN
-- Financial was **moderated** (0.5 → 0.749) — less financial relevance in this context
-- Nature was **preserved** (0.3 → 0.355) — still present but not dominant
-- Action and Person gained **negative values** — the model learned they're less relevant, and normalized them to emphasize the distinction
+*What happened:*
+- Geographic information was *boosted* (0.5 → 1.503) via attention, then enriched by FFN
+- Financial was *moderated* (0.5 → 0.749) — less financial relevance in this context
+- Nature was *preserved* (0.3 → 0.355) — still present but not dominant
+- Action and Person gained *negative values* — the model learned they're less relevant, and normalized them to emphasize the distinction
 
 This is much richer than the original ambiguous embedding!
 
@@ -419,16 +424,16 @@ Each block:
 
 ### Layer 3, 4, 5, 6...
 
-Each layer **refines** the representation:
+Each layer *refines* the representation:
 - Attention learns new aspects of token relationships
 - FFN adds more reasoning capacity
 - Residuals prevent information loss
 - Normalization keeps training stable
 
 After 6-12 layers, the "bank" token has been transformed through:
-- **Multiple perspectives** (each layer's multi-head attention)
-- **Deep reasoning** (6+ FFN transformations)
-- **Rich interactions** (tokens influence each other across layers)
+- *Multiple perspectives* (each layer's multi-head attention)
+- *Deep reasoning* (6+ FFN transformations)
+- *Rich interactions* (tokens influence each other across layers)
 
 The final output is a highly contextualized representation that encodes:
 - What "bank" means in this sentence
@@ -450,13 +455,13 @@ Each component serves a purpose:
 | **Residual (again)** | Enable gradients to flow, prevent depth penalty |
 | **Layer Norm (again)** | Consistency for next layer |
 
-**Without residuals:** Adding 12 layers would make training nearly impossible (vanishing gradients).
+*Without residuals:* Adding 12 layers would make training nearly impossible (vanishing gradients).
 
-**Without layer norm:** Values would explode or shrink, causing instability.
+*Without layer norm:* Values would explode or shrink, causing instability.
 
-**Without FFN:** Attention alone can only shuffle information; FFN adds computation.
+*Without FFN:* Attention alone can only shuffle information; FFN adds computation.
 
-**Together:** A stable, deep architecture that can learn complex patterns.
+*Together:* A stable, deep architecture that can learn complex patterns.
 
 ---
 
@@ -464,28 +469,28 @@ Each component serves a purpose:
 
 In a 5-dimensional model:
 
-**Multi-Head Attention (2 heads):**
+*Multi-Head Attention (2 heads):*
 - $W_Q$, $W_K$, $W_V$ per head: 3 × (5 × 5) = 75
 - Output projection: 10 × 5 = 50
-- **Total: ~125 parameters**
+- *Total: ~125 parameters*
 
-**Feed-Forward:**
+*Feed-Forward:*
 - $W_1$: 5 × 10 = 50
 - $b_1$: 10
 - $W_2$: 10 × 5 = 50
 - $b_2$: 5
-- **Total: ~115 parameters**
+- *Total: ~115 parameters*
 
-**Per Block: ~240 parameters**
+*Per Block: ~240 parameters*
 
 For a real transformer:
-- **d_model = 768** (GPT-2)
-- **d_ff = 3072** (4× expansion)
-- **8 heads** (96 dims each)
+- *d_model = 768* (GPT-2)
+- *d_ff = 3072* (4× expansion)
+- *8 heads* (96 dims each)
 
 Parameters per block: ~7 million
 
-12 layers × 7M = **84M parameters** (plus embeddings and output layer)
+12 layers × 7M = *84M parameters* (plus embeddings and output layer)
 
 ---
 
@@ -493,33 +498,33 @@ Parameters per block: ~7 million
 
 1. **One Transformer Block = Attention + FFN + Residuals + Layer Norm**
 
-2. **Information flow:**
+2. *Information flow:*
    - Multi-head attention contextualizes
    - Residuals preserve
    - Layer norm stabilizes
    - FFN reasons
 
-3. **Residuals are critical** for training deep networks (12+ layers)
+3. *Residuals are critical* for training deep networks (12+ layers)
 
-4. **Normalization keeps values stable** across many layers
+4. *Normalization keeps values stable* across many layers
 
-5. **FFN adds capacity** for non-linear reasoning
+5. *FFN adds capacity* for non-linear reasoning
 
-6. **Stacking blocks** allows deeper, more sophisticated reasoning
+6. *Stacking blocks* allows deeper, more sophisticated reasoning
 
-7. **Each block has independent parameters** (W_q, W_k, W_v, W_1, W_2) learned differently
+7. *Each block has independent parameters* (W_q, W_k, W_v, W_1, W_2) learned differently
 
-8. **Final output is highly contextualized** — "bank" has been enriched through attention, reasoning, and refinement
+8. *Final output is highly contextualized* — "bank" has been enriched through attention, reasoning, and refinement
 
 ---
 
 ## 14. What's Next?
 
-One Transformer Block is the **fundamental repeating unit**. In the next post, we'll see:
+One Transformer Block is the *fundamental repeating unit*. In the next post, we'll see:
 
-- How to **stack** these blocks (Encoder)
-- How to apply **masking** for generation (Decoder)
-- How tokens **interact across layers**
-- How the model processes **entire sequences**
+- How to *stack* these blocks (Encoder)
+- How to apply *masking* for generation (Decoder)
+- How tokens *interact across layers*
+- How the model processes *entire sequences*
 
 The single block we built today repeats 6-96 times in real models. Understanding this block is understanding the core of Transformers.

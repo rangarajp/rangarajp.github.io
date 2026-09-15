@@ -90,16 +90,16 @@ In engineering applications this matters enormously: a hallucinated parameter va
 
 Every LLM application forces you to make choices that do not exist in traditional systems:
 
-**What goes in the context?**  
+*What goes in the context?*  
 Not everything relevant can fit. You need a retrieval strategy (RAG), a ranking strategy, and a truncation policy. The wrong choice here is the most common source of quality failures.
 
-**How do you handle state?**  
+*How do you handle state?*  
 Conversations have history. Agents have memory. Neither fits neatly in a stateless request/response model. You need to decide: full history (expensive), sliding window (loses early context), summary (lossy), external memory store (latency + retrieval quality), or a combination.
 
 **How do you parse and validate output?**  
 Asking the model to respond in JSON is not a guarantee. Structured output modes (function calling, JSON mode) help but do not eliminate failures. You need a fallback: retry with a stricter prompt, extract with regex, or reject and surface an error.
 
-**How do you evaluate?**  
+*How do you evaluate?*  
 You cannot rely on unit tests. You need eval sets, quality metrics (accuracy, faithfulness, groundedness, format compliance), and a way to detect regressions when the prompt or model changes. LLM-as-judge is useful but adds cost and latency.
 
 **When do you call the model vs use deterministic code?**  

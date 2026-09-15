@@ -11,12 +11,12 @@ Read them in order for the full picture, or jump to any topic that interests you
 
 ## 1. The pipeline
 
-1. **Tokenization** — break raw text into tokens the model can consume
-2. **Token embeddings** — map each token to a dense numerical vector
-3. **Positional encoding** — inject sequence order into those vectors
-4. **Attention** — let tokens weigh how relevant other tokens are in context
-5. **Multi-head attention** — run multiple attention patterns in parallel and combine them
-6. **Transformer block** — stack attention, residuals, normalization, and the feed-forward network into one layer
+1. *Tokenization* — break raw text into tokens the model can consume
+2. *Token embeddings* — map each token to a dense numerical vector
+3. *Positional encoding* — inject sequence order into those vectors
+4. *Attention* — let tokens weigh how relevant other tokens are in context
+5. *Multi-head attention* — run multiple attention patterns in parallel and combine them
+6. *Transformer block* — stack attention, residuals, normalization, and the feed-forward network into one layer
 
 Together, these steps turn a sentence into a set of context-aware representations that downstream layers can reason over.
 

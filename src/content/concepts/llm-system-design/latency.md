@@ -57,8 +57,8 @@ E2E latency =
 
 Prompt processing and output generation behave differently:
 
-- **Prefill** processes prompt tokens largely in parallel. TTFT grows with prompt length, queue time, and model load.
-- **Decode** generates output autoregressively, one token after another. Total generation time grows roughly with output length.
+- *Prefill* processes prompt tokens largely in parallel. TTFT grows with prompt length, queue time, and model load.
+- *Decode* generates output autoregressively, one token after another. Total generation time grows roughly with output length.
 
 This is why trimming 5,000 input tokens primarily improves TTFT, while trimming 500 output tokens primarily improves completion time.
 
@@ -103,7 +103,7 @@ In a streaming request, the server forwards tokens or semantic chunks as they be
 Request ──▶ first token ─▶ more tokens ─▶ more tokens ─▶ done
 ```
 
-Streaming usually does **not** reduce model execution time. It reduces *perceived latency* by letting the user read while generation continues.
+Streaming usually does *not* reduce model execution time. It reduces *perceived latency* by letting the user read while generation continues.
 
 Use streaming for:
 
@@ -120,7 +120,7 @@ Streaming introduces design constraints:
 - A failed stream cannot always be retried invisibly after partial output was shown
 - Backpressure is required when the client consumes data slower than the model produces it
 
-Prefer **semantic streaming** when raw token streaming creates unstable UI. Buffer a sentence, JSON event, or tool status and emit complete units:
+Prefer *semantic streaming* when raw token streaming creates unstable UI. Buffer a sentence, JSON event, or tool status and emit complete units:
 
 ```text
 event: status   data: "Searching documents"
@@ -131,7 +131,7 @@ event: done     data: {"finish_reason": "stop"}
 
 ### Streaming and batching are orthogonal
 
-Streaming determines **how results are delivered**. Batching determines **how inference work is scheduled**. A serving engine can continuously batch several active requests while streaming each response to a different user.
+Streaming determines *how results are delivered*. Batching determines *how inference work is scheduled*. A serving engine can continuously batch several active requests while streaming each response to a different user.
 
 ---
 
@@ -154,9 +154,9 @@ Offline jobs optimize for throughput and cost, not TTFT. They can use larger bat
 
 The serving engine groups token-processing work from multiple requests so the accelerator is used efficiently.
 
-**Static batching** waits for a fixed group and processes it together. It is simple but suffers from head-of-line blocking: short requests wait for the longest request in the batch.
+*Static batching* waits for a fixed group and processes it together. It is simple but suffers from head-of-line blocking: short requests wait for the longest request in the batch.
 
-**Continuous batching** adds and removes requests between decoding steps. It gives much better utilization for variable-length LLM workloads and is the normal choice for high-throughput serving.
+*Continuous batching* adds and removes requests between decoding steps. It gives much better utilization for variable-length LLM workloads and is the normal choice for high-throughput serving.
 
 The trade-off is fundamental:
 
@@ -252,7 +252,7 @@ Changing even a small item near the beginning can invalidate reuse for everythin
 
 ### 4.4 KV cache
 
-During inference, the model stores attention keys and values for tokens it has already processed. This **KV cache** prevents recomputing the whole sequence for every generated token.
+During inference, the model stores attention keys and values for tokens it has already processed. This *KV cache* prevents recomputing the whole sequence for every generated token.
 
 It is primarily a model-serving optimization, not an application response cache. Its main trade-off is memory: long contexts and many concurrent requests consume significant accelerator memory. Serving systems manage this with techniques such as paged allocation, prefix sharing, eviction, and context limits.
 
@@ -478,16 +478,16 @@ The order matters:
 
 ## 9. Common mistakes
 
-**Optimizing only average latency**  
+*Optimizing only average latency*  
 A good average can coexist with an unusable p99. Design and alert on percentile SLOs.
 
 **Calling streaming a reduction in total latency**  
 Streaming usually improves perceived responsiveness, not completion time.
 
-**Treating semantic similarity as answer equivalence**  
+*Treating semantic similarity as answer equivalence*  
 Similar wording does not guarantee the same authorization, context, time, or intent.
 
-**Using retries to fix overload**  
+*Using retries to fix overload*  
 Retries add traffic to an already overloaded service. Use bounded retries with jitter, admission control, backpressure, and circuit breakers.
 
 **Increasing batch size without a queue budget**  

@@ -29,7 +29,12 @@ Think of serving as a busy kitchen.
 | Cook | Model Worker | Runs the model on GPU |
 | Pantry | Model Manager | Loads weights once at open |
 
+<figure>
+
 ![Serving architecture — main process vs worker process](./images/serving-engine-architecture.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Serving architecture — main process vs worker process</figcaption>
+</figure>
 
 ```text
 Client → FastAPI → LLM Engine → Workload Manager → Model Executor
@@ -54,14 +59,14 @@ print(response.status_code)
 print(response.text)
 ```
 
-**Client output:**
+*Client output:*
 
 ```text
 200
 {"generated_text":"What is the capital of the United States? The capital of the United States is Washington, D.C. ..."}
 ```
 
-**Full server FLOW** (connect each line to the picture above):
+*Full server FLOW* (connect each line to the picture above):
 
 ```text
 ============================================================
@@ -105,9 +110,14 @@ So Example A walks the picture top → bottom → back up, with one sequence and
 
 ## 2. Many prompts and many requests
 
-When more than one prompt is in flight, the engine must **create an id per prompt**, **batch** work for the GPU, then **map results back** and **remove** finished sequences. That is what the workload picture shows:
+When more than one prompt is in flight, the engine must *create an id per prompt*, *batch* work for the GPU, then *map results back* and *remove* finished sequences. That is what the workload picture shows:
+
+<figure>
 
 ![Workload manager: requests → ids → batch → map results back](./images/workload-sequence-id-flow.png)
+
+<figcaption><span class="figure-label">Figure 2.</span> Workload manager: requests → ids → batch → map results back</figcaption>
+</figure>
 
 ### Example B — One HTTP request, four prompts
 
@@ -132,7 +142,7 @@ print(response.status_code)
 print(response.json())
 ```
 
-**Client output (shape):**
+*Client output (shape):*
 
 ```text
 200
@@ -146,7 +156,7 @@ print(response.json())
 }
 ```
 
-**Full server FLOW:**
+*Full server FLOW:*
 
 ```text
 ============================================================
@@ -192,7 +202,7 @@ This is the numbered path on the workload diagram, lined up with Example B’s l
 **1. API Server receives the web request**  
 Waiter gets `Request 1` with prompts A–D (or several overlapping requests).
 
-**2. LLM Engine registers each prompt**  
+*2. LLM Engine registers each prompt*  
 `add_request` creates a UUID **id**, builds a `Sequence(id, prompt)`, puts it on `incoming_queue`, and stores it in `sequence_map`.
 
 ```text
@@ -286,7 +296,12 @@ In a production **vLLM** server, concurrent calls like C are continuously batche
 
 Batch generate waits for the **full** text. Streaming returns **tokens as they are produced**. The continuous loop looks like this:
 
+<figure>
+
 ![Streaming / continuous batch loop — EventQueue per request](./images/streaming-batch-loop.png)
+
+<figcaption><span class="figure-label">Figure 3.</span> Streaming / continuous batch loop — EventQueue per request</figcaption>
+</figure>
 
 ### What the figure is saying
 
@@ -407,7 +422,7 @@ Next iterations (same pattern; tokens from the run):
 … token=' in'        tokens=21   input_shape=(1, 29)
 ```
 
-**Finish — remove id** (same lifecycle as batch generate):
+*Finish — remove id* (same lifecycle as batch generate):
 
 ```text
 >>> [LLMEngine] streaming loop — seq bf1b87d8… finished → put None on client queue
@@ -430,7 +445,7 @@ Next iterations (same pattern; tokens from the run):
 
 ### Code path in the lab
 
-**Waiter** — FastAPI SSE (`main.ipynb` / `main.py`):
+*Waiter* — FastAPI SSE (`main.ipynb` / `main.py`):
 
 ```python
 @app.post("/generate_stream")
@@ -442,7 +457,7 @@ async def generate_stream(request: GenerateRequest, llm: LLMEngine = Depends(get
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 ```
 
-**Head chef** — EventQueue + wait for tokens (`llm/llm.py`):
+*Head chef* — EventQueue + wait for tokens (`llm/llm.py`):
 
 ```python
 async def event_generator(self, loop, prompt: str):
@@ -456,7 +471,7 @@ async def event_generator(self, loop, prompt: str):
     self.workload_manager.remove_finished_sequence(seq_id)
 ```
 
-**Batch-processing thread** — figure steps 3–7 (`requests_processing_loop`):
+*Batch-processing thread* — figure steps 3–7 (`requests_processing_loop`):
 
 ```python
 active = workload_manager.get_next_batch(is_streaming=True)
@@ -471,24 +486,29 @@ for result in results:
     workload_manager.update_sequence_output(result["request_id"], result["token"])
 ```
 
-When finished (EOS or `max_tokens`), put `None` on the queue and **remove** the sequence.
+When finished (EOS or `max_tokens`), put `None` on the queue and *remove* the sequence.
 
 ---
 
 ## 4. Takeaways
 
-1. **Example A** walks the architecture diagram with a full FLOW log — waiter → chef → executor → worker → GPU and back.  
-2. **Many prompts / requests** need **ids**: create on `add_request`, send in the batch, update `sequence_map`, then **remove** when done.  
-3. **Example B** is one request with many prompts batched together; **Example C** is many requests at once — production vLLM merges those with the same id discipline.  
-4. **Streaming** (`bf1b87d8…`, 21 tokens in the lab): same Host + **one GPU forward per token**; EventQueue delivers SSE; id is created, updated each step, then removed.
+1. *Example A* walks the architecture diagram with a full FLOW log — waiter → chef → executor → worker → GPU and back.  
+2. *Many prompts / requests* need *ids*: create on `add_request`, send in the batch, update `sequence_map`, then *remove* when done.  
+3. *Example B* is one request with many prompts batched together; *Example C* is many requests at once — production vLLM merges those with the same id discipline.  
+4. *Streaming* (`bf1b87d8…`, 21 tokens in the lab): same Host + *one GPU forward per token*; EventQueue delivers SSE; id is created, updated each step, then removed.
 
 ---
 
 ## 5. Scaling out: single-model serving architecture
 
-The lab above is **one process, one model**. In production you usually replicate that pattern across a cluster. A common layout looks like this:
+The lab above is *one process, one model*. In production you usually replicate that pattern across a cluster. A common layout looks like this:
+
+<figure>
 
 ![Single-model serving architecture — load balancer, frontend, backend, shared disk](./images/single-model-serving-architecture.png)
+
+<figcaption><span class="figure-label">Figure 4.</span> Single-model serving architecture — load balancer, frontend, backend, shared disk</figcaption>
+</figure>
 
 ### Layers
 
@@ -504,16 +524,16 @@ The lab above is **one process, one model**. In production you usually replicate
 
 ### How a request moves
 
-1. App → load balancer → one of N **model serving instances**  
-2. **Frontend** authenticates / throttles (via external systems), then issues **Setup** / **Predict** to the backend  
-3. **Backend** reads weights from shared disk (or uses an already-loaded engine) and runs inference  
+1. App → load balancer → one of N *model serving instances*  
+2. *Frontend* authenticates / throttles (via external systems), then issues *Setup* / *Predict* to the backend  
+3. *Backend* reads weights from shared disk (or uses an already-loaded engine) and runs inference  
 4. Response returns (batch or stream) through the same path  
 
 Labeled paths in the figure:
 
-- **(A)** Instances run on shared distributed compute  
-- **(B)** Frontend can stage / discover model files on shared disk  
-- **(C)** Backend loads those files for inference  
+- *(A)* Instances run on shared distributed compute  
+- *(B)* Frontend can stage / discover model files on shared disk  
+- *(C)* Backend loads those files for inference  
 
 ### Mapping to this series
 
@@ -523,7 +543,7 @@ Labeled paths in the figure:
 | Serving backend | LLM Engine → Workload Manager → Model Executor → Model Worker (or vLLM) |
 | Model files | Local checkpoint under `MODELS_DIR` |
 
-The lab is the **inside of one instance**. The figure is how you **replicate** that instance behind a load balancer when one GPU (or one process) is no longer enough.
+The lab is the *inside of one instance*. The figure is how you *replicate* that instance behind a load balancer when one GPU (or one process) is no longer enough.
 
-**Previous:** [vLLM Basics and Why KV Cache Matters](./vllm-basics-kv-cache)  
-**Next:** [Serving Multiple Models](./serving-multi-models)
+*Previous:* [vLLM Basics and Why KV Cache Matters](./vllm-basics-kv-cache)  
+*Next:* [Serving Multiple Models](./serving-multi-models)

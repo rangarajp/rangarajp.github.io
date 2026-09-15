@@ -14,12 +14,12 @@ That was useful for understanding the basic idea: a word looks at the other word
 
 Now we will remove that simplification and see why real Transformers learn three different representations: Query, Key, and Value.
 
-We will use one word throughout this article: **bank**
+We will use one word throughout this article: *bank*
 
 Consider these two sentences:
 
-- I am sitting by the river **bank**.
-- I went to the **bank** to deposit money.
+- I am sitting by the river *bank*.
+- I went to the *bank* to deposit money.
 
 The word `bank` begins with the same learned token embedding in both sentences. But after attention, we want its representation to become different:
 
@@ -372,7 +372,12 @@ For our example: the general `bank` representation asks its context for useful c
 
 The diagram below captures the full picture — from the same starting embedding to two different contextual representations via Query, Key, and Value:
 
+<figure>
+
 ![Query, Key, and Value — detailed overview](./images/attention_kqv_detailed.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Query, Key, and Value — detailed overview</figcaption>
+</figure>
 
 Query asks what I need. Key helps decide whether a token is relevant. Value contains the information that token contributes. The same `bank` embedding produces a river-side meaning or a financial meaning depending entirely on what the surrounding context matches.
 

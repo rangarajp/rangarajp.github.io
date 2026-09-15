@@ -15,14 +15,14 @@ Local checkpoint root comes from gitignored `notebooks/llm-inference/local_paths
 
 ## 1. What inference really is
 
-Training teaches a model weights. **Inference** is the job of turning those weights into answers for real users — at scale, under latency pressure, without burning the GPU budget.
+Training teaches a model weights. *Inference* is the job of turning those weights into answers for real users — at scale, under latency pressure, without burning the GPU budget.
 
 A pocket calculator is easy to serve: one request in, one number out, stateless.  
 An LLM is different:
 
-- **Stateful** — it needs context (your whole conversation so far) every single step  
-- **Sequential** — it can only produce *one* token at a time, and the next token depends on all previous ones  
-- **Memory-hungry** — the more users you serve, the more concurrent state you have to manage on GPU
+- *Stateful* — it needs context (your whole conversation so far) every single step  
+- *Sequential* — it can only produce *one* token at a time, and the next token depends on all previous ones  
+- *Memory-hungry* — the more users you serve, the more concurrent state you have to manage on GPU
 
 Those three properties make LLM inference its own engineering problem — not just "run the model on a server."
 
@@ -32,9 +32,9 @@ Those three properties make LLM inference its own engineering problem — not ju
 
 When you see a sentence generated word by word, that is not a UX trick. It reflects how transformers actually work.
 
-At each decode step, the model takes **all tokens generated so far** as input and predicts only the very next token from the output distribution. Then the loop repeats with one more token appended.
+At each decode step, the model takes *all tokens generated so far* as input and predicts only the very next token from the output distribution. Then the loop repeats with one more token appended.
 
-**Pseudocode:**
+*Pseudocode:*
 
 ```python
 tokens = tokenize(prompt)
@@ -63,7 +63,7 @@ for step in range(max_new_tokens):
 
 **Actual step-by-step timings from the notebook run** — prompt: *"Write a short introduction about the US capital city."*
 
-```
+```output
 step 01 | seq= 10 |  32.5 ms | ' Washington'
 step 02 | seq= 11 |  31.1 ms | ','
 step 03 | seq= 12 |  34.7 ms | ' D'
@@ -80,7 +80,7 @@ The times stay in the ~31–35 ms range here because the model is small (0.5B pa
 
 The shape of the problem:
 
-```
+```output
 Step time
   │          ·
   │         · ·
@@ -91,19 +91,24 @@ Step time
       (sequence grows → each step recomputes more)
 ```
 
-The root cause: at each step, the model runs **self-attention over all previous tokens**. That is an O(n) operation per layer — so as you generate more tokens, each new step is proportionally more expensive.
+The root cause: at each step, the model runs *self-attention over all previous tokens*. That is an O(n) operation per layer — so as you generate more tokens, each new step is proportionally more expensive.
+
+<figure>
 
 ![Step latency without KV cache — time per token vs generation step, with trend line](./images/kv-no-cache-step-latency.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Step latency without KV cache — time per token vs generation step, with trend line</figcaption>
+</figure>
 
 ---
 
 ## 4. The fix: KV cache
 
-In self-attention, each token produces a **Key** and a **Value** vector. These are used by every later token to decide what to attend to. The important insight: **a token's K/V vectors don't change** once it is computed — they are fixed properties of that token in that context.
+In self-attention, each token produces a *Key* and a *Value* vector. These are used by every later token to decide what to attend to. The important insight: *a token's K/V vectors don't change* once it is computed — they are fixed properties of that token in that context.
 
-So instead of recomputing K/V for all previous tokens at every step, you can **store them** and reuse them.
+So instead of recomputing K/V for all previous tokens at every step, you can *store them* and reuse them.
 
-```
+```output
 Without KV cache:          step 5 recomputes K/V for tokens 1, 2, 3, 4, 5
                            step 6 recomputes K/V for tokens 1, 2, 3, 4, 5, 6
                            step N recomputes N×L attention ops
@@ -121,11 +126,11 @@ Memory cost grows (you're storing more K/V every step), but **compute cost per s
 
 With a KV cache, generation splits into two distinct phases:
 
-**Prefill** — process the full prompt in one forward pass. This builds the KV cache for every prompt token at once.
+*Prefill* — process the full prompt in one forward pass. This builds the KV cache for every prompt token at once.
 
-**Decode** — at each subsequent step, only the newly added token is run through the model. It attends to all past tokens via the cache, produces the next logit, and appends its own K/V.
+*Decode* — at each subsequent step, only the newly added token is run through the model. It attends to all past tokens via the cache, produces the next logit, and appends its own K/V.
 
-```
+```output
 Prompt tokens: [t1] [t2] [t3] [t4] [t5]
                └──────── Prefill (one pass, builds KV) ──────┘
                                                                ↓
@@ -134,9 +139,9 @@ Prompt tokens: [t1] [t2] [t3] [t4] [t5]
                                                                ...  (each step: tiny forward + table lookup)
 ```
 
-**Measured from the notebook** — same prompt as above, but now with `use_cache=True`:
+*Measured from the notebook* — same prompt as above, but now with `use_cache=True`:
 
-```
+```output
 step 01 | prefill seq= 10 |  51.2 ms | ' Washington'   ← more expensive: builds KV for all 10 tokens
 step 02 | decode  seq= 11 |  44.4 ms | ','
 step 03 | decode  seq= 12 |  34.3 ms | ' D'
@@ -151,25 +156,35 @@ step 24 | decode  seq= 33 |  30.6 ms | 'Atlantic'
 
 After the first two steps warm up, decode settles to ~30–31 ms per token and stays flat — regardless of how long the sequence grows. The KV cache eliminated the quadratic recompute.
 
+<figure>
+
 ![With vs without KV cache — step latency overlay on the same prompt](./images/kv-cache-comparison.png)
+
+<figcaption><span class="figure-label">Figure 2.</span> With vs without KV cache — step latency overlay on the same prompt</figcaption>
+</figure>
 
 On the *"What is the capital of USA?"* question (7 prompt tokens):
 
-```
+```output
 Prefill : 48.6 ms   ← pay once to build the cache
 Decode  : 30.9 ms/token  (avg; min 30.0, max 41.2)
 Prefill ≈ 1.6× a single decode step
-```
+```output
 
 Prefill cost scales with prompt length. Decode cost per token is roughly flat. That ratio matters more on larger models and longer prompts than it does here.
 
+<figure>
+
 ![Prefill vs decode — bar for prefill, line for per-token decode steps](./images/prefill-vs-decode.png)
+
+<figcaption><span class="figure-label">Figure 3.</span> Prefill vs decode — bar for prefill, line for per-token decode steps</figcaption>
+</figure>
 
 ---
 
 ## 6. vLLM: all of this managed for you
 
-Manually managing K/V tensors, handling multiple concurrent users, and keeping the GPU busy is a significant engineering job. **vLLM** is an inference engine that handles it — you write prompts and sampling parameters, it handles the rest.
+Manually managing K/V tensors, handling multiple concurrent users, and keeping the GPU busy is a significant engineering job. *vLLM* is an inference engine that handles it — you write prompts and sampling parameters, it handles the rest.
 
 ### Load once, reuse everywhere
 
@@ -188,7 +203,7 @@ llm = LLM(
 )
 ```
 
-Weights load once — ≈ 0.93 GB for this 0.5B model. vLLM then pre-allocates a **paged KV block pool** so it can serve many concurrent requests without memory fragmentation.
+Weights load once — ≈ 0.93 GB for this 0.5B model. vLLM then pre-allocates a *paged KV block pool* so it can serve many concurrent requests without memory fragmentation.
 
 | Knob | Role |
 | ---- | ---- |
@@ -205,7 +220,7 @@ outputs = llm.generate([prompt], params)
 text = outputs[0].outputs[0].text
 ```
 
-**Run output:**
+*Run output:*
 ```
 prompt tokens ~ 29
 new tokens    = 128
@@ -292,17 +307,17 @@ Prompt
   → detokenise → text
 ```
 
-vLLM's job: run that loop for **many** requests at once, pack them into efficient batches, and manage KV blocks in a paged pool so the GPU stays busy without you writing any of that.
+vLLM's job: run that loop for *many* requests at once, pack them into efficient batches, and manage KV blocks in a paged pool so the GPU stays busy without you writing any of that.
 
 ---
 
 ## 8. Takeaways
 
-1. **LLM decode is sequential** — one token per step, full context each time without optimisation.
-2. **Step cost grows with context** — because self-attention re-runs over all previous tokens.
-3. **KV cache** — store K/V once per token; reuse on every future step → decode cost becomes roughly flat.
-4. **Prefill** is expensive per prompt token; **decode** is cheap per generated token.
-5. **vLLM** manages all of this: load once, batch many requests, serve streaming or blocking — same weights throughout.
-6. **Batching alone gives ~3× throughput** vs one-by-one on the same hardware.
+1. *LLM decode is sequential* — one token per step, full context each time without optimisation.
+2. *Step cost grows with context* — because self-attention re-runs over all previous tokens.
+3. *KV cache* — store K/V once per token; reuse on every future step → decode cost becomes roughly flat.
+4. *Prefill* is expensive per prompt token; *decode* is cheap per generated token.
+5. *vLLM* manages all of this: load once, batch many requests, serve streaming or blocking — same weights throughout.
+6. *Batching alone gives ~3× throughput* vs one-by-one on the same hardware.
 
-**Next:** [LLM Serving Engine Internals](./serving-engine-internals) — how a request travels through an actual HTTP serving stack, from waiter (FastAPI) to line cook (ModelWorker).
+*Next:* [LLM Serving Engine Internals](./serving-engine-internals) — how a request travels through an actual HTTP serving stack, from waiter (FastAPI) to line cook (ModelWorker).
