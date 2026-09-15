@@ -342,12 +342,6 @@ Inference rule of thumb: fit → feed → compute. If it does not fit, FLOPS do 
 
 ### Broader snapshot
 
-<figure>
-
-![Comparison of H200 SXM, H100 SXM, A100 SXM, L40S, and A10](./images/gpu-comparison-h200-h100-a100-l40s-a10.png)
-
-<figcaption><span class="figure-label">Figure 2.</span> Common inference GPUs compared on memory, FLOPS, bandwidth, FP8, NVLink, and on-demand cost</figcaption>
-</figure>
 
 | Spec | H200 SXM | H100 SXM | A100 SXM | L40S | A10 |
 |------|----------|----------|----------|------|-----|
