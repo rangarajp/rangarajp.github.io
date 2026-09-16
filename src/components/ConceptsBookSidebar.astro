@@ -1,0 +1,323 @@
+---
+import {
+	getConceptPath,
+	type ConceptEntry,
+	type ConceptSeries,
+} from '../lib/concepts';
+
+type Props = {
+	allSeries: ConceptSeries[];
+	currentSeriesId: string | null;
+	currentEntryId: string;
+	isHub: boolean;
+};
+
+const { allSeries, currentSeriesId, currentEntryId, isHub } = Astro.props;
+---
+
+<aside class="book-sidebar" data-book-sidebar>
+	<div class="sidebar-toolbar">
+		<a class="sidebar-all" href="/concepts">All books</a>
+		<button
+			type="button"
+			class="sidebar-toggle"
+			data-sidebar-toggle
+			aria-expanded="false"
+			aria-controls="book-sidebar-panel"
+		>
+			Contents
+		</button>
+	</div>
+
+	<nav id="book-sidebar-panel" class="sidebar-panel" aria-label="Book contents">
+		{allSeries.map((book) => {
+			const isCurrentBook = book.id === currentSeriesId;
+			return (
+				<details class="book-group" open={isCurrentBook || undefined}>
+					<summary class="book-summary">
+						<span class="book-title">{book.title}</span>
+						<span class="book-count">{book.articles.length}</span>
+					</summary>
+					<ul class="chapter-list">
+						<li class:list={['hub-link', { active: isCurrentBook && isHub }]}>
+							<a href={book.hubPath}>Overview</a>
+						</li>
+						{book.articles.map((article: ConceptEntry, index: number) => {
+							const isActive = article.id === currentEntryId;
+							return (
+								<li class:list={[{ active: isActive }]}>
+									<a href={getConceptPath(article.id)}>
+										<span class="ch-num">{index + 1}</span>
+										<span class="ch-title">{article.data.title}</span>
+									</a>
+									{isActive && !isHub && (
+										<ul class="page-toc" data-page-toc aria-label="On this page"></ul>
+									)}
+								</li>
+							);
+						})}
+					</ul>
+				</details>
+			);
+		})}
+	</nav>
+</aside>
+
+<script>
+	const root = document.querySelector('[data-book-sidebar]');
+	const toggle = root?.querySelector('[data-sidebar-toggle]');
+	const panel = root?.querySelector('#book-sidebar-panel');
+	const pageToc = root?.querySelector('[data-page-toc]');
+
+	toggle?.addEventListener('click', () => {
+		const open = root?.classList.toggle('is-open');
+		toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		toggle.textContent = open ? 'Hide contents' : 'Contents';
+	});
+
+	panel?.querySelectorAll('a').forEach((link) => {
+		link.addEventListener('click', () => {
+			if (window.matchMedia('(max-width: 960px)').matches) {
+				root?.classList.remove('is-open');
+				toggle?.setAttribute('aria-expanded', 'false');
+				if (toggle) toggle.textContent = 'Contents';
+			}
+		});
+	});
+
+	if (pageToc) {
+		const article = document.querySelector('.concepts-article');
+		const headings = Array.from(article?.querySelectorAll('h2') ?? []).filter(
+			(heading) => !heading.closest('.article-header') && !heading.closest('.page-nav'),
+		);
+
+		headings.forEach((heading, index) => {
+			const el = heading as HTMLHeadingElement;
+
+			if (!el.id) {
+				const slug = (el.textContent || `section-${index + 1}`)
+					.toLowerCase()
+					.replace(/[^a-z0-9]+/g, '-')
+					.replace(/^-|-$/g, '');
+				el.id = slug || `section-${index + 1}`;
+			}
+
+			const li = document.createElement('li');
+			const a = document.createElement('a');
+			a.href = `#${el.id}`;
+			a.textContent = el.textContent || `Section ${index + 1}`;
+			li.appendChild(a);
+			pageToc.appendChild(li);
+		});
+
+		if (!pageToc.children.length) {
+			pageToc.remove();
+		}
+	}
+</script>
+
+<style>
+	.book-sidebar {
+		font-size: 0.88rem;
+		line-height: 1.4;
+	}
+
+	.sidebar-toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.sidebar-all {
+		font-size: 0.8rem;
+		font-weight: 600;
+		color: rgb(var(--gray));
+		text-decoration: none;
+	}
+
+	.sidebar-all:hover {
+		color: var(--accent);
+	}
+
+	.sidebar-toggle {
+		display: none;
+		font: inherit;
+		font-size: 0.85rem;
+		font-weight: 700;
+		padding: 0.4rem 0.75rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 4px;
+		background: #fff;
+		color: rgb(var(--gray-dark));
+		cursor: pointer;
+	}
+
+	.sidebar-toggle:hover {
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+
+	.sidebar-panel {
+		display: block;
+	}
+
+	.book-group {
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 4px;
+		margin-bottom: 0.55rem;
+		background: #fff;
+		overflow: hidden;
+	}
+
+	.book-summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		padding: 0.65rem 0.8rem;
+		cursor: pointer;
+		list-style: none;
+		font-weight: 700;
+		color: rgb(var(--black));
+		user-select: none;
+	}
+
+	.book-summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.book-summary::before {
+		content: '▸';
+		display: inline-block;
+		margin-right: 0.4rem;
+		color: rgb(var(--gray));
+		font-size: 0.75rem;
+		transition: transform 0.15s ease;
+	}
+
+	.book-group[open] > .book-summary::before {
+		transform: rotate(90deg);
+	}
+
+	.book-title {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.book-count {
+		flex-shrink: 0;
+		font-size: 0.72rem;
+		font-weight: 700;
+		color: rgb(var(--gray));
+		background: rgba(var(--gray-light), 0.8);
+		border-radius: 999px;
+		min-width: 1.4rem;
+		height: 1.4rem;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 0.35rem;
+	}
+
+	.chapter-list {
+		list-style: none;
+		margin: 0;
+		padding: 0.15rem 0 0.5rem;
+		border-top: 1px solid rgb(var(--gray-light));
+	}
+
+	.chapter-list > li > a {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.45rem;
+		padding: 0.4rem 0.8rem 0.4rem 0.9rem;
+		text-decoration: none;
+		color: rgb(var(--gray-dark));
+	}
+
+	.chapter-list > li > a:hover {
+		background: rgba(var(--gray-light), 0.45);
+		color: var(--accent);
+	}
+
+	.chapter-list > li.active > a {
+		background: rgba(35, 55, 255, 0.06);
+		color: var(--accent);
+		font-weight: 700;
+	}
+
+	.hub-link > a {
+		font-style: italic;
+		color: rgb(var(--gray));
+	}
+
+	.ch-num {
+		flex-shrink: 0;
+		width: 1.15rem;
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: rgb(var(--gray));
+		text-align: right;
+		padding-top: 0.1rem;
+	}
+
+	.chapter-list > li.active .ch-num {
+		color: var(--accent);
+	}
+
+	.ch-title {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.page-toc {
+		list-style: none;
+		margin: 0 0 0.35rem;
+		padding: 0.15rem 0.8rem 0.35rem 2.2rem;
+	}
+
+	.page-toc li a {
+		display: block;
+		padding: 0.22rem 0;
+		font-size: 0.8rem;
+		font-weight: 400;
+		color: rgb(var(--gray));
+		text-decoration: none;
+		line-height: 1.35;
+	}
+
+	.page-toc li a:hover {
+		color: var(--accent);
+	}
+
+	@media (max-width: 960px) {
+		.sidebar-toggle {
+			display: inline-flex;
+		}
+
+		.sidebar-panel {
+			display: none;
+			margin-top: 0.5rem;
+		}
+
+		.book-sidebar.is-open .sidebar-panel {
+			display: block;
+		}
+	}
+
+	@media (min-width: 961px) {
+		.book-sidebar {
+			position: sticky;
+			top: 1.25rem;
+			max-height: calc(100vh - 2rem);
+			overflow-y: auto;
+			padding-right: 0.25rem;
+		}
+
+		.sidebar-toolbar {
+			margin-bottom: 0.85rem;
+		}
+	}
+</style>

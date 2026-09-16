@@ -1,10 +1,16 @@
 ---
 import BaseHead from '../../components/BaseHead.astro';
+import ConceptsBookSidebar from '../../components/ConceptsBookSidebar.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import { SITE_TITLE } from '../../consts';
 import { getCollection, render } from 'astro:content';
-import { getConceptPath, getSeriesContext, isSeriesHub } from '../../lib/concepts';
+import {
+	getConceptPath,
+	getSeriesContext,
+	groupConceptsBySeries,
+	isSeriesHub,
+} from '../../lib/concepts';
 
 export async function getStaticPaths() {
 	const concepts = await getCollection('concepts');
@@ -22,6 +28,7 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 
 const concepts = await getCollection('concepts');
+const { series: allSeries } = groupConceptsBySeries(concepts);
 const seriesContext = getSeriesContext(entry, concepts);
 const isHub = isSeriesHub(entry.id);
 
@@ -45,8 +52,17 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 	</head>
 	<body>
 		<Header />
-		<main>
-			<article class="prose">
+		<main class="concepts-shell">
+			{seriesContext && (
+				<ConceptsBookSidebar
+					allSeries={allSeries}
+					currentSeriesId={seriesContext.series.id}
+					currentEntryId={entry.id}
+					isHub={isHub}
+				/>
+			)}
+
+			<article class="prose concepts-article">
 				<header class="article-header">
 					<nav class="breadcrumbs" aria-label="Breadcrumb">
 						<a href="/concepts">Concepts</a>
@@ -81,27 +97,12 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 					<p class="description">{entry.data.description}</p>
 				</header>
 
-				{seriesContext && (
-					<nav class="series-nav" aria-label={`${seriesContext.series.title} chapters`}>
-						<p class="series-nav-label">
-							{isHub ? 'Contents' : 'In this book'}
-						</p>
-						<ol class="series-nav-list">
-							{articles.map((article, index) => (
-								<li class:list={[{ active: article.id === entry.id }]}>
-									<span class="step">{index + 1}</span>
-									<a href={getConceptPath(article.id)}>{article.data.title}</a>
-								</li>
-							))}
-						</ol>
-						{isHub && firstChapter && (
-							<p class="start-reading">
-								<a href={getConceptPath(firstChapter.id)}>
-									Start with Chapter 1 — {firstChapter.data.title} →
-								</a>
-							</p>
-						)}
-					</nav>
+				{isHub && firstChapter && (
+					<p class="start-reading">
+						<a href={getConceptPath(firstChapter.id)}>
+							Start with Chapter 1 — {firstChapter.data.title} →
+						</a>
+					</p>
 				)}
 
 				<Content />
@@ -143,11 +144,33 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 </html>
 
 <style>
+	main.concepts-shell {
+		width: min(72rem, calc(100% - 2em));
+		max-width: none;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1.5rem;
+		align-items: start;
+	}
+
+	@media (min-width: 961px) {
+		main.concepts-shell {
+			grid-template-columns: 16.5rem minmax(0, 42rem);
+			justify-content: center;
+			column-gap: 2.25rem;
+		}
+	}
+
+	.concepts-article {
+		min-width: 0;
+	}
+
 	.article-header {
-		margin-bottom: 2rem;
+		margin-bottom: 1.5rem;
 		padding-bottom: 1.5rem;
 		border-bottom: 1px solid rgb(var(--gray-light));
 	}
+
 	.breadcrumbs {
 		display: flex;
 		flex-wrap: wrap;
@@ -157,16 +180,20 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 		font-size: 0.85rem;
 		color: rgb(var(--gray));
 	}
+
 	.breadcrumbs a {
 		color: rgb(var(--gray));
 		text-decoration: none;
 	}
+
 	.breadcrumbs a:hover {
 		color: var(--accent);
 	}
+
 	.separator {
 		color: rgb(var(--gray-light));
 	}
+
 	.back-link {
 		display: inline-block;
 		margin-bottom: 0.75rem;
@@ -174,9 +201,11 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 		color: rgb(var(--gray));
 		text-decoration: none;
 	}
+
 	.back-link:hover {
 		color: var(--accent);
 	}
+
 	.chapter-eyebrow {
 		margin: 0 0 0.35rem;
 		font-size: 0.78rem;
@@ -185,6 +214,7 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 		text-transform: uppercase;
 		color: rgb(var(--gray));
 	}
+
 	.article-header h1 {
 		font-size: 1.85rem;
 		font-weight: 700;
@@ -192,79 +222,28 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 		line-height: 1.25;
 		margin-bottom: 0.5rem;
 	}
+
 	.description {
 		font-size: 1.05rem;
 		line-height: 1.5;
 		color: rgb(var(--gray));
 		margin: 0;
 	}
-	.series-nav {
-		margin-bottom: 2rem;
-		padding: 1rem 1.15rem;
-		background: rgba(var(--gray-light), 0.35);
-		border: 1px solid rgb(var(--gray-light));
-		border-radius: 4px;
-	}
-	.series-nav-label {
-		margin: 0 0 0.75rem;
-		font-size: 0.72rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: rgb(var(--gray));
-	}
-	.series-nav-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-	.series-nav-list li {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-	}
-	.series-nav-list li.active a {
-		color: var(--accent);
-		font-weight: 700;
-	}
-	.step {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-width: 1.35rem;
-		height: 1.35rem;
-		padding: 0 0.25rem;
-		border-radius: 999px;
-		background: rgb(var(--gray-light));
-		font-size: 0.72rem;
-		font-weight: 700;
-		color: rgb(var(--gray));
-	}
-	.series-nav-list li.active .step {
-		background: var(--accent);
-		color: white;
-	}
-	.series-nav-list a {
-		font-size: 0.9rem;
-		text-decoration: none;
-	}
-	.series-nav-list a:hover {
-		color: var(--accent);
-	}
+
 	.start-reading {
-		margin: 1rem 0 0;
+		margin: 0 0 1.75rem;
 		font-size: 0.95rem;
 		font-weight: 600;
 	}
+
 	.start-reading a {
 		text-decoration: none;
 	}
+
 	.start-reading a:hover {
 		color: var(--accent);
 	}
+
 	.page-nav {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -273,6 +252,7 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 		padding-top: 1.5rem;
 		border-top: 1px solid rgb(var(--gray-light));
 	}
+
 	.page-nav-link {
 		display: flex;
 		flex-direction: column;
@@ -284,20 +264,25 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 		color: inherit;
 		transition: border-color 0.2s;
 	}
+
 	.page-nav-link:hover {
 		border-color: var(--accent);
 	}
+
 	.page-nav-link.next {
 		text-align: right;
 		grid-column: 2;
 	}
+
 	.page-nav-direction {
 		font-size: 0.85rem;
 		color: rgb(var(--gray));
 	}
+
 	.page-nav-title {
 		font-weight: 700;
 	}
+
 	@media (max-width: 640px) {
 		.page-nav {
 			grid-template-columns: 1fr;
