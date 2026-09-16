@@ -1,0 +1,83 @@
+---
+description: O'Reilly Animal Guide style for all markdown content
+globs: "**/*.md"
+alwaysApply: false
+---
+
+# O'Reilly-style markdown (strict)
+
+All concept notes, guides, and site markdown follow an **O'Reilly Animal Guide** voice and format. Visual rendering uses `article.prose` + `src/styles/prose.css` (sans-serif body).
+
+## Typography & HTML/CSS contract
+
+- Body and headings are **sans-serif** (site `--font-sans`). Never introduce serif stacks for article prose.
+- Code and math stay monospace / KaTeX; do not use monospace for ordinary body text.
+- Articles render inside `<article class="prose">`. Do not invent alternate article typography.
+
+## Headings
+
+- Sentence case only: `## Latency metrics`, not `## Latency Metrics`.
+- Prefer numbered chapter-style sections when the post is a guided note: `## 1. …`, `### Prefill vs decode`.
+- Em dash for subtitle: `## 1. The mental model — three resources`.
+- No emoji in headings. No trailing `#` decorations.
+
+## Emphasis
+
+- Prefer *italics* for terms on first use and light emphasis.
+- Use **bold** sparingly (key term once, or a single takeaway) — not whole sentences, not every table cell.
+- Do not bold entire list lead-ins by default; italics or plain text are fine.
+
+## Figures
+
+```html
+<figure>
+
+![Alt text describing the figure](./images/name.png)
+
+<figcaption><span class="figure-label">Figure N.</span> Caption in sentence case with no trailing period</figcaption>
+</figure>
+```
+
+- Caption: sentence case, **no trailing period**.
+- Label format exactly: `Figure N.` (bold via `.figure-label`).
+- Alt text is descriptive, not the caption duplicated.
+
+## Tables
+
+- Clear header row; left-align text; right-align pure numeric columns when helpful.
+- Keep cells short; put explanation in surrounding prose, not megacells.
+- Avoid stuffing `**bold**` into every cell.
+
+## Lists & structure
+
+- Short paragraphs (2–4 sentences). Lead with the point.
+- Use lists for parallel items; use tables for comparisons; use prose for narrative.
+- Horizontal rules (`---`) sparingly — prefer heading hierarchy.
+- Math in `$$` / `$` KaTeX; define symbols in a small table when there are more than two.
+
+## Voice
+
+- Tutorial / practitioner tone: concrete numbers, worked examples, “why it matters.”
+- Avoid slide-deck fragments, telegram bullets, and unexplained jargon.
+- Link related posts in-flow: `[GPU Architecture](./gpu-architecture)`.
+
+## ❌ Avoid
+
+```markdown
+## Latency Metrics — TTFT/ITL/TPS!!!
+**TTFT** is **really** important. **ITL** is **also** important.
+---
+- **Runtime:** stuff
+- **Infrastructure:** stuff
+```
+
+## ✅ Prefer
+
+```markdown
+## 2. Latency metrics — TTFT, ITL, and TPS
+
+When a user sends a prompt, two clocks matter: how long until the first token, and how fast the rest streams.
+
+- *TTFT* (time to first token) — delay until the first output token
+- *ITL* (inter-token latency) — time between consecutive tokens after the first
+```

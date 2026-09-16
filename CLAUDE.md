@@ -8,6 +8,15 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
+## Content style (O'Reilly)
+
+All markdown under `src/content/**` follows **O'Reilly Animal Guide** style:
+
+- Sans-serif body and headings via `article.prose` + `src/styles/prose.css`
+- Sentence-case headings; prefer *italics* over heavy **bold**
+- Figures: `<span class="figure-label">Figure N.</span>` + sentence-case caption, **no trailing period**
+- Full rules: `.cursor/rules/oreilly-markdown.mdc` (applies to `**/*.md`)
+
 ## Documentation
 
 Full documentation: https://docs.astro.build

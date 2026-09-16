@@ -30,5 +30,6 @@ Together, these ideas explain how inference engines turn a trained transformer i
 - [LLM Serving Engine Internals](./serving-engine-internals)
 - [Serving Multiple Models](./serving-multi-models)
 - [LLM Inference Optimizations — Batching](./inference-optimizations-batching)
+- [LLM Inference Optimizations — Quantization](./inference-optimizations-quantization)
 
 Local lab paths: use gitignored `notebooks/llm-inference/local_paths.json` (from `local_paths.example.json`). Absolute machine paths are not published in these posts.

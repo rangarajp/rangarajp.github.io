@@ -1,13 +1,25 @@
 /*
-  Shared article prose — O'Reilly-inspired reading styles.
+  Shared article prose — O'Reilly Animal Guide reading styles (strict).
   Use on <article class="prose"> (concepts, build-from-scratch, etc.).
+  Content conventions: .cursor/rules/oreilly-markdown.mdc
 */
 
 .prose {
 	--prose-measure: 42rem;
+	font-family: var(--font-sans); /* O'Reilly web: sans-serif body + heads */
 	font-size: 1.0625rem; /* ~17px at 16px root; body sets 18px */
 	line-height: 1.65;
 	color: rgb(var(--gray-dark));
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+	font-family: var(--font-sans);
+	font-weight: 700;
 }
 
 .prose > *:first-child {

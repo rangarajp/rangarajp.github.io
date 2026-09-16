@@ -38,3 +38,6 @@ jupyter.log
 
 # models
 models/
+
+# temporary files
+todo.md
