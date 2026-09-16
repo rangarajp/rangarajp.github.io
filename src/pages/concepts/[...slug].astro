@@ -112,17 +112,19 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 				{isHub && seriesContext ? (
 					<>
 						<section class="hub-chapters" aria-label="Chapters">
-							<div class="hub-chapter-grid">
-								{articles.map((article, index) => (
-									<a class="hub-chapter-card" href={getConceptPath(article.id)}>
-										<span class="hub-chapter-num">Chapter {index + 1}</span>
-										<span class="hub-chapter-title">{article.data.title}</span>
-										{article.data.description && (
-											<span class="hub-chapter-desc">{article.data.description}</span>
-										)}
-									</a>
+							<h2 class="hub-chapters-title">Chapters</h2>
+							<ol class="hub-chapter-list">
+								{articles.map((article) => (
+									<li>
+										<a href={getConceptPath(article.id)}>
+											<span class="hub-chapter-title">{article.data.title}</span>
+											{article.data.description && (
+												<span class="hub-chapter-desc">{article.data.description}</span>
+											)}
+										</a>
+									</li>
 								))}
-							</div>
+							</ol>
 							{firstChapter && (
 								<p class="start-reading">
 									<a href={getConceptPath(firstChapter.id)}>
@@ -132,7 +134,7 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 							)}
 						</section>
 
-						<div class="hub-more prose">
+						<div class="hub-more">
 							<Content />
 						</div>
 					</>
@@ -287,56 +289,65 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 		margin-top: 0.5rem;
 	}
 
+	.hub-chapters-title {
+		font-size: 1.2rem;
+		margin: 0 0 0.85rem;
+	}
+
+	.hub-chapter-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		counter-reset: chapter;
+	}
+
+	.hub-chapter-list li {
+		counter-increment: chapter;
+		margin: 0 0 0.85rem;
+		padding: 0;
+	}
+
+	.hub-chapter-list a {
+		display: grid;
+		grid-template-columns: 2rem 1fr;
+		column-gap: 0.65rem;
+		row-gap: 0.15rem;
+		text-decoration: none;
+		color: inherit;
+		padding: 0.75rem 0.9rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 6px;
+		background: #fff;
+	}
+
+	.hub-chapter-list a::before {
+		content: counter(chapter) '.';
+		grid-row: 1 / span 2;
+		font-weight: 700;
+		color: rgb(var(--gray));
+		padding-top: 0.1rem;
+	}
+
+	.hub-chapter-list a:hover {
+		border-color: var(--accent);
+	}
+
+	.hub-chapter-title {
+		font-weight: 700;
+		line-height: 1.35;
+	}
+
+	.hub-chapter-desc {
+		grid-column: 2;
+		font-size: 0.92rem;
+		line-height: 1.45;
+		color: rgb(var(--gray));
+	}
+
 	.hub-more {
 		margin-top: 2.25rem;
 		padding-top: 1.5rem;
 		border-top: 1px solid rgb(var(--gray-light));
-	}
-
-	.hub-chapter-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-		gap: 1rem;
-	}
-
-	.hub-chapter-card {
-		display: flex;
-		flex-direction: column;
-		gap: 0.35rem;
-		padding: 1.1rem 1.15rem;
-		border: 1px solid rgb(var(--gray-light));
-		border-radius: 8px;
-		text-decoration: none;
-		color: inherit;
-		transition:
-			border-color 0.2s,
-			box-shadow 0.2s;
-		background: #fff;
-	}
-
-	.hub-chapter-card:hover {
-		border-color: var(--accent);
-		box-shadow: var(--box-shadow);
-	}
-
-	.hub-chapter-num {
-		font-size: 0.72rem;
-		font-weight: 700;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: rgb(var(--gray));
-	}
-
-	.hub-chapter-title {
-		font-size: 1.05rem;
-		font-weight: 700;
-		line-height: 1.3;
-	}
-
-	.hub-chapter-desc {
-		font-size: 0.9rem;
-		line-height: 1.45;
-		color: rgb(var(--gray));
 	}
 
 	.start-reading {

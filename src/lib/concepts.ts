@@ -12,16 +12,26 @@ export type ConceptSeries = {
 };
 
 export function getConceptPath(id: string): string {
-	return id.endsWith('/index') ? `/concepts/${id.slice(0, -'/index'.length)}` : `/concepts/${id}`;
+	if (id.endsWith('/index')) {
+		return `/concepts/${id.slice(0, -'/index'.length)}`;
+	}
+	return `/concepts/${id}`;
 }
 
+/** Series id for an entry. Hub files may be `series` or `series/index`. */
 export function getSeriesId(id: string): string | null {
-	const slashIndex = id.indexOf('/');
-	return slashIndex === -1 ? null : id.slice(0, slashIndex);
+	if (!id.includes('/')) {
+		// Folder index.md → id "llm-inference" (Astro glob), or a true standalone
+		return id;
+	}
+	if (id.endsWith('/index')) {
+		return id.slice(0, -'/index'.length);
+	}
+	return id.slice(0, id.indexOf('/'));
 }
 
 export function isSeriesHub(id: string): boolean {
-	return id.endsWith('/index');
+	return !id.includes('/') || id.endsWith('/index');
 }
 
 export function groupConceptsBySeries(concepts: ConceptEntry[]): {
@@ -29,15 +39,10 @@ export function groupConceptsBySeries(concepts: ConceptEntry[]): {
 	standalone: ConceptEntry[];
 } {
 	const seriesMap = new Map<string, { hub: ConceptEntry | null; articles: ConceptEntry[] }>();
-	const standalone: ConceptEntry[] = [];
 
 	for (const entry of concepts) {
 		const seriesId = getSeriesId(entry.id);
-
-		if (!seriesId) {
-			standalone.push(entry);
-			continue;
-		}
+		if (!seriesId) continue;
 
 		if (!seriesMap.has(seriesId)) {
 			seriesMap.set(seriesId, { hub: null, articles: [] });
@@ -52,28 +57,39 @@ export function groupConceptsBySeries(concepts: ConceptEntry[]): {
 		}
 	}
 
-	const series = [...seriesMap.entries()]
-		.map(([id, group]) => {
-			const articles = group.articles.sort(
-				(a, b) => (a.data.order ?? Number.MAX_SAFE_INTEGER) - (b.data.order ?? Number.MAX_SAFE_INTEGER),
-			);
+	const standalone: ConceptEntry[] = [];
+	const series: ConceptSeries[] = [];
 
-			const hubTitle = group.hub?.data.title ?? formatSeriesTitle(id);
-			const title = hubTitle.replace(/\s+overview$/i, '');
+	for (const [id, group] of seriesMap.entries()) {
+		const articles = group.articles.sort(
+			(a, b) => (a.data.order ?? Number.MAX_SAFE_INTEGER) - (b.data.order ?? Number.MAX_SAFE_INTEGER),
+		);
 
-			return {
-				id,
-				title,
-				description: group.hub?.data.description ?? '',
-				hubPath: getConceptPath(group.hub?.id ?? `${id}/index`),
-				seriesOrder: group.hub?.data.seriesOrder ?? Number.MAX_SAFE_INTEGER,
-				articles,
-			};
-		})
-		.sort((a, b) => {
-			if (a.seriesOrder !== b.seriesOrder) return a.seriesOrder - b.seriesOrder;
-			return a.title.localeCompare(b.title);
+		// Hub with no chapters = standalone topic at concepts root
+		if (articles.length === 0) {
+			if (group.hub) standalone.push(group.hub);
+			continue;
+		}
+
+		const hubTitle = group.hub?.data.title ?? formatSeriesTitle(id);
+		const title = hubTitle.replace(/\s+overview$/i, '');
+
+		series.push({
+			id,
+			title,
+			description: group.hub?.data.description ?? '',
+			hubPath: getConceptPath(group.hub?.id ?? id),
+			seriesOrder: group.hub?.data.seriesOrder ?? Number.MAX_SAFE_INTEGER,
+			articles,
 		});
+	}
+
+	series.sort((a, b) => {
+		if (a.seriesOrder !== b.seriesOrder) return a.seriesOrder - b.seriesOrder;
+		return a.title.localeCompare(b.title);
+	});
+
+	standalone.sort((a, b) => a.data.title.localeCompare(b.data.title));
 
 	return { series, standalone };
 }
