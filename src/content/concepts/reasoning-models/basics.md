@@ -1,5 +1,5 @@
 ---
-title: 'Basics'
+title: 'What Reasoning Means'
 description: 'Conventional LLM training, what reasoning means, and how it is improved.'
 pubDate: 'Aug 24 2026'
 order: 1
@@ -103,3 +103,7 @@ Building reasoning models from scratch is useful in practice: it surfaces capabi
 3. Reasoning here means generating intermediate steps (chain of thought) before the final answer
 4. It is not rule-based logic — it is still statistical pattern matching
 5. You can improve it via inference-time compute, RL, or SFT / distillation from stronger models
+
+---
+
+*Next:* [Inference-Time Scaling](./inference-time-scaling) — how to improve reasoning without retraining, by spending more compute at decode time.

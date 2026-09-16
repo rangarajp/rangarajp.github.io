@@ -129,3 +129,7 @@ BPE is a subword method inspired by data compression. It iteratively merges the 
 #### Encoding new text
 
 When new text arrives, the tokenizer applies the learned merge rules in order. It prefers the longest matching tokens already in the vocabulary. Anything left unmatched is broken down into fundamental byte representations.
+
+---
+
+*Next:* [Token Embeddings](./token-embeddings) — how tokens are mapped into dense numerical vectors that capture meaning.

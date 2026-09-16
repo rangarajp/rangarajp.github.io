@@ -2,15 +2,15 @@
 title: 'LLM Inference Optimizations — Quantization'
 description: 'Why the same LLM needs different memory at FP32 vs INT4, how bits store numbers, the staircase intuition, weight histograms, quantization error, and absmax in detail.'
 pubDate: 'Sep 15 2026'
-order: 6
+order: 8
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-LLMs are “large” mostly because they store billions of numbers. Quantization asks a simple question: **can we store each number with fewer bits and still get almost the same answers?**
+LLMs are “large” mostly because they store billions of numbers. Quantization asks a simple question: can we store each number with fewer bits and still get almost the same answers?
 
-This note builds that intuition from bits upward — memory math, float layouts, the staircase picture, weight histograms, quantization error — then walks one technique in detail: **symmetric absmax**.
+This chapter builds that intuition from bits upward — memory math, float layouts, the staircase picture, weight histograms, quantization error — then walks one technique in detail: *symmetric absmax*.
 
-Inspired by [A Visual Guide to Quantization](https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-quantization) (Maarten Grootendorst) and the walkthrough in [LLM Quantization Explained](https://www.youtube.com/watch?v=37g8S71LfmQ). Figures below are originals drawn for this series.
+Inspired by [A Visual Guide to Quantization](https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-quantization) (Maarten Grootendorst) and the walkthrough in [LLM Quantization Explained](https://www.youtube.com/watch?v=37g8S71LfmQ). Figures below are originals drawn for this book.
 
 Related: [GPU memory budgets](./gpu-architecture), [batching](./inference-optimizations-batching).
 
@@ -39,6 +39,14 @@ $$
 </figure>
 
 That is the core pressure: interactive serving wants the model in GPU HBM. If FP16 does not fit, you either shard across GPUs or **shrink the numbers**. Quantization is the shrink.
+
+Cutting precision also improves run time performance :
+
+• Prefill: Compute-bound prefill now runs on lower-precision Tensor 
+Cores with twice the FLOPS.
+
+• Decode: Memory-bound decode now loads half as much data per 
+value, effectively doubling memory bandwidth.
 
 Trade-off in one line: lower bits → less memory (and often more tokens/sec on bandwidth-bound decode) → more rounding error → possible quality loss.
 
@@ -84,6 +92,9 @@ A float is not “a decimal with infinite precision.” It is a fixed bit budget
 
 *Dynamic range* = how large/small a value you can represent.  
 *Precision* = how close neighboring representable values are.
+
+Precision is number of bits to represent a single value. Ex: FP16 used 16 bits
+Type is whether integer (no decimal) or float (decimal)
 
 ### One concrete weight: 0.73
 
@@ -277,6 +288,6 @@ Absmax is the right first mental model: **choose a range, choose a grid, round, 
 5. **Error** — $w - \hat{w}$ after round-trip; outliers and low bit-width make it worse.  
 6. **Absmax** — $\alpha=\max|w|$, $s=\alpha/127$, $q=\mathrm{round}(w/s)$, $\hat{w}=q\cdot s$; start here, then graduate to group-wise / GPTQ-style methods for 4-bit serving.
 
-**Practical default today:** serve in BF16/FP16 when VRAM allows; use well-tested **INT8 / INT4** checkpoints (GPTQ, AWQ, GGUF, …) when you need to fit or to cut weight traffic — and always measure quality on *your* prompts, not only perplexity tables.
+*Practical default today:* serve in BF16/FP16 when VRAM allows; use well-tested INT8 / INT4 checkpoints (GPTQ, AWQ, GGUF, …) when you need to fit or to cut weight traffic — and always measure quality on *your* prompts, not only perplexity tables.
 
-Next optimization neighbors: activation quantization & KV-cache dtype, and speculative decoding for latency without shrinking weights.
+This closes the published chapters of the LLM Inference book. Coming later: speculative decoding and serving trade-offs. Return to the [contents](./) when you are ready for the next installment.

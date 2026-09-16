@@ -6,6 +6,8 @@ order: 2
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
+[What reasoning means](./basics) introduced the three ways to improve reasoning: inference-time compute, reinforcement learning, and distillation. This chapter covers the first: keeping the weights fixed and spending more compute at decode time.
+
 Reasoning ability and answer accuracy can improve without retraining by spending more compute at decode time. That idea is inference-time scaling: same weights, more tokens, samples, search, or revise loops while answering.
 
 The central trade-off is simple — higher accuracy in exchange for more compute (latency, tokens, wall-clock time).
@@ -238,4 +240,7 @@ Stop early when `Verdict: OK` or when the rule score stops improving — another
 4. Sequential path: draft → rule / length / avg log-prob / LLM-as-judge → revise (self-refinement)
 5. Scorers and judges are part of the method — a bad scorer (e.g. length-only) can undo good samples
 6. Toy runs and MATH-500-style evals share the trade-off: accuracy up, compute up
-7. Next in this series: deeper chain of thought, then training-time methods, search, and verifiers
+
+---
+
+*Next:* [Training for Reasoning](./training-for-reasoning) — how training-time RL changes the model's weights so better reasoning is the default, not just an inference-time trick.

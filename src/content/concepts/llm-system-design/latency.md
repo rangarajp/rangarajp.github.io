@@ -6,6 +6,8 @@ order: 3
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
+[Designing for reliability](./reliability) built the fallback stack that keeps an LLM system running when models fail. This chapter tackles the complementary problem: keeping it *fast*.
+
 Latency is the time between a user starting an action and the system delivering a useful result. In an LLM application, that delay is not one number. The request may wait in a queue, retrieve context, process a long prompt, generate hundreds of tokens, call tools, and pass through output validation before the user sees the final answer.
 
 A system can therefore feel fast while still taking several seconds to finish, or feel slow even when its total runtime is reasonable. Designing for latency starts by measuring the right milestones.
@@ -542,3 +544,7 @@ Every latency optimization can affect another system property. Caching can reduc
 6. Remove serial work, parallelize independent operations, route to the smallest adequate model, and bound input and output tokens.
 7. Separate interactive, synchronous API, agent, and offline batch traffic because they optimize for different goals.
 8. Trace the full critical path and optimize the measured bottleneck—not the most visible component.
+
+---
+
+This is the last published chapter in the LLM system design series. ← [Back to the LLM System Design series](./).

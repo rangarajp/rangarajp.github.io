@@ -2,13 +2,13 @@
 title: 'Serving Multiple Models'
 description: 'One FastAPI process, many checkpoints — model store, LRU cache, engine, and workers with Qwen2.5 and TinyLlama.'
 pubDate: 'Sep 13 2026'
-order: 4
+order: 6
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
 A single-model server is simple: load weights once, answer every request with that model. Real platforms often need *several* models behind one API — different sizes, chat templates, or tasks — without keeping every checkpoint resident on GPU.
 
-This post walks a small multi-model stack: one HTTP process, a model store, an LRU cache (capacity 2), and workers for two local chat models.
+This chapter walks a small multi-model stack: one HTTP process, a model store, an LRU cache (capacity 2), and workers for two local chat models.
 
 | Model ID | Checkpoint |
 | -------- | ---------- |
@@ -409,4 +409,4 @@ So routing is not only load balancing — it is **cache-aware placement**: send 
 | Load / unload | Manager + engine delete worker | Frontend → backend Load/Unload |
 | Failure / scale | Restart the process | New instances + updated model↔host map |
 
-**Previous:** [LLM Serving Engine Internals](./serving-engine-internals)
+*Next:* [Batching](./inference-optimizations-batching) — how continuous batching keeps the GPU ferry full without stranding passengers.

@@ -1,11 +1,12 @@
 ---
-title: 'LLM Inference Overview'
-description: 'How large language models generate tokens efficiently at serving time.'
+title: 'Inference Engineering Basics'
+description: 'Runtime, infrastructure, and tooling — plus TTFT, ITL, TPS, percentile latency, and arithmetic intensity.'
 pubDate: 'Aug 12 2026'
+order: 1
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-Training learns model weights from data. *Inference* is serving that model in production — turning prompts into tokens under latency, cost, and reliability constraints.
+This book starts with the job of inference engineering, then moves into GPUs and serving stacks. *Training* learns model weights from data. *Inference* is serving that model in production — turning prompts into tokens under latency, cost, and reliability constraints.
 
 Inference for generative models is not a single forward pass. It needs three layers working together:
 
@@ -122,4 +123,4 @@ Decode attention alone sits far below the H100 line. A full decode step is even 
 
 Contrast with *prefill*, where many tokens reuse the same loaded weights → intensity rises toward (or past) the ridge → more compute-bound. That is why TTFT and TPS respond to different hardware knobs.
 
-For the hardware ridge line and prefill vs decode in more detail, see [GPU Architecture for LLM Inference](./gpu-architecture).
+Next: what a GPU actually is — SMs, Tensor Cores, and the cache/VRAM stack — in [GPU Basics — Inside the Chip](./gpu-basics).

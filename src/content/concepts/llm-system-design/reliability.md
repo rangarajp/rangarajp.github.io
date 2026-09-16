@@ -6,6 +6,8 @@ order: 2
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
+[How LLM systems differ](./basics) established that LLM components fail in ways traditional software doesn't: probabilistically, silently, and with latency variance. This chapter builds the reliability stack to handle all three.
+
 A traditional API either works or throws an exception — simple to monitor and easy to handle. LLM systems break that assumption in three distinct ways.
 
 *Infrastructure failures* — the model doesn't respond at all:
@@ -522,3 +524,7 @@ class TokenBudget:
 | 5 | Circuit breaker | Timeout storms during sustained outages | More than one provider |
 | 6 | Centralised gateway | Scattered logic, no unified observability | More than two services calling LLMs |
 | 6 | Token budget | One caller draining quota for others | Before production |
+
+---
+
+*Next:* [Designing for Latency](./latency) — how to measure and reduce LLM latency using streaming, caching, routing, and inference-aware architecture.

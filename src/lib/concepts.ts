@@ -7,6 +7,7 @@ export type ConceptSeries = {
 	title: string;
 	description: string;
 	hubPath: string;
+	seriesOrder: number;
 	articles: ConceptEntry[];
 };
 
@@ -65,10 +66,14 @@ export function groupConceptsBySeries(concepts: ConceptEntry[]): {
 				title,
 				description: group.hub?.data.description ?? '',
 				hubPath: getConceptPath(group.hub?.id ?? `${id}/index`),
+				seriesOrder: group.hub?.data.seriesOrder ?? Number.MAX_SAFE_INTEGER,
 				articles,
 			};
 		})
-		.sort((a, b) => a.title.localeCompare(b.title));
+		.sort((a, b) => {
+			if (a.seriesOrder !== b.seriesOrder) return a.seriesOrder - b.seriesOrder;
+			return a.title.localeCompare(b.title);
+		});
 
 	return { series, standalone };
 }

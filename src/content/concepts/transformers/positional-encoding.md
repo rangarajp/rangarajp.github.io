@@ -6,6 +6,8 @@ order: 3
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
+[Token embeddings](./token-embeddings) give each token a rich numerical representation — but they are the same regardless of where the token appears in a sentence. This chapter adds the missing ingredient: position.
+
 In English, word order matters. Compare:
 
 - *Dog chased the cat*
@@ -207,3 +209,7 @@ same token content
 orientation difference
 = relative positional distance
 ```
+
+---
+
+*Next:* [Attention](./attention) — how each token uses these positionally-aware embeddings to decide which other tokens are relevant to its meaning.

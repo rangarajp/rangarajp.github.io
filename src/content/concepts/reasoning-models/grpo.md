@@ -2,11 +2,11 @@
 title: 'GRPO — Group Relative Policy Optimization'
 description: 'How GRPO trains reasoning by comparing a group of attempts on the same question — without a critic network.'
 pubDate: 'Sep 5 2026'
-order: 5
+order: 4
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-[Training for reasoning](/concepts/reasoning-models/training-for-reasoning) introduced GRPO as the RL algorithm behind DeepSeek-R1. This page goes deeper: what GRPO actually does, worked through a concrete example with rollouts, rewards, advantages, and the KL penalty.
+[Training for reasoning](./training-for-reasoning) introduced GRPO as the RL algorithm behind DeepSeek-R1. This page goes deeper: what GRPO actually does, worked through a concrete example with rollouts, rewards, advantages, and the KL penalty.
 
 Notebook: [grpo-training.ipynb](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/reasoning-models/grpo-training.ipynb) — runs a mini-GRPO loop on math problems and compares the base model against the fine-tuned version.
 
@@ -402,3 +402,7 @@ This is qualitatively different from SFT: there, self-correction would only appe
 5. Together, these produce reasoning behaviour (self-checking, extended CoT) that SFT on fixed demos rarely matches
 6. The KL formula must be non-negative — the approximation `exp(log π_ref − log π_θ) − (log π_ref − log π_θ) − 1` ensures the penalty always pulls toward the reference; the naive `log π_θ − log π_ref` can go negative and corrupt the model
 7. See [grpo-training.ipynb](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/reasoning-models/grpo-training.ipynb) for a runnable mini-GRPO loop, corrected KL, and before/after comparison (+71% accuracy in 20 steps on CPU)
+
+---
+
+This is the last published chapter in the reasoning-models series. ← [Back to the Reasoning Models series](./).

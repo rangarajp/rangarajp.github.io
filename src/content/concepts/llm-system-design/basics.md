@@ -258,7 +258,10 @@ In automotive and engineering contexts, this extends to operational data: CAD fi
 3. Context window management is the central design constraint — you decide what the model can reason about
 4. State, output parsing, and evaluation all need explicit strategies that have no direct equivalent in traditional software
 5. Use deterministic code where you can; reach for an LLM only where language understanding or flexible reasoning is genuinely needed
-6. Design for the failure modes specific to LLMs: prompt injection, context leakage, silent quality degradation, and latency at scale — see [Designing for reliability](/concepts/llm-system-design/reliability) for fallback chains, model routing, and gateway patterns
+6. Design for the failure modes specific to LLMs: prompt injection, context leakage, silent quality degradation, and latency at scale — see [Designing for reliability](./reliability) for fallback chains, model routing, and gateway patterns
 7. Treat prompts as versioned code, outputs as untrusted data, and LLM call logs as first-class telemetry
 8. Evaluation hygiene and user privacy are not afterthoughts — contaminated evals produce false confidence, and unmanaged data handling creates legal and trust risk
-9. Next: the anatomy of an LLM application — how the components above connect into a working system
+
+---
+
+*Next:* [Designing for Reliability](./reliability) — fallback strategies, model routing by task, and gateway patterns for LLM systems that need to stay up when models do not.

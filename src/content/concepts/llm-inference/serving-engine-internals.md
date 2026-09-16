@@ -2,11 +2,11 @@
 title: 'LLM Serving Engine Internals'
 description: 'How a vLLM-style serving stack moves requests from HTTP to GPU — restaurant analogy, sequence ids, batching, and streaming.'
 pubDate: 'Sep 13 2026'
-order: 3
+order: 5
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-Once you can generate tokens with vLLM (see [vLLM Basics and Why KV Cache Matters](./vllm-basics-kv-cache)), the next question is: **how does a request travel from HTTP to GPU and back?**
+Once you can generate tokens with vLLM (see [vLLM Basics and Why KV Cache Matters](./vllm-basics-kv-cache)), the next question is: how does a request travel from HTTP to GPU and back?
 
 Lab: `notebooks/llm-inference/single_model_llm_serving/` — start the server from `main.ipynb`, call it from `test.ipynb`. Server FLOW prints (`>>> [Layer]`) match the boxes in the diagrams below.
 
@@ -545,5 +545,4 @@ Labeled paths in the figure:
 
 The lab is the *inside of one instance*. The figure is how you *replicate* that instance behind a load balancer when one GPU (or one process) is no longer enough.
 
-*Previous:* [vLLM Basics and Why KV Cache Matters](./vllm-basics-kv-cache)  
-*Next:* [Serving Multiple Models](./serving-multi-models)
+*Next:* [Serving Multiple Models](./serving-multi-models) — one API, many checkpoints, with an LRU cache of resident weights.

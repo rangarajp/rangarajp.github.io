@@ -26,7 +26,16 @@ const seriesContext = getSeriesContext(entry, concepts);
 const isHub = isSeriesHub(entry.id);
 
 const backHref = seriesContext && !isHub ? seriesContext.series.hubPath : '/concepts';
-const backLabel = seriesContext && !isHub ? seriesContext.series.title : 'All Concepts';
+const backLabel = seriesContext && !isHub ? seriesContext.series.title : 'All books';
+
+const articles = seriesContext?.series.articles ?? [];
+const currentIndex = seriesContext?.currentIndex ?? -1;
+const firstChapter = articles[0];
+const prevArticle = currentIndex > 0 ? articles[currentIndex - 1] : null;
+const nextArticle =
+	currentIndex >= 0 && currentIndex < articles.length - 1 ? articles[currentIndex + 1] : null;
+const isFirstChapter = currentIndex === 0;
+const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 ---
 
 <!doctype html>
@@ -65,50 +74,62 @@ const backLabel = seriesContext && !isHub ? seriesContext.series.title : 'All Co
 						)}
 					</nav>
 					<a href={backHref} class="back-link">&larr; {backLabel}</a>
+					{seriesContext && !isHub && currentIndex >= 0 && (
+						<p class="chapter-eyebrow">Chapter {currentIndex + 1} of {articles.length}</p>
+					)}
 					<h1>{entry.data.title}</h1>
 					<p class="description">{entry.data.description}</p>
 				</header>
 
 				{seriesContext && (
-					<nav class="series-nav" aria-label={`${seriesContext.series.title} topics`}>
-						<p class="series-nav-label">In this series</p>
+					<nav class="series-nav" aria-label={`${seriesContext.series.title} chapters`}>
+						<p class="series-nav-label">
+							{isHub ? 'Contents' : 'In this book'}
+						</p>
 						<ol class="series-nav-list">
-							{seriesContext.series.articles.map((article, index) => (
+							{articles.map((article, index) => (
 								<li class:list={[{ active: article.id === entry.id }]}>
 									<span class="step">{index + 1}</span>
 									<a href={getConceptPath(article.id)}>{article.data.title}</a>
 								</li>
 							))}
 						</ol>
+						{isHub && firstChapter && (
+							<p class="start-reading">
+								<a href={getConceptPath(firstChapter.id)}>
+									Start with Chapter 1 — {firstChapter.data.title} →
+								</a>
+							</p>
+						)}
 					</nav>
 				)}
 
 				<Content />
 
-				{seriesContext && !isHub && seriesContext.currentIndex >= 0 && (
-					<nav class="page-nav" aria-label="Article navigation">
-						{seriesContext.currentIndex > 0 ? (
-							<a
-								class="page-nav-link prev"
-								href={getConceptPath(seriesContext.series.articles[seriesContext.currentIndex - 1].id)}
-							>
-								<span class="page-nav-direction">&larr; Previous</span>
-								<span class="page-nav-title">
-									{seriesContext.series.articles[seriesContext.currentIndex - 1].data.title}
-								</span>
+				{seriesContext && !isHub && currentIndex >= 0 && (
+					<nav class="page-nav" aria-label="Chapter navigation">
+						{isFirstChapter ? (
+							<a class="page-nav-link prev" href={seriesContext.series.hubPath}>
+								<span class="page-nav-direction">&larr; Contents</span>
+								<span class="page-nav-title">{seriesContext.series.title}</span>
+							</a>
+						) : prevArticle ? (
+							<a class="page-nav-link prev" href={getConceptPath(prevArticle.id)}>
+								<span class="page-nav-direction">&larr; Chapter {currentIndex}</span>
+								<span class="page-nav-title">{prevArticle.data.title}</span>
 							</a>
 						) : (
 							<span />
 						)}
-						{seriesContext.currentIndex < seriesContext.series.articles.length - 1 ? (
-							<a
-								class="page-nav-link next"
-								href={getConceptPath(seriesContext.series.articles[seriesContext.currentIndex + 1].id)}
-							>
-								<span class="page-nav-direction">Next &rarr;</span>
-								<span class="page-nav-title">
-									{seriesContext.series.articles[seriesContext.currentIndex + 1].data.title}
-								</span>
+						{nextArticle ? (
+							<a class="page-nav-link next" href={getConceptPath(nextArticle.id)}>
+								<span class="page-nav-direction">Chapter {currentIndex + 2} →</span>
+								<span class="page-nav-title">{nextArticle.data.title}</span>
+							</a>
+						) : isLastChapter ? (
+							<a class="page-nav-link next" href={seriesContext.series.hubPath}>
+								<span class="page-nav-direction">End of book →</span>
+								<span class="page-nav-title">Back to contents</span>
 							</a>
 						) : (
 							<span />
@@ -148,13 +169,21 @@ const backLabel = seriesContext && !isHub ? seriesContext.series.title : 'All Co
 	}
 	.back-link {
 		display: inline-block;
-		margin-bottom: 1rem;
+		margin-bottom: 0.75rem;
 		font-size: 0.9rem;
 		color: rgb(var(--gray));
 		text-decoration: none;
 	}
 	.back-link:hover {
 		color: var(--accent);
+	}
+	.chapter-eyebrow {
+		margin: 0 0 0.35rem;
+		font-size: 0.78rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: rgb(var(--gray));
 	}
 	.article-header h1 {
 		font-size: 1.85rem;
@@ -205,8 +234,9 @@ const backLabel = seriesContext && !isHub ? seriesContext.series.title : 'All Co
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 1.35rem;
+		min-width: 1.35rem;
 		height: 1.35rem;
+		padding: 0 0.25rem;
 		border-radius: 999px;
 		background: rgb(var(--gray-light));
 		font-size: 0.72rem;
@@ -222,6 +252,17 @@ const backLabel = seriesContext && !isHub ? seriesContext.series.title : 'All Co
 		text-decoration: none;
 	}
 	.series-nav-list a:hover {
+		color: var(--accent);
+	}
+	.start-reading {
+		margin: 1rem 0 0;
+		font-size: 0.95rem;
+		font-weight: 600;
+	}
+	.start-reading a {
+		text-decoration: none;
+	}
+	.start-reading a:hover {
 		color: var(--accent);
 	}
 	.page-nav {
@@ -263,6 +304,7 @@ const backLabel = seriesContext && !isHub ? seriesContext.series.title : 'All Co
 		}
 		.page-nav-link.next {
 			grid-column: 1;
+			text-align: left;
 		}
 	}
 </style>

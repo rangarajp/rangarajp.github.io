@@ -2,15 +2,15 @@
 title: 'Transformer Block'
 description: 'Putting It All Together'
 pubDate: 'Aug 4 2026'
-order: 6
+order: 7
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-# Transformer Block: Putting It All Together
+[Multi-head attention](./multi-head-attention) gave each token a richer, multi-perspective context vector. But attention alone does not make a transformer — it is one component inside a larger repeating structure called the *transformer block*. This chapter walks through that full block.
 
-## Background: What We Have So Far
+## Background: what we have so far
 
-From the [multi-head attention post](https://rangarajp.github.io/concepts/transformers/multi-head-attention/), we learned that:
+From the [multi-head attention chapter](./multi-head-attention), we learned that:
 
 1. *Single-head attention* produces a contextualized vector for each token
 2. *Multi-head attention* runs multiple specialized attention patterns in parallel
@@ -518,13 +518,10 @@ Parameters per block: ~7 million
 
 ---
 
-## 14. What's Next?
+## 14. End of this series
 
-One Transformer Block is the *fundamental repeating unit*. In the next post, we'll see:
+The transformer block is the *fundamental repeating unit*. Real models stack it 6–96 times, each layer with its own independent parameters, progressively refining every token's representation from raw embedding to rich contextual meaning. Understanding this block is understanding the core of transformers.
 
-- How to *stack* these blocks (Encoder)
-- How to apply *masking* for generation (Decoder)
-- How tokens *interact across layers*
-- How the model processes *entire sequences*
+This is the last published chapter in the series. To build a working transformer from scratch, [Andrej Karpathy's nanoGPT](https://github.com/karpathy/nanoGPT) is an excellent hands-on companion.
 
-The single block we built today repeats 6-96 times in real models. Understanding this block is understanding the core of Transformers.
+← [Back to the Transformers series](./).

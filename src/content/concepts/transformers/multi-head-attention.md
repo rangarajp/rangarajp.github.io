@@ -2,9 +2,11 @@
 title: 'Multi-Head Attention'
 description: 'How multiple attention heads learn different relationship patterns in parallel.'
 pubDate: 'Aug 5 2026'
-order: 5
+order: 6
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
+
+[Query, Key, and Value](./attention_detailed) showed how a single attention head transforms the same starting embedding into a context-aware representation. The limitation is that one head can only capture one perspective at a time.
 
 Single-head attention produces one weighted view of a token's neighbors. Multi-head attention runs several attention computations in parallel, each with its own weight matrices, then concatenates and projects the results. That lets the model capture different relationship types at once — geography and action, syntax and semantics — instead of forcing one head to compromise.
 
@@ -445,3 +447,7 @@ Mostly yes, though some redundancy can appear. The network learns to use heads e
 *How many heads is optimal?*
 
 Empirically, often 8–16 for many tasks. More heads add capacity and parameters — a trade-off between expressiveness and compute cost.
+
+---
+
+*Next:* [Transformer Block](./transformer-block) — how multi-head attention combines with residual connections, layer normalisation, and a feed-forward network into the repeating unit that stacks to build a full transformer.

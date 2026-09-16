@@ -6,6 +6,8 @@ order: 5
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
+In the [previous chapter](./attention), we built intuition for self-attention using a simplified model where Query, Key, and Value were all the same as the raw embedding. This chapter removes that simplification.
+
 In the previous article, we simplified attention by assuming:
 
 $$Q = K = V = X$$

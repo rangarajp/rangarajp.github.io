@@ -2,13 +2,13 @@
 title: 'GPU Architecture for LLM Inference'
 description: 'A practical story of GPU specs for LLM serving — memory, FLOPS, bandwidth, arithmetic intensity, interconnect, and how to choose cards.'
 pubDate: 'Sep 15 2026'
-order: 1
+order: 3
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
 LLM inference lives or dies on the GPU. Before you tune batching, KV cache, or a serving engine, you need a clear mental model of what the hardware is doing — and which number on the datasheet actually matters for *your* traffic.
 
-This note is that story: where the model must live, how to size memory, what limits speed (and why prefill and decode disagree), how GPUs talk to each other, and how to pick a card when specs pull in opposite directions.
+If SMs, Tensor Cores, and the cache/VRAM stack are new, start with [GPU Basics — Inside the Chip](./gpu-basics). This chapter is the inference lens on top: where the model must live, how to size memory, what limits speed (and why prefill and decode disagree), how GPUs talk to each other, and how to pick a card when specs pull in opposite directions.
 
 ## 1. The mental model — three resources, one kitchen
 
@@ -371,4 +371,4 @@ On real hardware: measure peak memory at target batch/context, then check whethe
 5. Interconnect ladder: NVSwitch ≫ bridge ≫ PCIe ≫ cross-node; keep tensor parallel on the fast path.
 6. Choose by bottleneck — SXM for FLOPS/NVLink, NVL/H200 when capacity and feed rate dominate.
 
-Next in this series: how serving engines use that GPU memory for KV cache and keep the device busy under many concurrent requests.
+Next in this book: how serving engines use that GPU memory for the KV cache — [vLLM Basics and Why KV Cache Matters](./vllm-basics-kv-cache).

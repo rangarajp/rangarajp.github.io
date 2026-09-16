@@ -2,13 +2,13 @@
 title: 'LLM Inference Optimizations — Batching'
 description: 'Why GPUs need batching, why static batches fail with uneven prompts, and how continuous batching plus chunked prefill keep the boat full without stranding passengers.'
 pubDate: 'Sep 15 2026'
-order: 5
+order: 7
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
 Serving one prompt at a time wastes a GPU. Serving many at once without a plan wastes latency. Batching is the optimization that sits between those two failures.
 
-This note is the boat story: why you fill seats, what goes wrong when passengers need trips of different lengths, and how modern engines pick up and drop off continuously — including when a long boarding (prefill) would otherwise block everyone else.
+This chapter is the boat story: why you fill seats, what goes wrong when passengers need trips of different lengths, and how modern engines pick up and drop off continuously — including when a long boarding (prefill) would otherwise block everyone else.
 
 Prerequisite mental model: [prefill vs decode and KV cache](./vllm-basics-kv-cache). For how a server wires the loop, see [Serving Engine Internals](./serving-engine-internals).
 
@@ -205,4 +205,4 @@ Static batching is a charter bus. Continuous batching is a city ferry with open 
 4. *Chunked prefill* — board long prompts in pieces so one heavy boarding does not freeze riders already on the water.  
 5. *Same analogy everywhere* — queue = dock, batch = boat, prefill = boarding, decode = hop, EOS = drop-off, KV = luggage already stowed for the rest of the trip.
 
-Next levers in the same optimization family (not covered here): paged KV / memory management, quantization, and speculative decoding — each is another way to fit more passengers or shorten each hop without buying a bigger boat.
+Next: [Quantization](./inference-optimizations-quantization) — fewer bits per weight so more passengers (and longer trips) fit in the same pantry.

@@ -6,6 +6,8 @@ order: 4
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
+[Positional encoding](./positional-encoding) gave each token-embedding a sense of where it sits in the sequence. Now we need to give each token a sense of *what the other tokens mean to it*. That is attention.
+
 Attention computes contextual relevance scores between tokens. Given a sequence of embeddings (with positional information already mixed in), each token looks at every other token and decides how much to weigh each one. The result is a new representation that depends on context — the same token can mean different things depending on what surrounds it.
 
 ## 1. Background
@@ -308,3 +310,7 @@ context  = Σ_i weight_i × v_i
 ```
 
 where `k_i` and `v_i` are the key and value vectors of word `i`.
+
+---
+
+*Next:* [Query, Key, and Value](./attention_detailed) — why real transformers learn three separate projections instead of comparing raw embeddings directly.

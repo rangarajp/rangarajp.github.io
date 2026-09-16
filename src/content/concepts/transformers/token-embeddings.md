@@ -6,7 +6,7 @@ order: 2
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-Embeddings give tokens meaning by mapping them into dense vectors. Higher dimensions can capture richer relationships, but at a computational cost. Modern GPT models typically use embedding sizes from 768 to 12,288 dimensions.
+[Tokenization](./tokenization) converted raw text into discrete token IDs. Those IDs are integers — they carry no geometric meaning. Embeddings give tokens meaning by mapping them into dense vectors. Higher dimensions can capture richer relationships, but at a computational cost. Modern GPT models typically use embedding sizes from 768 to 12,288 dimensions.
 
 ## 1. Word2Vec
 
@@ -48,3 +48,7 @@ There are several families of embedding methods beyond Word2Vec. The diagram bel
 
 <figcaption><span class="figure-label">Figure 2.</span> Embedding Techniques</figcaption>
 </figure>
+
+---
+
+*Next:* [Positional Encoding](./positional-encoding) — how sequence order is injected into token representations so the model knows where each token sits.

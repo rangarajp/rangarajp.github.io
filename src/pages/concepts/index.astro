@@ -10,7 +10,7 @@ const concepts = await getCollection('concepts');
 const { series, standalone } = groupConceptsBySeries(concepts);
 
 function noteLabel(count: number): string {
-	return count === 1 ? '1 note' : `${count} notes`;
+	return count === 1 ? '1 chapter' : `${count} chapters`;
 }
 ---
 
@@ -24,10 +24,10 @@ function noteLabel(count: number): string {
 		<main class="concepts-index">
 			<header class="page-intro">
 				<h1>Concepts</h1>
-				<p>Core ideas and mental models, organized into learning paths.</p>
+				<p>Short books on the ideas behind modern LLM systems. Read each series in chapter order.</p>
 			</header>
 
-			<nav class="series-grid" aria-label="Concept series">
+			<nav class="series-grid" aria-label="Concept books">
 				{series.map((item) => (
 					<a href={item.hubPath} class="series-card">
 						<h2>{item.title}</h2>

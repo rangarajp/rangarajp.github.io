@@ -1,35 +1,29 @@
 ---
-title: 'LLM Inference Overview'
-description: 'How large language models generate tokens efficiently at serving time.'
+title: 'LLM Inference'
+description: 'How large language models generate tokens efficiently at serving time — from GPU silicon to batching and quantization.'
 pubDate: 'Aug 12 2026'
+seriesOrder: 2
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-LLM inference is what happens after training: turning a prompt into tokens, one step at a time, under latency and cost constraints. This series covers the ideas behind modern serving stacks — from GPU fundamentals and the generate loop to caching, batching, and decoding tricks.
+LLM inference is what happens after training: turning a prompt into tokens, one step at a time, under latency and cost constraints. This book covers the ideas behind modern serving stacks — from GPU fundamentals and the generate loop to caching, batching, and decoding tricks.
 
-Read them in order for the full picture, or jump to any topic that interests you.
+Read the chapters in order. Each one builds on the last.
 
-## 1. The pipeline
+## Contents
 
-Topics to cover in this series:
+1. [Inference engineering basics](./basics) — runtime, infrastructure, tooling; TTFT, ITL, TPS; arithmetic intensity
+2. [GPU basics](./gpu-basics) — SMs, cores, cache hierarchy, and architecture generations
+3. [GPU architecture for inference](./gpu-architecture) — FLOPS, memory, bandwidth; how to read specs and pick cards
+4. [vLLM basics and KV cache](./vllm-basics-kv-cache) — why decode is expensive and what the KV cache fixes
+5. [Serving engine internals](./serving-engine-internals) — the loop that batches, schedules, and streams tokens
+6. [Serving multiple models](./serving-multi-models) — one API, many checkpoints, cache and eviction
+7. [Batching](./inference-optimizations-batching) — continuous batching and chunked prefill
+8. [Quantization](./inference-optimizations-quantization) — trading precision for memory and throughput
 
-1. *GPU architecture* — FLOPS, memory, and bandwidth; how to read specs and pick cards
-2. *Autoregressive generation* — the prefill and decode loop that produces the next token
-3. *KV cache* — storing past keys and values so decode does not recompute the full sequence
-4. *Batching* — packing requests to keep GPUs busy without blowing up latency
-5. *Quantization* — trading precision for memory and throughput
-6. *Speculative decoding* — drafting with a small model and verifying with a large one
-7. *Serving trade-offs* — latency vs throughput, context length, and memory walls
+## Coming later
 
-Together, these ideas explain how inference engines turn a trained transformer into a practical API.
+- *Speculative decoding* — drafting with a small model and verifying with a large one
+- *Serving trade-offs* — latency vs throughput, context length, and memory walls
 
-## Related posts in this folder
-
-- [GPU Architecture for LLM Inference](./gpu-architecture)
-- [vLLM Basics and Why KV Cache Matters](./vllm-basics-kv-cache)
-- [LLM Serving Engine Internals](./serving-engine-internals)
-- [Serving Multiple Models](./serving-multi-models)
-- [LLM Inference Optimizations — Batching](./inference-optimizations-batching)
-- [LLM Inference Optimizations — Quantization](./inference-optimizations-quantization)
-
-Local lab paths: use gitignored `notebooks/llm-inference/local_paths.json` (from `local_paths.example.json`). Absolute machine paths are not published in these posts.
+Local lab paths: use gitignored `notebooks/llm-inference/local_paths.json` (from `local_paths.example.json`). Absolute machine paths are not published in these chapters.

@@ -2,11 +2,11 @@
 title: 'Training for Reasoning'
 description: 'From pretraining to SFT to RL with verifiers — how reasoning models learned to practice, not only read.'
 pubDate: 'Sep 5 2026'
-order: 4
+order: 3
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
-[Inference-time scaling](/concepts/reasoning-models/inference-time-scaling) keeps the weights fixed and spends more compute while answering. Training-time reasoning changes the weights so the model *practices* hard problems during training — and carries that habit into every later call.
+[Inference-time scaling](./inference-time-scaling) keeps the weights fixed and spends more compute while answering. Training-time reasoning changes the weights so the model *practices* hard problems during training — and carries that habit into every later call.
 
 A useful metaphor for the history:
 
@@ -89,7 +89,7 @@ advantage_i = (reward_i − mean(group_rewards)) / std(group_rewards)
 
 No separate critic network needed. This is cheaper and more stable for long reasoning traces, where a learned value function is hard to train accurately.
 
-→ Deep dive: [GRPO — Group Relative Policy Optimization](/concepts/reasoning-models/grpo) — rollouts, advantages, the KL penalty, and a [mini-training experiment](/concepts/reasoning-models/grpo#8-mini-training-results-qwen3-06b-20-steps-cpu) on Qwen3-0.6B showing +71% accuracy in 20 steps on CPU. Notebook: [grpo-training.ipynb](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/reasoning-models/grpo-training.ipynb)
+→ Deep dive: [GRPO — Group Relative Policy Optimization](./grpo) — rollouts, advantages, the KL penalty, and a [mini-training experiment](./grpo#8-mini-training-results-qwen3-06b-20-steps-cpu) on Qwen3-0.6B showing +71% accuracy in 20 steps on CPU. Notebook: [grpo-training.ipynb](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/reasoning-models/grpo-training.ipynb)
 
 ### 3.2 DeepSeek-R1 — the open recipe (DeepSeek, Jan 2025)
 
@@ -189,6 +189,8 @@ Replace `verifier` with a SymPy checker (math), a test executor (code), or a mix
 3. Reasoning RL (o1 / DeepSeek-R1 era) — questions + rule-based verifiers + GRPO/PPO; practice until the answer checks out; self-correction and extended deliberation emerge from the reward signal
 4. GRPO avoids a critic by normalising rewards within a group of rollouts for the same question — cheaper and more stable for long CoT
 5. DeepSeek-R1 (Jan 2025, open weights) uses a four-stage pipeline: cold-start SFT → reasoning RL → rejection-sampling SFT → second RL; R1-Zero skips the cold start and shows reasoning emerges from outcome rewards alone
-6. Pair with [inference-time scaling](/concepts/reasoning-models/inference-time-scaling): train the habit, then spend more decode compute when the problem is worth it
+6. Pair with [inference-time scaling](./inference-time-scaling): train the habit, then spend more decode compute when the problem is worth it
 
-Next in this series: deeper chain of thought, then search and verifiers.
+---
+
+*Next:* [GRPO](./grpo) — a deep dive into the RL algorithm behind DeepSeek-R1, with rollouts, advantages, KL penalty, and a mini-training experiment.

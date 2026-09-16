@@ -2,7 +2,7 @@
 title: 'vLLM Basics and Why KV Cache Matters'
 description: 'From next-word prediction to a production engine — why decode is expensive, what KV cache fixes, and how vLLM wires it all together.'
 pubDate: 'Sep 13 2026'
-order: 2
+order: 4
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
@@ -11,7 +11,7 @@ Model: `Qwen2.5-0.5B-Instruct` (vLLM 0.6.x, PyTorch 2.4, CUDA 11.8)
 
 Local checkpoint root comes from gitignored `notebooks/llm-inference/local_paths.json` (copy from `local_paths.example.json`). Do not commit absolute machine paths.
 
----
+With GPU memory and bandwidth in mind from the previous chapters, this chapter turns to the generate loop itself — why decode is expensive, what the KV cache fixes, and how vLLM wires it together.
 
 ## 1. What inference really is
 
@@ -320,4 +320,4 @@ vLLM's job: run that loop for *many* requests at once, pack them into efficient 
 5. *vLLM* manages all of this: load once, batch many requests, serve streaming or blocking — same weights throughout.
 6. *Batching alone gives ~3× throughput* vs one-by-one on the same hardware.
 
-*Next:* [LLM Serving Engine Internals](./serving-engine-internals) — how a request travels through an actual HTTP serving stack, from waiter (FastAPI) to line cook (ModelWorker).
+*Next:* [LLM Serving Engine Internals](./serving-engine-internals) — how a request travels through an HTTP serving stack, from waiter (FastAPI) to line cook (ModelWorker).

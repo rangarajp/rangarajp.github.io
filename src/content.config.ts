@@ -11,7 +11,10 @@ const concepts = defineCollection({
 			pubDate: z.coerce.date(),
 			updatedDate: z.coerce.date().optional(),
 			heroImage: z.optional(image()),
+			/** Chapter order within a series (articles only). */
 			order: z.number().optional(),
+			/** Book order on /concepts (hub pages only). */
+			seriesOrder: z.number().optional(),
 		}),
 });
 
