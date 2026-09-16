@@ -30,26 +30,21 @@ function noteLabel(count: number): string {
 			<nav class="series-grid" aria-label="Concept books">
 				{series.map((item) => (
 					<a href={item.hubPath} class="series-card">
+						<span class="card-kind">Book</span>
 						<h2>{item.title}</h2>
 						{item.description && <p class="series-description">{item.description}</p>}
 						<p class="series-meta">{noteLabel(item.articles.length)} →</p>
 					</a>
 				))}
+				{standalone.map((entry) => (
+					<a href={getConceptPath(entry.id)} class="series-card">
+						<span class="card-kind">Topic</span>
+						<h2>{entry.data.title}</h2>
+						{entry.data.description && <p class="series-description">{entry.data.description}</p>}
+						<p class="series-meta">Open →</p>
+					</a>
+				))}
 			</nav>
-
-			{standalone.length > 0 && (
-				<section class="standalone">
-					<h2>Other topics</h2>
-					<ul class="article-list">
-						{standalone.map((entry) => (
-							<li>
-								<a href={getConceptPath(entry.id)}>{entry.data.title}</a>
-								{entry.data.description && <p>{entry.data.description}</p>}
-							</li>
-						))}
-					</ul>
-				</section>
-			)}
 		</main>
 		<Footer />
 	</body>
@@ -73,7 +68,7 @@ function noteLabel(count: number): string {
 
 	.series-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 1.25rem;
 	}
 
@@ -85,6 +80,7 @@ function noteLabel(count: number): string {
 		border-radius: 8px;
 		text-decoration: none;
 		color: inherit;
+		min-height: 11rem;
 		transition:
 			box-shadow 0.2s,
 			border-color 0.2s;
@@ -93,6 +89,15 @@ function noteLabel(count: number): string {
 	.series-card:hover {
 		border-color: var(--accent);
 		box-shadow: var(--box-shadow);
+	}
+
+	.card-kind {
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: rgb(var(--gray));
+		margin-bottom: 0.45rem;
 	}
 
 	.series-card h2 {
@@ -115,37 +120,9 @@ function noteLabel(count: number): string {
 		color: var(--accent);
 	}
 
-	.standalone {
-		margin-top: 2.5rem;
-	}
-
-	.standalone h2 {
-		font-size: 1.15rem;
-		margin-bottom: 0.85rem;
-	}
-
-	.article-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.article-list li {
-		margin-bottom: 1rem;
-	}
-
-	.article-list a {
-		font-weight: 600;
-		text-decoration: none;
-	}
-
-	.article-list a:hover {
-		color: var(--accent);
-	}
-
-	.article-list p {
-		margin: 0.2rem 0 0;
-		color: rgb(var(--gray));
-		font-size: 0.95rem;
+	@media (max-width: 720px) {
+		.series-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

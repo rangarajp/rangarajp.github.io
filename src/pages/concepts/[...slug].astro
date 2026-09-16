@@ -52,43 +52,55 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 	</head>
 	<body>
 		<Header />
-		<main class="concepts-shell">
-			{seriesContext && (
-				<ConceptsBookSidebar
-					allSeries={allSeries}
-					currentSeriesId={seriesContext.series.id}
-					currentEntryId={entry.id}
-					isHub={isHub}
-				/>
-			)}
-
-			<article class="prose concepts-article">
+		{seriesContext && (
+			<ConceptsBookSidebar
+				allSeries={allSeries}
+				currentSeriesId={seriesContext.series.id}
+				currentEntryId={entry.id}
+				isHub={isHub}
+			/>
+		)}
+		<main class:list={['concepts-shell', { 'is-hub': isHub }]}>
+			<article class:list={['prose', 'concepts-article', { 'hub-article': isHub }]}>
 				<header class="article-header">
-					<nav class="breadcrumbs" aria-label="Breadcrumb">
-						<a href="/concepts">Concepts</a>
+					<div class="header-top">
+						<nav class="breadcrumbs" aria-label="Breadcrumb">
+							<a href="/concepts">Concepts</a>
+							{seriesContext && (
+								<>
+									<span class="separator">/</span>
+									{isHub ? (
+										<span aria-current="page">{seriesContext.series.title}</span>
+									) : (
+										<a href={seriesContext.series.hubPath}>{seriesContext.series.title}</a>
+									)}
+								</>
+							)}
+							{seriesContext && !isHub && (
+								<>
+									<span class="separator">/</span>
+									<span aria-current="page">{entry.data.title}</span>
+								</>
+							)}
+							{!seriesContext && (
+								<>
+									<span class="separator">/</span>
+									<span aria-current="page">{entry.data.title}</span>
+								</>
+							)}
+						</nav>
 						{seriesContext && (
-							<>
-								<span class="separator">/</span>
-								{isHub ? (
-									<span aria-current="page">{seriesContext.series.title}</span>
-								) : (
-									<a href={seriesContext.series.hubPath}>{seriesContext.series.title}</a>
-								)}
-							</>
+							<button
+								type="button"
+								class="contents-btn"
+								data-sidebar-toggle
+								aria-expanded="false"
+								aria-controls="book-sidebar-panel"
+							>
+								Contents
+							</button>
 						)}
-						{seriesContext && !isHub && (
-							<>
-								<span class="separator">/</span>
-								<span aria-current="page">{entry.data.title}</span>
-							</>
-						)}
-						{!seriesContext && (
-							<>
-								<span class="separator">/</span>
-								<span aria-current="page">{entry.data.title}</span>
-							</>
-						)}
-					</nav>
+					</div>
 					<a href={backHref} class="back-link">&larr; {backLabel}</a>
 					{seriesContext && !isHub && currentIndex >= 0 && (
 						<p class="chapter-eyebrow">Chapter {currentIndex + 1} of {articles.length}</p>
@@ -97,15 +109,36 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 					<p class="description">{entry.data.description}</p>
 				</header>
 
-				{isHub && firstChapter && (
-					<p class="start-reading">
-						<a href={getConceptPath(firstChapter.id)}>
-							Start with Chapter 1 — {firstChapter.data.title} →
-						</a>
-					</p>
-				)}
+				{isHub && seriesContext ? (
+					<>
+						<section class="hub-chapters" aria-label="Chapters">
+							<div class="hub-chapter-grid">
+								{articles.map((article, index) => (
+									<a class="hub-chapter-card" href={getConceptPath(article.id)}>
+										<span class="hub-chapter-num">Chapter {index + 1}</span>
+										<span class="hub-chapter-title">{article.data.title}</span>
+										{article.data.description && (
+											<span class="hub-chapter-desc">{article.data.description}</span>
+										)}
+									</a>
+								))}
+							</div>
+							{firstChapter && (
+								<p class="start-reading">
+									<a href={getConceptPath(firstChapter.id)}>
+										Start with Chapter 1 — {firstChapter.data.title} →
+									</a>
+								</p>
+							)}
+						</section>
 
-				<Content />
+						<div class="hub-more prose">
+							<Content />
+						</div>
+					</>
+				) : (
+					<Content />
+				)}
 
 				{seriesContext && !isHub && currentIndex >= 0 && (
 					<nav class="page-nav" aria-label="Chapter navigation">
@@ -145,20 +178,14 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 
 <style>
 	main.concepts-shell {
-		width: min(72rem, calc(100% - 2em));
+		width: min(46rem, calc(100% - 2em));
 		max-width: none;
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 1.5rem;
-		align-items: start;
+		margin-left: auto;
+		margin-right: auto;
 	}
 
-	@media (min-width: 961px) {
-		main.concepts-shell {
-			grid-template-columns: 16.5rem minmax(0, 42rem);
-			justify-content: center;
-			column-gap: 2.25rem;
-		}
+	main.concepts-shell.is-hub {
+		width: min(58rem, calc(100% - 2em));
 	}
 
 	.concepts-article {
@@ -171,12 +198,38 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 		border-bottom: 1px solid rgb(var(--gray-light));
 	}
 
+	.header-top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.contents-btn {
+		flex-shrink: 0;
+		font: inherit;
+		font-size: 0.82rem;
+		font-weight: 700;
+		padding: 0.35rem 0.7rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 999px;
+		background: #fff;
+		color: rgb(var(--gray-dark));
+		cursor: pointer;
+	}
+
+	.contents-btn:hover {
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+
 	.breadcrumbs {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 0.35rem;
-		margin-bottom: 0.75rem;
+		margin-bottom: 0;
 		font-size: 0.85rem;
 		color: rgb(var(--gray));
 	}
@@ -230,8 +283,64 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 		margin: 0;
 	}
 
+	.hub-chapters {
+		margin-top: 0.5rem;
+	}
+
+	.hub-more {
+		margin-top: 2.25rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid rgb(var(--gray-light));
+	}
+
+	.hub-chapter-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		gap: 1rem;
+	}
+
+	.hub-chapter-card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		padding: 1.1rem 1.15rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 8px;
+		text-decoration: none;
+		color: inherit;
+		transition:
+			border-color 0.2s,
+			box-shadow 0.2s;
+		background: #fff;
+	}
+
+	.hub-chapter-card:hover {
+		border-color: var(--accent);
+		box-shadow: var(--box-shadow);
+	}
+
+	.hub-chapter-num {
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: rgb(var(--gray));
+	}
+
+	.hub-chapter-title {
+		font-size: 1.05rem;
+		font-weight: 700;
+		line-height: 1.3;
+	}
+
+	.hub-chapter-desc {
+		font-size: 0.9rem;
+		line-height: 1.45;
+		color: rgb(var(--gray));
+	}
+
 	.start-reading {
-		margin: 0 0 1.75rem;
+		margin: 1.5rem 0 0;
 		font-size: 0.95rem;
 		font-weight: 600;
 	}
