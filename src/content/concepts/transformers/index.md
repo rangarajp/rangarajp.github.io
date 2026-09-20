@@ -8,4 +8,7 @@ heroImage: '../../../assets/blog-placeholder-3.jpg'
 
 Read the chapters in order. Each one assumes the previous.
 
-Ready to code the full encoder–decoder? See [Transformer from Scratch](/build-from-scratch/transformers).
+Ready to code?
+
+- [GPT from Scratch](/build-from-scratch/gpt) — decoder-only next-token model
+- [Transformer from Scratch](/build-from-scratch/transformers) — English→French encoder–decoder

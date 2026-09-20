@@ -1,0 +1,213 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_TITLE } from '../../consts';
+
+const notebookUrl =
+	'https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/LLM_Scratch/transformers.ipynb';
+const notebookDir =
+	'https://github.com/rangarajp/rangarajp.github.io/tree/main/notebooks/LLM_Scratch';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead
+			title={`GPT from Scratch - ${SITE_TITLE}`}
+			description="Build a GPT-style decoder-only Transformer from scratch in PyTorch — tokenizer through training on The Verdict."
+		/>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<article class="prose">
+				<header class="article-header">
+					<nav class="breadcrumbs" aria-label="Breadcrumb">
+						<a href="/build-from-scratch">Build from Scratch</a>
+						<span class="separator">/</span>
+						<span aria-current="page">GPT</span>
+					</nav>
+					<a href="/build-from-scratch" class="back-link">&larr; Build from Scratch</a>
+					<h1>GPT from Scratch</h1>
+					<p class="description">
+						A decoder-only Transformer in PyTorch: build each piece, smoke-test with tiny
+						tensors, then train on <em>The Verdict</em>.
+					</p>
+				</header>
+
+				<p>
+					Theory lives under
+					<a href="/concepts/transformers">Concepts → Transformers</a>. This page walks the
+					runnable notebook in
+					<a href={notebookDir}><code>notebooks/LLM_Scratch/</code></a>. For the
+					encoder–decoder seq2seq build, see
+					<a href="/build-from-scratch/transformers">Transformer from Scratch</a>.
+				</p>
+
+				<p>
+					<em>Flow:</em> tokenizer → dataset → embeddings → attention → block → GPT →
+					generate → train.
+				</p>
+
+				<h2>What you build</h2>
+				<ul>
+					<li>GPT-2 BPE tokenization via <code>tiktoken</code></li>
+					<li>Sliding-window next-token dataset and DataLoader</li>
+					<li>
+						Causal multi-head attention, LayerNorm, GELU feed-forward, and a stacked GPT
+						model
+					</li>
+					<li>Greedy text generation and a simple AdamW training loop on <em>The Verdict</em></li>
+				</ul>
+
+				<h2>1. Config</h2>
+				<p>
+					Shared hyperparameters used by every module (short context for fast training):
+				</p>
+				<ul>
+					<li><code>vocab_size=50257</code> (GPT-2 BPE)</li>
+					<li><code>context_length=256</code>, <code>emb_dim=768</code></li>
+					<li><code>n_heads=12</code>, <code>n_layers=12</code></li>
+					<li><code>drop_rate=0.1</code>, <code>qkv_bias=False</code></li>
+				</ul>
+				<p>
+					That is a GPT-2–small–shaped stack with a shorter context window so CPU/GPU
+					smoke runs stay practical.
+				</p>
+
+				<h2>2. Tokenizer and dataset</h2>
+				<p>
+					Encode text to integer IDs with GPT-2 BPE, then cut a sliding window over the
+					token stream:
+				</p>
+				<ul>
+					<li><em>Input</em> — tokens <code>[t0 … tN−1]</code></li>
+					<li><em>Target</em> — next-token shift <code>[t1 … tN]</code></li>
+				</ul>
+				<p>
+					A tiny string smoke test checks that <code>inputs[:, 1:]</code> equals
+					<code>targets[:, :-1]</code> before any model code runs.
+				</p>
+
+				<h2>3. Embeddings</h2>
+				<p>
+					Each token ID and each position becomes a vector; their sum is the model input:
+				</p>
+				<pre><code>token_embeddings + pos_embeddings → (batch, seq, emb_dim)</code></pre>
+
+				<h2>4. Attention stack</h2>
+				<p>Attention is built in three steps so shapes stay obvious:</p>
+				<ol>
+					<li>
+						<em>Self-attention</em> — single head, no batch, no mask yet
+						(<code>Q Kᵀ / √d</code>, softmax, times <code>V</code>)
+					</li>
+					<li>
+						<em>Causal attention</em> — batched, with an upper-triangular mask so token
+						<em>i</em> cannot attend to future tokens
+					</li>
+					<li>
+						<em>Multi-head attention</em> — split embedding into <em>h</em> heads, attend
+						per head, concat, project with <code>W_o</code>
+					</li>
+				</ol>
+				<pre><code>(B, S, d) → Q,K,V → (B, h, S, d/h) → scores → weights @ V → (B, S, d) → W_o</code></pre>
+
+				<h2>5. Block and GPT model</h2>
+				<p>Each transformer block is pre-norm with residuals:</p>
+				<pre><code>x → LayerNorm → MHA → dropout → +x
+  → LayerNorm → FFN (4× emb, GELU) → dropout → +x</code></pre>
+				<p>
+					<code>GPTModel</code> stacks token + position embeddings, <em>N</em> blocks,
+					final LayerNorm, then a linear head to vocab logits
+					<code>(batch, seq, vocab_size)</code>.
+				</p>
+
+				<h2>6. Generation and training</h2>
+				<p>
+					Greedy decode takes the last-position logits, argmax, appends, and repeats —
+					untrained samples are nonsense by design. Training uses cross-entropy over the
+					next-token shift on <em>The Verdict</em> (downloaded if missing), AdamW
+					(<code>lr=4e-4</code>), and periodic eval plus a printed sample each epoch.
+				</p>
+				<p>
+					Untrained loss should sit near <code>ln(vocab) ≈ 10.8</code>. After a few epochs
+					loss drops and samples start echoing the story’s style.
+				</p>
+				<pre><code>cd notebooks/LLM_Scratch
+# open transformers.ipynb and run top to bottom</code></pre>
+
+				<h2>Code index</h2>
+				<ul>
+					<li>
+						<a href={notebookUrl}>transformers.ipynb</a> — full walkthrough (all sections
+						above)
+					</li>
+					<li>
+						<a href={`${notebookDir}/the-verdict.txt`}>the-verdict.txt</a> — training text
+						(or auto-downloaded)
+					</li>
+				</ul>
+
+				<p>
+					For the mental model behind each block, start at
+					<a href="/concepts/transformers">Transformers Overview</a>. For serving-side math
+					on matmul FLOPs and attention cost, see
+					<a href="/concepts/llm-inference/inference-engineering-mathematics">Inference Engineering Mathematics</a>.
+				</p>
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	.article-header {
+		margin-bottom: 2rem;
+		padding-bottom: 1.5rem;
+		border-bottom: 1px solid rgb(var(--gray-light));
+	}
+	.breadcrumbs {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.35rem;
+		margin-bottom: 0.75rem;
+		font-size: 0.85rem;
+		color: rgb(var(--gray));
+	}
+	.breadcrumbs a {
+		color: rgb(var(--gray));
+		text-decoration: none;
+	}
+	.breadcrumbs a:hover {
+		color: var(--accent);
+	}
+	.separator {
+		color: rgb(var(--gray-light));
+	}
+	.back-link {
+		display: inline-block;
+		margin-bottom: 1rem;
+		font-size: 0.9rem;
+		color: rgb(var(--gray));
+		text-decoration: none;
+	}
+	.back-link:hover {
+		color: var(--accent);
+	}
+	.article-header h1 {
+		font-size: 1.85rem;
+		font-weight: 700;
+		letter-spacing: -0.015em;
+		line-height: 1.25;
+		margin-bottom: 0.5rem;
+	}
+	.description {
+		font-size: 1.05rem;
+		line-height: 1.5;
+		color: rgb(var(--gray));
+		margin: 0;
+	}
+</style>

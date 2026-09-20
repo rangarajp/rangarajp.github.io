@@ -41,3 +41,9 @@ models/
 
 # temporary files
 todo.md
+~$*
+*.pyc
+__pycache__/
+
+# notebook scratch exports
+notebooks/**/_export_preview.txt

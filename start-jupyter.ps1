@@ -1,15 +1,26 @@
 # start-jupyter.ps1
-# Starts the Jupyter server for this workspace using .venv-qwen.
+# Starts a detached Jupyter server on :8888 using .venv-qwen.
+# Uses Start-Process (not Start-Job) so the server survives after this script exits.
 
 $PORT   = 8888
 $TOKEN  = "qwendemo"
 $ROOT   = $PSScriptRoot
 $PYTHON = Join-Path $ROOT ".venv-qwen\Scripts\python.exe"
 $LOG    = Join-Path $ROOT "jupyter.log"
+$ERR    = Join-Path $ROOT "jupyter.err.log"
+$PIDFILE = Join-Path $ROOT "jupyter.pid"
 
-# Check if already running
-$listening = netstat -ano 2>$null | Select-String ":$PORT "
-if ($listening) {
+function Test-PortOpen {
+    param([int]$Port)
+    $null -ne (netstat -ano 2>$null | Select-String ":$Port\s")
+}
+
+if (-not (Test-Path $PYTHON)) {
+    Write-Host "Missing $PYTHON" -ForegroundColor Red
+    exit 1
+}
+
+if (Test-PortOpen -Port $PORT) {
     Write-Host ""
     Write-Host "Jupyter already running on port $PORT." -ForegroundColor Green
     Write-Host "  URL: http://localhost:${PORT}/?token=${TOKEN}" -ForegroundColor Cyan
@@ -20,39 +31,43 @@ if ($listening) {
 Write-Host ""
 Write-Host "Starting Jupyter server on port $PORT ..." -ForegroundColor Yellow
 
-# Run as a background job so this script returns immediately
-$job = Start-Job -ScriptBlock {
-    param($python, $port, $token, $root, $log)
-    Set-Location $root
-    & $python -m jupyter notebook `
-        --no-browser `
-        "--port=$port" `
-        "--NotebookApp.token=$token" `
-        "--NotebookApp.password=" `
-        "--notebook-dir=$root" *> $log
-} -ArgumentList $PYTHON, $PORT, $TOKEN, $ROOT, $LOG
+# Detached process — survives after this script / task ends
+$proc = Start-Process -FilePath $PYTHON -ArgumentList @(
+    "-m", "jupyter", "notebook",
+    "--no-browser",
+    "--port=$PORT",
+    "--NotebookApp.token=$TOKEN",
+    "--NotebookApp.password=",
+    "--notebook-dir=$ROOT"
+) -WorkingDirectory $ROOT -WindowStyle Hidden `
+  -RedirectStandardOutput $LOG -RedirectStandardError $ERR -PassThru
 
-Start-Sleep -Seconds 5
+Set-Content -Path $PIDFILE -Value $proc.Id -Encoding ascii
 
-# Verify
-$running = netstat -ano 2>$null | Select-String ":$PORT "
-if ($running) {
-    Write-Host "Jupyter started successfully." -ForegroundColor Green
-} else {
-    Write-Host "Waiting a few more seconds..." -ForegroundColor Yellow
-    Start-Sleep -Seconds 5
-    $running = netstat -ano 2>$null | Select-String ":$PORT "
-    if ($running) {
-        Write-Host "Jupyter started successfully." -ForegroundColor Green
-    } else {
-        Write-Host "Could not confirm start. Check jupyter.log for errors." -ForegroundColor Red
-        if (Test-Path $LOG) { Get-Content $LOG -Tail 10 }
+$ok = $false
+for ($i = 0; $i -lt 20; $i++) {
+    Start-Sleep -Seconds 1
+    if (Test-PortOpen -Port $PORT) {
+        $ok = $true
+        break
     }
+    if ($proc.HasExited) {
+        Write-Host "Jupyter exited early (code $($proc.ExitCode)). See jupyter.err.log" -ForegroundColor Red
+        if (Test-Path $ERR) { Get-Content $ERR -Tail 20 }
+        exit 1
+    }
+}
+
+if ($ok) {
+    Write-Host "Jupyter started successfully (pid $($proc.Id))." -ForegroundColor Green
+} else {
+    Write-Host "Port $PORT not open yet. Check jupyter.log / jupyter.err.log" -ForegroundColor Red
+    if (Test-Path $ERR) { Get-Content $ERR -Tail 20 }
+    exit 1
 }
 
 Write-Host ""
 Write-Host "  URL: http://localhost:${PORT}/?token=${TOKEN}" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "In Cursor: open any notebook -> Select Kernel -> Existing Jupyter Server -> paste the URL." -ForegroundColor Gray
-Write-Host "Cursor remembers this. You only need to do this once." -ForegroundColor Gray
+Write-Host "In Cursor: Select Kernel -> Existing Jupyter Server -> paste the URL." -ForegroundColor Gray
 Write-Host ""

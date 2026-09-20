@@ -51,10 +51,15 @@ const codeBase =
 						sizes="(max-width: 900px) 100vw, 900px"
 					/>
 					<figcaption>
-						Encoder–decoder flow with expanded multi-head attention. Shapes assume
-						batch=128, sequence=100, d_model=512, heads=8.
+						<span class="figure-label">Figure 1.</span> Encoder–decoder flow with expanded
+						multi-head attention — shapes assume batch 128, sequence 100, d_model 512, heads 8
 					</figcaption>
 				</figure>
+
+				<p>
+					For a decoder-only GPT walkthrough (next-token prediction), see
+					<a href="/build-from-scratch/gpt">GPT from Scratch</a>.
+				</p>
 
 				<h2>What you build</h2>
 				<ul>
@@ -82,19 +87,19 @@ const codeBase =
 				</p>
 				<ul>
 					<li>
-						<strong>Encoder input:</strong> <code>&lt;sos&gt; … tokens … &lt;eos&gt;</code> + pad
+						<em>Encoder input</em> — <code>&lt;sos&gt; … tokens … &lt;eos&gt;</code> + pad
 					</li>
 					<li>
-						<strong>Decoder input:</strong> <code>&lt;sos&gt; … tokens</code> + pad (teacher forcing)
+						<em>Decoder input</em> — <code>&lt;sos&gt; … tokens</code> + pad (teacher forcing)
 					</li>
 					<li>
-						<strong>Label:</strong> tokens + <code>&lt;eos&gt;</code> + pad
+						<em>Label</em> — tokens + <code>&lt;eos&gt;</code> + pad
 					</li>
 					<li>
-						<strong>Encoder mask:</strong> padding only → <code>(batch, 1, 1, seq_len)</code>
+						<em>Encoder mask</em> — padding only → <code>(batch, 1, 1, seq_len)</code>
 					</li>
 					<li>
-						<strong>Decoder mask:</strong> padding <em>and</em> causal lower-triangular →
+						<em>Decoder mask</em> — padding <em>and</em> causal lower-triangular →
 						<code>(batch, 1, seq_len, seq_len)</code>
 					</li>
 				</ul>
@@ -123,7 +128,7 @@ const codeBase =
 					<li>Final linear projection + log-softmax over the target vocabulary</li>
 				</ol>
 				<p>
-					Cross-attention does <strong>not</strong> reuse encoder <code>Wk</code>/<code>Wv</code>.
+					Cross-attention does <em>not</em> reuse encoder <code>Wk</code>/<code>Wv</code>.
 					Each decoder cross-attention block projects the shared encoder output with its own
 					<code>Wk</code> and <code>Wv</code>.
 				</p>

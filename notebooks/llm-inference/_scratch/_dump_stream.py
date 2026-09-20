@@ -3,7 +3,7 @@ import pathlib
 import re
 
 here = pathlib.Path(__file__).resolve().parent
-base = here / "single_model_llm_serving"
+base = here.parent / "single_model_llm_serving"
 out = here / "_stream_dump"
 out.mkdir(exist_ok=True)
 

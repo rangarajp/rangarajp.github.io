@@ -6,6 +6,12 @@ import { SITE_TITLE } from '../../consts';
 
 const builds = [
 	{
+		title: 'GPT from Scratch',
+		href: '/build-from-scratch/gpt',
+		description:
+			'Decoder-only GPT in PyTorch: tokenizer, causal attention, transformer blocks, and training on The Verdict.',
+	},
+	{
 		title: 'Transformer from Scratch',
 		href: '/build-from-scratch/transformers',
 		description:
@@ -17,13 +23,16 @@ const builds = [
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`Build from Scratch - ${SITE_TITLE}`} description="Implementing things from the ground up" />
+		<BaseHead
+			title={`Build from Scratch - ${SITE_TITLE}`}
+			description="Implementations from the ground up — GPT and encoder–decoder Transformers in PyTorch."
+		/>
 	</head>
 	<body>
 		<Header />
 		<main>
 			<h1>Build from Scratch</h1>
-			<p>Implementing things from the ground up.</p>
+			<p>Implementing models from the ground up — runnable notebooks with explicit shapes.</p>
 			<nav class="builds">
 				{builds.map((build) => (
 					<a href={build.href} class="build-card">

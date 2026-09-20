@@ -522,6 +522,10 @@ Parameters per block: ~7 million
 
 The transformer block is the *fundamental repeating unit*. Real models stack it 6–96 times, each layer with its own independent parameters, progressively refining every token's representation from raw embedding to rich contextual meaning. Understanding this block is understanding the core of transformers.
 
-This is the last published chapter in the series. To build a working transformer from scratch, [Andrej Karpathy's nanoGPT](https://github.com/karpathy/nanoGPT) is an excellent hands-on companion.
+This is the last published chapter in the series. To build working models yourself:
+
+- [GPT from Scratch](/build-from-scratch/gpt) — decoder-only stack in this repo
+- [Transformer from Scratch](/build-from-scratch/transformers) — English→French encoder–decoder
+- [Andrej Karpathy's nanoGPT](https://github.com/karpathy/nanoGPT) — another excellent hands-on companion
 
 ← [Back to the Transformers series](./).

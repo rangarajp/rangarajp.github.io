@@ -3,7 +3,7 @@ import pathlib
 import re
 
 here = pathlib.Path(__file__).resolve().parent
-nb_path = here / "single_model_llm_serving" / "main.ipynb"
+nb_path = here.parent / "single_model_llm_serving" / "main.ipynb"
 out_dir = here / "_flows"
 out_dir.mkdir(exist_ok=True)
 
