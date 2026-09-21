@@ -8,7 +8,7 @@
 	--prose-measure: 42rem;
 	font-family: var(--font-sans); /* O'Reilly web: sans-serif body + heads */
 	font-size: 1.0625rem; /* ~17px at 16px root; body sets 18px */
-	line-height: 1.65;
+	line-height: 1.7;
 	color: rgb(var(--gray-dark));
 }
 
@@ -19,7 +19,7 @@
 .prose h5,
 .prose h6 {
 	font-family: var(--font-sans);
-	font-weight: 700;
+	font-weight: 600;
 }
 
 .prose > *:first-child {
@@ -28,27 +28,29 @@
 
 /* --- Headings: calm hierarchy (book chapter feel) --- */
 .prose h2 {
-	font-size: 1.35rem;
-	font-weight: 700;
+	font-size: 1.3rem;
+	font-weight: 600;
 	letter-spacing: -0.01em;
-	line-height: 1.3;
+	line-height: 1.35;
 	margin: 2.25rem 0 0.75rem;
 	padding-top: 0.25rem;
+	scroll-margin-top: 4.5rem;
 	color: rgb(var(--black));
 	border-top: none;
 }
 
 .prose h3 {
-	font-size: 1.12rem;
-	font-weight: 700;
-	line-height: 1.35;
+	font-size: 1.1rem;
+	font-weight: 600;
+	line-height: 1.4;
 	margin: 1.75rem 0 0.5rem;
+	scroll-margin-top: 4.5rem;
 	color: rgb(var(--black));
 }
 
 .prose h4 {
 	font-size: 1.02rem;
-	font-weight: 700;
+	font-weight: 600;
 	margin: 1.35rem 0 0.4rem;
 	color: rgb(var(--black));
 }
@@ -62,13 +64,14 @@
 	margin-bottom: 1rem;
 }
 
-/* Emphasis: prefer italic; keep bold rare and light */
+/* Emphasis: prefer italic; neutralize bold so ** does not shout */
 .prose em {
 	font-style: italic;
 }
 
-.prose strong {
-	font-weight: 700;
+.prose strong,
+.prose b {
+	font-weight: inherit;
 }
 
 .prose ol,
@@ -142,7 +145,7 @@
 	display: block;
 	font-family: var(--font-sans);
 	font-size: 0.7rem;
-	font-weight: 700;
+	font-weight: 600;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 	color: #8a8378;
@@ -177,7 +180,7 @@
 
 .prose figcaption .figure-label {
 	font-style: normal;
-	font-weight: 700;
+	font-weight: 600;
 	color: rgb(var(--gray-dark));
 	margin-right: 0.25em;
 }
@@ -197,7 +200,7 @@
 
 .prose thead th {
 	background: #f0f2f5;
-	font-weight: 700;
+	font-weight: 600;
 	border-bottom: 2px solid #c8d0dc;
 }
 
@@ -209,11 +212,21 @@
 	white-space: nowrap;
 }
 
-/* --- Math --- */
+/* --- Math: match body size (KaTeX default ~1.21em is too large) --- */
+.prose .katex {
+	font-size: 1em;
+}
+
 .prose .katex-display {
 	margin: 1.15rem 0;
 	overflow-x: auto;
 	overflow-y: hidden;
+	font-size: 1.05em;
+}
+
+.prose .katex-display > .katex {
+	font-size: 1em;
+	text-align: center;
 }
 
 /* --- Blockquotes / callouts --- */

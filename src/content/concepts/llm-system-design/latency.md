@@ -40,10 +40,10 @@ The main metrics are:
 
 | Metric | Meaning | Matters most for |
 |---|---|---|
-| **Time to first token (TTFT)** | Time from request submission until the first generated token arrives | Interactive chat and perceived responsiveness |
-| **Inter-token latency (ITL)** | Delay between consecutive streamed tokens | How smooth the response feels |
-| **Time per output token (TPOT)** | Average decode time for each generated token after the first | Generation speed and capacity planning |
-| **End-to-end latency (E2E)** | Time until the complete, usable response is available | APIs, structured output, agents, and batch jobs |
+| *Time to first token (TTFT)* | Time from request submission until the first generated token arrives | Interactive chat and perceived responsiveness |
+| *Inter-token latency (ITL)* | Delay between consecutive streamed tokens | How smooth the response feels |
+| *Time per output token (TPOT)* | Average decode time for each generated token after the first | Generation speed and capacity planning |
+| *End-to-end latency (E2E)* | Time until the complete, usable response is available | APIs, structured output, agents, and batch jobs |
 
 A useful approximation is:
 
@@ -483,7 +483,7 @@ The order matters:
 *Optimizing only average latency*  
 A good average can coexist with an unusable p99. Design and alert on percentile SLOs.
 
-**Calling streaming a reduction in total latency**  
+*Calling streaming a reduction in total latency*  
 Streaming usually improves perceived responsiveness, not completion time.
 
 *Treating semantic similarity as answer equivalence*  
@@ -492,13 +492,13 @@ Similar wording does not guarantee the same authorization, context, time, or int
 *Using retries to fix overload*  
 Retries add traffic to an already overloaded service. Use bounded retries with jitter, admission control, backpressure, and circuit breakers.
 
-**Increasing batch size without a queue budget**  
+*Increasing batch size without a queue budget*  
 Throughput improves while interactive TTFT becomes worse.
 
-**Caching without model, prompt, or data versions**  
+*Caching without model, prompt, or data versions*  
 Old answers silently survive behavior and knowledge changes.
 
-**Optimizing model inference while serial tools dominate**  
+*Optimizing model inference while serial tools dominate*  
 Trace the full request before deciding where to optimize.
 
 ---

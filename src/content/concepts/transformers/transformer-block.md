@@ -82,7 +82,7 @@ Let's continue with our "bank" token from the previous posts.
  Geographic, Financial, Nature, Action, Person
 ```
 
-**After Multi-Head Attention (from Multi-Head Attention post):**
+*After Multi-Head Attention (from Multi-Head Attention post):*
 ```
 [0.293, 0.134, 0.256, 0.211, 0.125]
 ```
@@ -177,7 +177,7 @@ Without it, attention and FFN outputs can have wildly different magnitudes acros
 
 The Feed-Forward Network (FFN) is a two-layer dense network that adds *non-linear reasoning capacity*.
 
-Structure: **Dense(d_model → d_ff) → Activation → Dense(d_ff → d_model)**
+Structure: *Dense(d_model → d_ff) → Activation → Dense(d_ff → d_model)*
 
 In our case:
 - d_model = 5 (our embedding dimension)
@@ -401,7 +401,7 @@ This is much richer than the original ambiguous embedding!
 
 ## 10. Stacking Blocks: Building Depth
 
-One Transformer Block is powerful, but real transformers stack them: **6 layers in BERT, 12 in GPT-2, 96 in GPT-3**.
+One Transformer Block is powerful, but real transformers stack them: *6 layers in BERT, 12 in GPT-2, 96 in GPT-3*.
 
 Each block:
 - Takes the previous block's output as input
@@ -448,12 +448,12 @@ Each component serves a purpose:
 
 | Component | Purpose |
 |-----------|---------|
-| **Multi-Head Attention** | Capture relationships between tokens |
-| **Residual Connection** | Preserve information, enable deep networks |
-| **Layer Normalization** | Stabilize values, speed up training |
-| **Feed-Forward Network** | Add non-linear reasoning capacity |
-| **Residual (again)** | Enable gradients to flow, prevent depth penalty |
-| **Layer Norm (again)** | Consistency for next layer |
+| *Multi-Head Attention* | Capture relationships between tokens |
+| *Residual Connection* | Preserve information, enable deep networks |
+| *Layer Normalization* | Stabilize values, speed up training |
+| *Feed-Forward Network* | Add non-linear reasoning capacity |
+| *Residual (again)* | Enable gradients to flow, prevent depth penalty |
+| *Layer Norm (again)* | Consistency for next layer |
 
 *Without residuals:* Adding 12 layers would make training nearly impossible (vanishing gradients).
 
@@ -496,7 +496,7 @@ Parameters per block: ~7 million
 
 ## 13. Key Takeaways
 
-1. **One Transformer Block = Attention + FFN + Residuals + Layer Norm**
+1. *One Transformer Block = Attention + FFN + Residuals + Layer Norm*
 
 2. *Information flow:*
    - Multi-head attention contextualizes

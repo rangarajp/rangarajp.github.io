@@ -55,7 +55,7 @@ Client → FastAPI → ModelManager → (cache hit?)
 
 ## 2. Register models (store)
 
-`config/models.json` lists what the platform *knows about*. Paths are **folder names** under `MODELS_DIR` — not absolute machine paths.
+`config/models.json` lists what the platform *knows about*. Paths are *folder names* under `MODELS_DIR` — not absolute machine paths.
 
 ```json
 {
@@ -82,7 +82,7 @@ Client → FastAPI → ModelManager → (cache hit?)
 }
 ```
 
-Machine-local roots live in a **gitignored** file (never published):
+Machine-local roots live in a *gitignored* file (never published):
 
 ```text
 local_paths.example.json   # committed template
@@ -101,7 +101,7 @@ os.environ["MODELS_DIR"] = str(MODELS_DIR)
 
 ## 3. LRU manager + engine
 
-Default capacity is **2** — enough to keep both lab models warm. On a miss with a full cache, the oldest entry is unloaded.
+Default capacity is *2* — enough to keep both lab models warm. On a miss with a full cache, the oldest entry is unloaded.
 
 ```python
 # app/manager.py (core of get_model_worker)
@@ -170,7 +170,7 @@ loaded: {}
 
 ### Generate — Qwen
 
-**Input**
+*Input*
 
 ```json
 {
@@ -180,7 +180,7 @@ loaded: {}
 }
 ```
 
-**Output**
+*Output*
 
 ```json
 {
@@ -193,7 +193,7 @@ loaded: {}
 
 ### Generate — TinyLlama
 
-**Input**
+*Input*
 
 ```json
 {
@@ -203,7 +203,7 @@ loaded: {}
 }
 ```
 
-**Output**
+*Output*
 
 ```json
 {
@@ -216,7 +216,7 @@ loaded: {}
 
 After both models have been hit once (`max_models=2`):
 
-**Output**
+*Output*
 
 ```text
 loaded_models: {
@@ -229,7 +229,7 @@ loaded_models: {
 
 Four `/generate` calls in parallel (`max_new_tokens=40`).
 
-**Input**
+*Input*
 
 | model_id | prompt |
 | -------- | ------ |
@@ -238,7 +238,7 @@ Four `/generate` calls in parallel (`max_new_tokens=40`).
 | `qwen2.5-0.5b` | What is speculative decoding? One sentence. |
 | `tinyllama-1.1b` | What is a transformer? One sentence. |
 
-**Output**
+*Output*
 
 | model_id | time | generated_text (truncated) |
 | -------- | ---- | ------------------------- |
@@ -253,7 +253,7 @@ Every response echoed the requested `model_id` — routing stayed correct under 
 
 Same prompt twice on an already-loaded Qwen worker.
 
-**Input**
+*Input*
 
 ```json
 {
@@ -263,7 +263,7 @@ Same prompt twice on an already-loaded Qwen worker.
 }
 ```
 
-**Output**
+*Output*
 
 ```text
 call 1: 1.477s  status=200
@@ -278,25 +278,25 @@ Once the worker is cached, repeat calls are generation cost only — no reload s
 
 ### Errors
 
-**Input** — invalid model
+*Input* — invalid model
 
 ```json
 { "model_id": "does-not-exist", "prompt": "hello", "max_new_tokens": 8 }
 ```
 
-**Output**
+*Output*
 
 ```json
 { "detail": "Model does-not-exist not found" }
 ```
 
-**Input** — empty prompt
+*Input* — empty prompt
 
 ```json
 { "model_id": "qwen2.5-0.5b", "prompt": "", "max_new_tokens": 8 }
 ```
 
-**Output**
+*Output*
 
 ```text
 500  — Empty prompt
@@ -304,7 +304,7 @@ Once the worker is cached, repeat calls are generation cost only — no reload s
 
 ### Token length vs latency (warm Qwen)
 
-**Input**
+*Input*
 
 ```json
 {
@@ -314,7 +314,7 @@ Once the worker is cached, repeat calls are generation cost only — no reload s
 }
 ```
 
-**Output**
+*Output*
 
 | `max_new_tokens` | Latency | Approx. chars |
 | ---------------- | ------- | ------------- |
@@ -327,7 +327,7 @@ Decode cost scales roughly with tokens generated — same idea as single-model s
 
 ### LRU eviction (`max_models=1`)
 
-**Input**
+*Input*
 
 ```json
 POST /admin/cache/config   { "max_models": 1 }
@@ -335,7 +335,7 @@ POST /admin/cache/clear
 POST /generate             alternate qwen2.5-0.5b ↔ tinyllama-1.1b
 ```
 
-**Output (expected)**
+*Output (expected)*
 
 With capacity 1, `loaded_models` holds only the last requested model; the previous worker is unloaded (server logs show `LRU eviction`). Restore with `{ "max_models": 2 }` when done.
 
@@ -343,18 +343,18 @@ With capacity 1, `loaded_models` holds only the last requested model; the previo
 
 ## 6. What this demo teaches
 
-- **Store ≠ cache.** Registration is cheap; loading weights is expensive.  
-- **LRU is the memory valve.** Cap how many checkpoints stay on GPU.  
-- **Engine + workers** keep frameworks pluggable (transformers LLM today; other worker types fit the same factory).  
-- **Routing is part of the contract.** Every response echoes `model_id` so clients can verify the right model answered.
+- *Store ≠ cache.* Registration is cheap; loading weights is expensive.  
+- *LRU is the memory valve.* Cap how many checkpoints stay on GPU.  
+- *Engine + workers* keep frameworks pluggable (transformers LLM today; other worker types fit the same factory).  
+- *Routing is part of the contract.* Every response echoes `model_id` so clients can verify the right model answered.
 
-This sits next to [LLM Serving Engine Internals](./serving-engine-internals) (one model, deep stack) as the **multi-model control plane**: same HTTP surface, many checkpoints, deliberate load/unload.
+This sits next to [LLM Serving Engine Internals](./serving-engine-internals) (one model, deep stack) as the *multi-model control plane*: same HTTP surface, many checkpoints, deliberate load/unload.
 
 ---
 
 ## 7. Scaling out: multi-model cluster architecture
 
-The lab is **one instance** that can load Qwen or TinyLlama with an LRU cache. Production multi-model platforms add a second concern: **which host should answer for which model?**
+The lab is *one instance* that can load Qwen or TinyLlama with an LRU cache. Production multi-model platforms add a second concern: *which host should answer for which model?*
 
 <figure>
 
@@ -368,22 +368,22 @@ The lab is **one instance** that can load Qwen or TinyLlama with an LRU cache. P
 | Piece | Role |
 | ----- | ---- |
 | Model store | Model files + metadata (registry) |
-| Serving frontend | Web API, **model cache**, management, download |
+| Serving frontend | Web API, *model cache*, management, download |
 | Serving backend | Inference runtime (e.g. Triton / vLLM) — load, unload, predict |
 | Shared disk | Staged weights the backend can map into memory |
 
 Flow:
 
-1. Frontend downloads / stages a checkpoint from the model store onto shared disk **(B)**  
-2. Frontend tells the backend to **Load model** (or **Unload**)  
-3. Backend reads files from shared disk **(C)** and runs **Predict**  
+1. Frontend downloads / stages a checkpoint from the model store onto shared disk *(B)*  
+2. Frontend tells the backend to *Load model* (or *Unload*)  
+3. Backend reads files from shared disk *(C)* and runs *Predict*  
 4. Results return through the frontend  
 
 That matches the lab: store → manager/cache → engine/worker → generate — plus an explicit load/unload control plane.
 
 ### Across the cluster (bottom of figure)
 
-A **model service API + routing logic** sits in front of many instances. It keeps a **map: model ↔ hosts** (replicas):
+A *model service API + routing logic* sits in front of many instances. It keeps a *map: model ↔ hosts* (replicas):
 
 | Model | Replicas (example) |
 | ----- | ------------------ |
@@ -392,13 +392,13 @@ A **model service API + routing logic** sits in front of many instances. It keep
 | C | host C2 |
 | D | hosts C1, C3 |
 
-Incoming traffic for models A/B/C is routed to instances whose **cache already holds** that model (or that are allowed to load it):
+Incoming traffic for models A/B/C is routed to instances whose *cache already holds* that model (or that are allowed to load it):
 
 - Instance 1 — cache A, B → serves A and B  
 - Instance 2 — cache C, D → serves C  
 - Instance 3 — cache A, D → serves A  
 
-So routing is not only load balancing — it is **cache-aware placement**: send the request where the weights are warm when possible.
+So routing is not only load balancing — it is *cache-aware placement*: send the request where the weights are warm when possible.
 
 ### Lab vs production
 

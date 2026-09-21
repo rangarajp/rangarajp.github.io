@@ -50,7 +50,7 @@ A good interactive experience usually needs both: low TTFT (the answer starts so
 
 Raw averages hide tails. Serving systems report *percentiles* of latency (for TTFT, ITL, or end-to-end).
 
-*p50* (the median): half of requests are faster, half are slower. In plain language: **1 in every 2 requests is slower than this number.**
+*p50* (the median): half of requests are faster, half are slower. In plain language: *1 in every 2 requests is slower than this number.*
 
 | Percentile | Meaning |
 |------------|---------|

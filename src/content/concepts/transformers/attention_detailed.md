@@ -127,7 +127,7 @@ Suppose the scores from one attention head look like this:
 | `sitting` | 0.3 |
 | `by` | 0.2 |
 | `the` | 0.1 |
-| **`river`** | **2.8** |
+| **`river`* | *2.8** |
 | `bank` | 0.5 |
 
 `river` gets the largest score. Query and Key determine who should pay attention to whom.
@@ -179,7 +179,7 @@ For our `bank` Query, imagine the result is:
 | `sitting` | 0.087 |
 | `by` | 0.081 |
 | `the` | 0.075 |
-| **`river`** | **0.507** |
+| **`river`* | *0.507** |
 | `bank` | 0.100 |
 
 At this point we know where `bank` should get information from. But we still have not decided what information should actually flow from `river` to `bank` — that is the job of Value.
@@ -270,7 +270,7 @@ The embedding gives the token a starting meaning. Attention changes that represe
 
 The example above is easiest to understand using bidirectional attention, where a token can look at words on both sides.
 
-Decoder-only models such as GPT use causal attention — a token can only attend to itself and earlier tokens. So in "I went to the **bank** to deposit money", `bank` cannot look forward to `deposit` or `money`.
+Decoder-only models such as GPT use causal attention — a token can only attend to itself and earlier tokens. So in "I went to the *bank* to deposit money", `bank` cannot look forward to `deposit` or `money`.
 
 For a GPT-style example, write the sentence as: "After depositing the money, I went to the bank." Now when the model processes `bank`, `depositing` and `money` are already in the past context and can influence its representation.
 

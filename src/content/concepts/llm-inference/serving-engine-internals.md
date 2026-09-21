@@ -199,25 +199,25 @@ print(response.json())
 
 This is the numbered path on the workload diagram, lined up with Example B’s log:
 
-**1. API Server receives the web request**  
+*1. API Server receives the web request*  
 Waiter gets `Request 1` with prompts A–D (or several overlapping requests).
 
 *2. LLM Engine registers each prompt*  
-`add_request` creates a UUID **id**, builds a `Sequence(id, prompt)`, puts it on `incoming_queue`, and stores it in `sequence_map`.
+`add_request` creates a UUID *id*, builds a `Sequence(id, prompt)`, puts it on `incoming_queue`, and stores it in `sequence_map`.
 
 ```text
 >>> [WorkloadManager] add_request → incoming_queue  id=7a0a61c3… prompt='The capital of France is'
 … (one line per prompt)
 ```
 
-**3. Engine asks for the next batch**  
+*3. Engine asks for the next batch*  
 Host moves sequences from `incoming_queue` into `active_sequences` (up to `batch_size=4`) and returns `[(id, prompt), …]`.
 
 ```text
 >>> [WorkloadManager] get_next_batch(batch) — pulled 4, active=4
 ```
 
-**4. Batch execution**  
+*4. Batch execution*  
 Engine sends that list to Model Executor → Worker. The GPU never needs to know about HTTP — only `(id, prompt)`.
 
 ```text
@@ -225,10 +225,10 @@ Engine sends that list to Model Executor → Worker. The GPU never needs to know
 >>> [GPU] model.generate() on cuda  input_shape=(4, 5)
 ```
 
-**5. Results come back tagged by id**  
+*5. Results come back tagged by id*  
 Worker returns `[(id, generated_text), …]`.
 
-**6. Update `sequence_map`, then remove**  
+*6. Update `sequence_map`, then remove*  
 Engine writes each result into `sequence_map[id]`, then drops finished ids from active lists and the map. Finally it walks the original id list to build `generated_texts` in the right order for the API.
 
 ```text
@@ -238,7 +238,7 @@ Engine writes each result into `sequence_map[id]`, then drops finished ids from 
 >>> [FastAPI] ← returning BatchGenerateResponse
 ```
 
-**Create id → queue → batch → model → update by id → remove id → map to HTTP response.**  
+*Create id → queue → batch → model → update by id → remove id → map to HTTP response.*  
 That loop is how nothing is lost or swapped when many prompts share one GPU call.
 
 ### Example C — Many HTTP requests at once
@@ -270,7 +270,7 @@ async def call_api(prompt):
 results = await asyncio.gather(*[call_api(p) for p in prompts])
 ```
 
-**Client output:**
+*Client output:*
 
 ```text
 {'prompt': 'What is KV cache?',             'time': 1.61, ...}
@@ -279,7 +279,7 @@ results = await asyncio.gather(*[call_api(p) for p in prompts])
 {'prompt': 'What is continuous batching?',  'time': 5.86, ...}
 ```
 
-On the server you see **four separate** `REQUEST  POST /basic_generate` FLOW blocks (same pattern as Example A). Each connection owns its own reply.
+On the server you see *four separate* `REQUEST  POST /basic_generate` FLOW blocks (same pattern as Example A). Each connection owns its own reply.
 
 | | Example B | Example C |
 | - | --------- | --------- |
@@ -287,14 +287,14 @@ On the server you see **four separate** `REQUEST  POST /basic_generate` FLOW blo
 | Ids + Host queue | Yes — see FLOW `add_request` / `remove_finished_sequence` | Each call is independent |
 | GPU | One batch `input_shape=(4, …)` | Separate generates (times add up) |
 
-In a production **vLLM** server, concurrent calls like C are continuously batched with the same id discipline as the second diagram — Request 1 and Request 2 share the kitchen; ids keep answers attached when mapping back.
+In a production *vLLM* server, concurrent calls like C are continuously batched with the same id discipline as the second diagram — Request 1 and Request 2 share the kitchen; ids keep answers attached when mapping back.
 
 
 ---
 
 ## 3. Streaming — one token per batch step
 
-Batch generate waits for the **full** text. Streaming returns **tokens as they are produced**. The continuous loop looks like this:
+Batch generate waits for the *full* text. Streaming returns *tokens as they are produced*. The continuous loop looks like this:
 
 <figure>
 
@@ -308,11 +308,11 @@ Batch generate waits for the **full** text. Streaming returns **tokens as they a
 | Step | Meaning |
 | ---- | ------- |
 | (1) | API Server (async) accepts Request A and Request B |
-| (2) | Engine **Add Request** — each gets an id, lands in `incoming_queue` / `sequence_map` (with an **EventQueue** for that client) |
-| (3) | Batch-processing thread **Get Batch** of active sequences |
-| (4)–(5) | Model Executor runs the batch but generates **only one new token per prompt** |
-| (6) | **Update Sequences** — append token; grow `output` / prompt context |
-| (7) | Push token into that sequence’s **EventQueue**; API streams it to the client |
+| (2) | Engine *Add Request* — each gets an id, lands in `incoming_queue` / `sequence_map` (with an *EventQueue* for that client) |
+| (3) | Batch-processing thread *Get Batch* of active sequences |
+| (4)–(5) | Model Executor runs the batch but generates *only one new token per prompt* |
+| (6) | *Update Sequences* — append token; grow `output` / prompt context |
+| (7) | Push token into that sequence’s *EventQueue*; API streams it to the client |
 
 Two requests stay on the same loop; ids + EventQueues keep tokens on the right wire.
 
@@ -350,7 +350,7 @@ print("num tokens:", len(tokens))
 print("full text:", prompt + "".join(tokens))
 ```
 
-**Client output (from the lab):**
+*Client output (from the lab):*
 
 ```text
 status: 200
@@ -365,7 +365,7 @@ One `sequence_id` for all 21 tokens — that is the ticket number on every SSE e
 
 ### Server FLOW (from `main.ipynb`) — connect to the figure
 
-**Start — figure steps (1)–(2):** create id, EventQueue, enqueue.
+*Start — figure steps (1)–(2):* create id, EventQueue, enqueue.
 
 ```text
 ============================================================
@@ -380,7 +380,7 @@ One `sequence_id` for all 21 tokens — that is the ticket number on every SSE e
 >>> [WorkloadManager] get_next_batch(streaming) — pulled 1, active=1
 ```
 
-**One decode step — figure steps (3)–(7):** one forward, one token, push to EventQueue, update sequence.  
+*One decode step — figure steps (3)–(7):* one forward, one token, push to EventQueue, update sequence.  
 `input_shape` grows `(1, 9) → (1, 10) → …` as the prompt context lengthens.
 
 ```text

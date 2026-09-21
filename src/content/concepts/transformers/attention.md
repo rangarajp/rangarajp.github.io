@@ -71,13 +71,13 @@ Walk through Sentence A with five embedding dimensions:
 
 | Word | Geographic | Financial | Nature | Action | Person |
 | ---- | ---------- | --------- | ------ | ------ | ------ |
-| I | 0.1 | 0.0 | 0.0 | 0.0 | **0.95** |
+| I | 0.1 | 0.0 | 0.0 | 0.0 | *0.95* |
 | am | 0.0 | 0.0 | 0.0 | 0.5 | 0.1 |
-| sitting | 0.1 | 0.0 | 0.1 | **0.9** | 0.0 |
+| sitting | 0.1 | 0.0 | 0.1 | *0.9* | 0.0 |
 | by | 0.2 | 0.0 | 0.0 | 0.2 | 0.0 |
 | the | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| river | **0.8** | 0.0 | **0.9** | 0.0 | 0.0 |
-| **bank** | **0.5** | **0.5** | **0.3** | 0.0 | 0.0 |
+| river | *0.8* | 0.0 | *0.9* | 0.0 | 0.0 |
+| *bank* | *0.5* | *0.5* | *0.3* | 0.0 | 0.0 |
 
 *Key point:* "bank" starts ambiguous — equal Geographic and Financial (0.5 each). Nothing in the embedding itself says this is a riverbank.
 
@@ -99,25 +99,25 @@ V = W_V × embedding
 
 `W_Q`, `W_K`, and `W_V` are parameters the network learns during training. Different matrices let Q, K, and V capture different aspects of meaning:
 
-- **Query** — what to search for
-- **Key** — what to match against
-- **Value** — what to contribute
+- *Query* — what to search for
+- *Key* — what to match against
+- *Value* — what to contribute
 
 That learned transformation makes self-attention much more expressive than using raw embeddings. For this walkthrough we keep them identical to keep the math clean, but in real Transformers they are always separate learned parameters.
 
-Focus on **"bank"**. The score against each word is the dot product `Q_bank · K_word`:
+Focus on *"bank"*. The score against each word is the dot product `Q_bank · K_word`:
 
 | Word | Key vector | Dot product with Q_bank | Score |
 | ---- | ---------- | ----------------------- | ----- |
-| I | [0.1, 0.0, 0.0, 0.0, 0.95] | `(0.5×0.1) + (0.5×0.0) + (0.3×0.0) + (0.0×0.0) + (0.0×0.95)` | **0.05** |
-| am | [0.0, 0.0, 0.0, 0.5, 0.1] | `(0.5×0.0) + (0.5×0.0) + (0.3×0.0) + (0.0×0.5) + (0.0×0.1)` | **0.00** |
-| sitting | [0.1, 0.0, 0.1, 0.9, 0.0] | `(0.5×0.1) + (0.5×0.0) + (0.3×0.1) + (0.0×0.9) + (0.0×0.0)` | **0.08** |
-| by | [0.2, 0.0, 0.0, 0.2, 0.0] | `(0.5×0.2) + (0.5×0.0) + (0.3×0.0) + (0.0×0.2) + (0.0×0.0)` | **0.10** |
-| the | [0.0, 0.0, 0.0, 0.0, 0.0] | `(0.5×0.0) + (0.5×0.0) + (0.3×0.0) + (0.0×0.0) + (0.0×0.0)` | **0.00** |
-| river | [0.8, 0.0, 0.9, 0.0, 0.0] | `(0.5×0.8) + (0.5×0.0) + (0.3×0.9) + (0.0×0.0) + (0.0×0.0)` | **0.67** |
-| bank | [0.5, 0.5, 0.3, 0.0, 0.0] | `(0.5×0.5) + (0.5×0.5) + (0.3×0.3) + (0.0×0.0) + (0.0×0.0)` | **0.59** |
+| I | [0.1, 0.0, 0.0, 0.0, 0.95] | `(0.5×0.1) + (0.5×0.0) + (0.3×0.0) + (0.0×0.0) + (0.0×0.95)` | *0.05* |
+| am | [0.0, 0.0, 0.0, 0.5, 0.1] | `(0.5×0.0) + (0.5×0.0) + (0.3×0.0) + (0.0×0.5) + (0.0×0.1)` | *0.00* |
+| sitting | [0.1, 0.0, 0.1, 0.9, 0.0] | `(0.5×0.1) + (0.5×0.0) + (0.3×0.1) + (0.0×0.9) + (0.0×0.0)` | *0.08* |
+| by | [0.2, 0.0, 0.0, 0.2, 0.0] | `(0.5×0.2) + (0.5×0.0) + (0.3×0.0) + (0.0×0.2) + (0.0×0.0)` | *0.10* |
+| the | [0.0, 0.0, 0.0, 0.0, 0.0] | `(0.5×0.0) + (0.5×0.0) + (0.3×0.0) + (0.0×0.0) + (0.0×0.0)` | *0.00* |
+| river | [0.8, 0.0, 0.9, 0.0, 0.0] | `(0.5×0.8) + (0.5×0.0) + (0.3×0.9) + (0.0×0.0) + (0.0×0.0)` | *0.67* |
+| bank | [0.5, 0.5, 0.3, 0.0, 0.0] | `(0.5×0.5) + (0.5×0.5) + (0.3×0.3) + (0.0×0.0) + (0.0×0.0)` | *0.59* |
 
-**Raw attention scores:** `[0.05, 0.00, 0.08, 0.10, 0.00, 0.67, 0.59]`
+*Raw attention scores:* `[0.05, 0.00, 0.08, 0.10, 0.00, 0.67, 0.59]`
 
 "river" gets the highest score (0.67) — even though "bank" started ambiguous, the nature/geographic neighbor wins.
 
@@ -137,22 +137,22 @@ attention_weight = e^score / Σ e^score_i
 | river | 0.67 | 1.95 |
 | bank | 0.59 | 1.80 |
 
-**Sum:** `1.05 + 1.00 + 1.08 + 1.11 + 1.00 + 1.95 + 1.80 = 9.00`
+*Sum:* `1.05 + 1.00 + 1.08 + 1.11 + 1.00 + 1.95 + 1.80 = 9.00`
 
 | Word | Attention weight |
 | ---- | ---------------- |
-| I | 1.05 / 9.00 = **0.117** |
-| am | 1.00 / 9.00 = **0.111** |
-| sitting | 1.08 / 9.00 = **0.120** |
-| by | 1.11 / 9.00 = **0.123** |
-| the | 1.00 / 9.00 = **0.111** |
-| river | 1.95 / 9.00 = **0.217** |
-| bank | 1.80 / 9.00 = **0.200** |
+| I | 1.05 / 9.00 = *0.117* |
+| am | 1.00 / 9.00 = *0.111* |
+| sitting | 1.08 / 9.00 = *0.120* |
+| by | 1.11 / 9.00 = *0.123* |
+| the | 1.00 / 9.00 = *0.111* |
+| river | 1.95 / 9.00 = *0.217* |
+| bank | 1.80 / 9.00 = *0.200* |
 
 Interpretation:
 
-- **21.7%** of "bank"'s attention goes to "river"
-- **20.0%** goes to itself
+- *21.7%* of "bank"'s attention goes to "river"
+- *20.0%* goes to itself
 - The remaining ~58% is distributed among the other words
 
 ### 2.3 Context vector
@@ -174,9 +174,9 @@ Each row is one word's individual contribution (attention weight × value vector
 | the | 0.111 | [0.0, 0.0, 0.0, 0.0, 0.0] | [0.000, 0.000, 0.000, 0.000, 0.000] |
 | river | 0.217 | [0.8, 0.0, 0.9, 0.0, 0.0] | [0.174, 0.000, 0.195, 0.000, 0.000] |
 | bank | 0.200 | [0.5, 0.5, 0.3, 0.0, 0.0] | [0.100, 0.100, 0.060, 0.000, 0.000] |
-| **Sum ↓** | | | **[0.323, 0.100, 0.267, 0.189, 0.122]** |
+| *Sum ↓* | | | *[0.323, 0.100, 0.267, 0.189, 0.122]* |
 
-The last row is the **Context Vector A** — the column-wise sum of all weighted vectors:
+The last row is the *Context Vector A* — the column-wise sum of all weighted vectors:
 
 ```
 Context Vector A = [0.323, 0.100, 0.267, 0.189, 0.122]
@@ -197,16 +197,16 @@ Financial collapsed; nature stayed relevant. The river sentence pushed "bank" to
 
 ### 2.4 Same embedding, opposite context
 
-Now Sentence B — **same starting "bank" embedding**, different neighbors.
+Now Sentence B — *same starting "bank" embedding*, different neighbors.
 
 The low-scoring words (`I`, `am`, `going`, `the`) barely move the result. The decisive neighbors are `deposit` and `money`, so we focus the math there (along with `bank` and `to`):
 
 | Word | Geographic | Financial | Nature | Action | Person |
 | ---- | ---------- | --------- | ------ | ------ | ------ |
 | to | 0.1 | 0.1 | 0.0 | 0.2 | 0.0 |
-| **bank** | **0.5** | **0.5** | **0.3** | 0.0 | 0.0 |
-| deposit | 0.0 | **0.95** | 0.0 | **0.9** | 0.0 |
-| money | 0.0 | **1.0** | 0.0 | 0.0 | 0.0 |
+| *bank* | *0.5* | *0.5* | *0.3* | 0.0 | 0.0 |
+| deposit | 0.0 | *0.95* | 0.0 | *0.9* | 0.0 |
+| money | 0.0 | *1.0* | 0.0 | 0.0 | 0.0 |
 
 Scores against the same `Q_bank = [0.5, 0.5, 0.3, 0.0, 0.0]`:
 
@@ -214,17 +214,17 @@ Scores against the same `Q_bank = [0.5, 0.5, 0.3, 0.0, 0.0]`:
 | ---- | ----- |
 | to | 0.10 |
 | bank | 0.59 |
-| deposit | **0.47** |
-| money | **0.50** |
+| deposit | *0.47* |
+| money | *0.50* |
 
 After softmax (sum of `e^score` ≈ 6.17):
 
 | Word | Attention weight |
 | ---- | ---------------- |
-| bank | 1.80 / 6.17 = **0.293** |
-| to | 1.11 / 6.17 = **0.179** |
-| deposit | 1.61 / 6.17 = **0.261** |
-| money | 1.65 / 6.17 = **0.267** |
+| bank | 1.80 / 6.17 = *0.293* |
+| to | 1.11 / 6.17 = *0.179* |
+| deposit | 1.61 / 6.17 = *0.261* |
+| money | 1.65 / 6.17 = *0.267* |
 
 Together, `deposit` + `money` get over half the attention mass.
 
@@ -236,8 +236,8 @@ Context Vector B = [0.164, 0.679, 0.088, 0.271, 0.000]
 | Dimension | Original | Context A (river) | Context B (deposit) |
 | --------- | -------- | ----------------- | ------------------- |
 | Geographic | 0.5 | 0.323 | 0.164 |
-| Financial | 0.5 | **0.100** ↓ | **0.679** ↑ |
-| Nature | 0.3 | **0.267** | **0.088** ↓ |
+| Financial | 0.5 | *0.100* ↓ | *0.679* ↑ |
+| Nature | 0.3 | *0.267* | *0.088* ↓ |
 | Action | 0.0 | 0.189 | 0.271 |
 | Person | 0.0 | 0.122 | 0.000 |
 
@@ -269,7 +269,7 @@ This is the same interpretation used in the [step-by-step attention video](https
    h'_bank = e_bank + W_O × Δh_bank
    ```
 
-In the simplified calculations above, **Context Vector A/B** is `Δh_bank`, the weighted sum of the value vectors. In the full Transformer, it does not replace the original `"bank"` embedding; it updates it. `"river"` therefore moves the representation toward a geographic/nature direction, while `"deposit"` and `"money"` move the same starting representation toward a financial direction.
+In the simplified calculations above, *Context Vector A/B* is `Δh_bank`, the weighted sum of the value vectors. In the full Transformer, it does not replace the original `"bank"` embedding; it updates it. `"river"` therefore moves the representation toward a geographic/nature direction, while `"deposit"` and `"money"` move the same starting representation toward a financial direction.
 
 That is the central point — the embedding starts ambiguous; attention contextualizes it.
 

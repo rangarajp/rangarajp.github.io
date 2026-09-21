@@ -51,7 +51,7 @@ Each head learns different weights (`W_i^Q`, `W_i^K`, `W_i^V`), so each weights 
 
 ## 3. Worked example: 2-head attention on "bank"
 
-Continue with Sentence A: **"I am sitting by the river bank"**
+Continue with Sentence A: *"I am sitting by the river bank"*
 
 Use the same embeddings as the attention walkthrough, but compute with two different heads.
 
@@ -65,7 +65,7 @@ Use the same embeddings as the attention walkthrough, but compute with two diffe
 | by | 0.2 | 0.0 | 0.0 | 0.2 | 0.0 |
 | the | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
 | river | 0.8 | 0.0 | 0.9 | 0.0 | 0.0 |
-| **bank** | **0.5** | **0.5** | **0.3** | 0.0 | 0.0 |
+| *bank* | *0.5* | *0.5* | *0.3* | 0.0 | 0.0 |
 
 *Recall:* single-head attention on "bank" produced:
 
@@ -115,10 +115,10 @@ Dot product with key vectors (using `W_1^K`, also learned for geographic focus):
 | I | [0.08, 0.00, 0.00, 0.00, 0.88] | 0.08 | High person, not geographic |
 | am | [0.00, 0.00, 0.00, 0.40, 0.08] | 0.00 | Action-focused, not geographic |
 | sitting | [0.09, 0.00, 0.09, 0.80, 0.00] | 0.12 | Some geography, but action-heavy |
-| by | [0.18, 0.00, 0.00, 0.16, 0.00] | **0.16** | Geographic preposition |
+| by | [0.18, 0.00, 0.00, 0.16, 0.00] | *0.16* | Geographic preposition |
 | the | [0.00, 0.00, 0.00, 0.00, 0.00] | 0.00 | Stop word |
-| river | [0.72, 0.00, 0.81, 0.00, 0.00] | **0.79** | Highest — geographic + nature |
-| bank | [0.45, 0.45, 0.27, 0.00, 0.00] | **0.52** | Self-reference with geographic aspect |
+| river | [0.72, 0.00, 0.81, 0.00, 0.00] | *0.79* | Highest — geographic + nature |
+| bank | [0.45, 0.45, 0.27, 0.00, 0.00] | *0.52* | Self-reference with geographic aspect |
 
 *Raw scores (Head 1):* `[0.08, 0.00, 0.12, 0.16, 0.00, 0.79, 0.52]`
 
@@ -131,10 +131,10 @@ Head 1 gives river a higher score (0.79) than single-head (0.67) because it is s
 | I | 0.08 | 1.08 | 0.11 |
 | am | 0.00 | 1.00 | 0.10 |
 | sitting | 0.12 | 1.13 | 0.11 |
-| by | 0.16 | 1.17 | **0.12** |
+| by | 0.16 | 1.17 | *0.12* |
 | the | 0.00 | 1.00 | 0.10 |
-| river | 0.79 | 2.20 | **0.22** |
-| bank | 0.52 | 1.68 | **0.17** |
+| river | 0.79 | 2.20 | *0.22* |
+| bank | 0.52 | 1.68 | *0.17* |
 
 *Sum:* `1.08 + 1.00 + 1.13 + 1.17 + 1.00 + 2.20 + 1.68 = 9.26`
 
@@ -209,12 +209,12 @@ Dot product with keys using `W_2^K` (learned for action focus):
 | Word | Key vector | Score | Why |
 | ---- | ---------- | ----- | --- |
 | I | [0.08, 0.00, 0.00, 0.00, 0.88] | 0.11 | Person element, not action-central |
-| am | [0.00, 0.00, 0.00, 0.65, 0.10] | **0.10** | Auxiliary verb (action-relevant) |
-| sitting | [0.10, 0.00, 0.12, 0.92, 0.00] | **0.28** | Core action verb |
+| am | [0.00, 0.00, 0.00, 0.65, 0.10] | *0.10* | Auxiliary verb (action-relevant) |
+| sitting | [0.10, 0.00, 0.12, 0.92, 0.00] | *0.28* | Core action verb |
 | by | [0.18, 0.00, 0.00, 0.22, 0.00] | 0.08 | Preposition, modest action relevance |
 | the | [0.00, 0.00, 0.00, 0.00, 0.00] | 0.00 | Stop word |
 | river | [0.72, 0.00, 0.81, 0.02, 0.00] | 0.24 | Nature, not action-focused |
-| bank | [0.45, 0.45, 0.27, 0.00, 0.00] | **0.25** | Self, some action relevance |
+| bank | [0.45, 0.45, 0.27, 0.00, 0.00] | *0.25* | Self, some action relevance |
 
 *Raw scores (Head 2):* `[0.11, 0.10, 0.28, 0.08, 0.00, 0.24, 0.25]`
 
@@ -226,11 +226,11 @@ Head 2 gives sitting much higher relative weight than Head 1 (0.28 vs 0.12).
 | ---- | ----- | ------- | ---------------- |
 | I | 0.11 | 1.12 | 0.11 |
 | am | 0.10 | 1.11 | 0.11 |
-| sitting | 0.28 | 1.32 | **0.13** |
+| sitting | 0.28 | 1.32 | *0.13* |
 | by | 0.08 | 1.08 | 0.11 |
 | the | 0.00 | 1.00 | 0.10 |
 | river | 0.24 | 1.27 | 0.12 |
-| bank | 0.25 | 1.28 | **0.13** |
+| bank | 0.25 | 1.28 | *0.13* |
 
 *Sum:* `1.12 + 1.11 + 1.32 + 1.08 + 1.00 + 1.27 + 1.28 = 9.18`
 
@@ -311,11 +311,11 @@ Final = [0.307, 0.085, 0.260, 0.173, 0.115, 0.207, 0.065, 0.160, 0.194, 0.116] �
 
 | Dimension | Original | Single-head | Head 1 (geo) | Head 2 (action) | Multi-head final |
 | --------- | -------- | ----------- | ------------ | --------------- | ---------------- |
-| Geographic | 0.5 | 0.323 | 0.307 | 0.207 | **0.293** |
-| Financial | 0.5 | 0.100 | 0.085 | 0.065 | **0.134** |
-| Nature | 0.3 | 0.267 | 0.260 | 0.160 | **0.256** |
-| Action | 0.0 | 0.189 | 0.173 | 0.194 | **0.211** |
-| Person | 0.0 | 0.122 | 0.115 | 0.116 | **0.125** |
+| Geographic | 0.5 | 0.323 | 0.307 | 0.207 | *0.293* |
+| Financial | 0.5 | 0.100 | 0.085 | 0.065 | *0.134* |
+| Nature | 0.3 | 0.267 | 0.260 | 0.160 | *0.256* |
+| Action | 0.0 | 0.189 | 0.173 | 0.194 | *0.211* |
+| Person | 0.0 | 0.122 | 0.115 | 0.116 | *0.125* |
 
 1. *Original* — ambiguous: equal Geographic and Financial (0.5 each)
 2. *Single-head* — one pattern: "river" pulls Geographic to 0.323; Financial drops to 0.100
@@ -436,11 +436,11 @@ All learned via backpropagation during training.
 
 ## 8. Quick intuition check
 
-**Why not one large head instead of multiple small heads?**
+*Why not one large head instead of multiple small heads?*
 
 Multiple heads force specialization; a single large head tends to average and miss detail. Multi-head is closer to an ensemble of learned experts, and is more robust across input types.
 
-**Do all heads learn completely different things?**
+*Do all heads learn completely different things?*
 
 Mostly yes, though some redundancy can appear. The network learns to use heads efficiently via the `W^O` projection.
 

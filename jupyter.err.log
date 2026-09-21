@@ -44,3 +44,11 @@ Node.js v24.16.0
 [I 2026-09-20 17:05:13.836 JupyterNotebookApp] 302 GET /tree? (@127.0.0.1) 1.25ms
 [I 2026-09-20 17:05:14.649 JupyterNotebookApp] 302 GET /tree? (@127.0.0.1) 1.21ms
 [I 2026-09-20 17:05:14.651 JupyterNotebookApp] 302 GET /tree? (@127.0.0.1) 1.04ms
+[I 2026-09-20 22:21:58.119 ServerApp] 302 GET / (@127.0.0.1) 1.17ms
+[I 2026-09-20 22:21:58.124 JupyterNotebookApp] 302 GET /tree? (@127.0.0.1) 1.10ms
+[I 2026-09-20 22:21:58.430 ServerApp] Kernel started: 78c3e68f-a9ea-45e7-8ca5-664150f97f5d
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.
+[I 2026-09-20 22:22:01.847 ServerApp] Adapting from protocol version 5.3 (kernel 78c3e68f-a9ea-45e7-8ca5-664150f97f5d) to 5.4 (client).
+[I 2026-09-20 22:22:01.850 ServerApp] Connecting to kernel 78c3e68f-a9ea-45e7-8ca5-664150f97f5d.
+[W 2026-09-20 22:22:01.880 ServerApp] The websocket_ping_timeout (90000) cannot be longer than the websocket_ping_interval (30000).
+    Setting websocket_ping_timeout=30000

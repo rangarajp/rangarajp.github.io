@@ -117,7 +117,7 @@ GPUs sit at two very different memory scales:
 | *VRAM* (device memory) | GB (80 GB HBM3 on H100 SXM) | HBM or GDDR — off-chip DRAM | Weights, KV cache, activations |
 | *On-chip SRAM* | MB per chip (L1 + shared L2) | Static RAM on die | Hot tiles of weights and activations during a kernel |
 
-The pattern is always the same: **large and slow at the bottom, small and fast at the top.**
+The pattern is always the same: *large and slow at the bottom, small and fast at the top.*
 
 - *DRAM (GB)* — cheap per bit, high capacity. This is where the 70B model and every concurrent KV cache must live.
 - *SRAM (MB)* — expensive per bit, low latency. Kernels win when they reuse the same bytes many times while data still sits in L1/L2.

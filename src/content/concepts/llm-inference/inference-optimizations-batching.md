@@ -29,13 +29,13 @@ Think of the GPU as a ferry that runs short trips in a loop. Each trip is one *i
 | Getting off | EOS / max tokens / client cancel |
 | Ticket id | Sequence id (so the right answer returns to the right client) |
 
-The captain’s job is not “make one perfect trip.” It is **keep seats useful**: pick up waiting passengers when a seat frees, drop finished ones immediately, and do not let one slow boarding freeze the whole route.
+The captain’s job is not “make one perfect trip.” It is *keep seats useful*: pick up waiting passengers when a seat frees, drop finished ones immediately, and do not let one slow boarding freeze the whole route.
 
 ---
 
 ## 2. Why batching is needed
 
-A transformer forward pass loads the same weights from HBM whether you run **1** sequence or **N**. Decode is usually *memory-bandwidth bound*: most of the time is moving weights, not doing math on one token.
+A transformer forward pass loads the same weights from HBM whether you run *1* sequence or *N*. Decode is usually *memory-bandwidth bound*: most of the time is moving weights, not doing math on one token.
 
 So with one passenger alone on a big boat:
 
@@ -50,7 +50,7 @@ Batching puts several passengers on the same trip. One weight load serves many s
 8 passengers together →  pay ~same trip cost for 8 tokens
 ```
 
-That is the whole economic case for batching: **amortize weight traffic across concurrent sequences**.
+That is the whole economic case for batching: *amortize weight traffic across concurrent sequences*.
 
 Batching also matters in prefill. Larger effective batch / token counts make matmuls fatter and more compute-bound — which is where TFLOPS actually help (see [GPU Architecture](./gpu-architecture)).
 
@@ -60,14 +60,14 @@ Batching also matters in prefill. Larger effective batch / token counts make mat
 
 Naive batching works like a charter that will not leave the dock until every seat is filled, then will not return until *every* passenger has completed their entire journey.
 
-**How it runs:**
+*How it runs:*
 
 1. Collect up to $B$ prompts from the queue  
 2. Pad them to the same length  
-3. Run prefill + decode until **all** sequences in that batch are done  
+3. Run prefill + decode until *all* sequences in that batch are done  
 4. Only then admit the next batch  
 
-**Boat picture:** eight tourists board together. One wants a 2-stop hop; another wants a 200-stop cruise. The ferry will not drop the short rider at stop 2 and free that seat. Everyone stays on until the longest trip ends. New tourists on the dock watch an almost-empty boat cruise past because the charter rules say “same group only.”
+*Boat picture:* eight tourists board together. One wants a 2-stop hop; another wants a 200-stop cruise. The ferry will not drop the short rider at stop 2 and free that seat. Everyone stays on until the longest trip ends. New tourists on the dock watch an almost-empty boat cruise past because the charter rules say “same group only.”
 
 ### What hurts in practice
 
@@ -88,10 +88,10 @@ Static batching is simple and fine for offline jobs where you already have a pil
 
 Continuous batching (also called *iteration-level* or *in-flight* batching) changes the unit of scheduling from “whole request” to “one iteration.”
 
-**Rules of the modern ferry:**
+*Rules of the modern ferry:*
 
-1. After **every** decode trip, check who finished → **drop them off**, free their seat and KV  
-2. If seats (and memory) remain, **pick up** waiting passengers from the dock  
+1. After *every* decode trip, check who finished → *drop them off*, free their seat and KV  
+2. If seats (and memory) remain, *pick up* waiting passengers from the dock  
 3. New passengers may need boarding (prefill) while others are already riding (decode)  
 4. The boat never waits for the original group to finish together  
 
@@ -102,7 +102,7 @@ Iteration t+1: [A decode] [B decode] [E prefill/decode] [D decode]
                E boarded into C’s freed seat
 ```
 
-**Boat picture:** the ferry runs a tight loop of short hops. At each pier it lets people off who reached their stop and lets new people on if a seat is free. A two-stop rider does not hostage a two-hundred-stop rider. The dock clears steadily instead of in giant charter waves.
+*Boat picture:* the ferry runs a tight loop of short hops. At each pier it lets people off who reached their stop and lets new people on if a seat is free. A two-stop rider does not hostage a two-hundred-stop rider. The dock clears steadily instead of in giant charter waves.
 
 | Static batching | Continuous batching |
 | --------------- | ------------------- |
@@ -115,7 +115,7 @@ This is why production engines talk about `max_num_seqs` and KV memory pools rat
 
 ### What continuous batching does *not* remove
 
-Passengers still have different luggage sizes (prompt lengths) and different destinations (output lengths). Continuous batching fixes **when** you can pick up and drop off. You still need a plan for **boarding** so a single tourist with a shipping container of luggage does not block the gangway for everyone else. That plan is chunked prefill.
+Passengers still have different luggage sizes (prompt lengths) and different destinations (output lengths). Continuous batching fixes *when* you can pick up and drop off. You still need a plan for *boarding* so a single tourist with a shipping container of luggage does not block the gangway for everyone else. That plan is chunked prefill.
 
 ---
 
@@ -130,7 +130,7 @@ Recall two phases per passenger:
 
 Decode wants many seated passengers sharing each weight load. Prefill wants lots of tokens to chew through at once. Mixing them carelessly creates a classic failure mode:
 
-**Head-of-line blocking on the gangway.**  
+*Head-of-line blocking on the gangway.*  
 A new passenger arrives with a 8k-token prompt. If the engine runs that entire prefill in one blocking chunk, every already-seated rider waits — no decode tokens stream to them — until boarding finishes. Time-to-first-token for the new rider may look fine while *everyone else’s* token stream stalls.
 
 Boat picture: the ferry is mid-route with 20 happy passengers. One new tourist shows up with a container load. If the crew insists on loading the entire container before the next hop, those 20 riders sit dead in the water. Efficient pick-and-drop dies at the dock.
@@ -141,7 +141,7 @@ Boat picture: the ferry is mid-route with 20 happy passengers. One new tourist s
 
 Chunked prefill splits a long prompt into token chunks (e.g. 512 or 2048 at a time). Between chunks, the engine can still run decode steps for passengers already on board.
 
-**Rules:**
+*Rules:*
 
 1. Cap how many *prefill tokens* you admit in one iteration (`max_num_batched_tokens` style budgets)  
 2. Spend some of that budget on decode tokens for active riders (often prioritized so streams stay smooth)  
@@ -154,7 +154,7 @@ Iteration:  decode(A,B,C) + prefill_chunk(D, tokens 512..1023)
 Iteration:  decode(A,B,C,D)   ← D fully boarded, now a normal rider
 ```
 
-**Boat picture:** the container is loaded *crate by crate*. Between crates, the ferry still makes its short hops — existing passengers keep moving toward their stops. New boarding progresses without turning the route into a blocked cargo operation.
+*Boat picture:* the container is loaded *crate by crate*. Between crates, the ferry still makes its short hops — existing passengers keep moving toward their stops. New boarding progresses without turning the route into a blocked cargo operation.
 
 | Without chunked prefill | With chunked prefill |
 | ----------------------- | -------------------- |
@@ -162,7 +162,7 @@ Iteration:  decode(A,B,C,D)   ← D fully boarded, now a normal rider
 | Active decodes stall → latency spikes for everyone | Decodes keep getting seats on each trip |
 | Unpredictable interference when long prompts arrive | Smoother TTFT / TPOT trade-off under mixed traffic |
 
-Chunked prefill is how you keep **efficient pick and drop** when the dock has both day-trippers (short prompts) and freight (long contexts).
+Chunked prefill is how you keep *efficient pick and drop* when the dock has both day-trippers (short prompts) and freight (long contexts).
 
 ---
 
@@ -185,13 +185,13 @@ End-to-end, a well-run inference ferry looks like this:
                     drop off finished → free seat + KV → next pick up
 ```
 
-**Design checklist**
+*Design checklist*
 
-1. **Batch** — never run the big ferry for one rider if others are waiting and memory allows  
-2. **Continuous** — re-form the passenger list every iteration; drop finished, pick new  
-3. **Chunk prefill** — board long prompts in budgets so decode riders keep moving  
-4. **Cap seats by memory** — KV cache is the real seat belt count, not a vanity batch size  
-5. **Track tickets** — sequence ids so pick/drop never mix up who gets which answer  
+1. *Batch* — never run the big ferry for one rider if others are waiting and memory allows  
+2. *Continuous* — re-form the passenger list every iteration; drop finished, pick new  
+3. *Chunk prefill* — board long prompts in budgets so decode riders keep moving  
+4. *Cap seats by memory* — KV cache is the real seat belt count, not a vanity batch size  
+5. *Track tickets* — sequence ids so pick/drop never mix up who gets which answer  
 
 Static batching is a charter bus. Continuous batching is a city ferry with open boarding. Chunked prefill is the rule that freight loads in stages so the ferry schedule still serves everyone.
 

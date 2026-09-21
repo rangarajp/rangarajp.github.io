@@ -61,7 +61,7 @@ for step in range(max_new_tokens):
     input_ids = torch.cat([input_ids, [[next_id]]], dim=-1)
 ```
 
-**Actual step-by-step timings from the notebook run** — prompt: *"Write a short introduction about the US capital city."*
+*Actual step-by-step timings from the notebook run* — prompt: *"Write a short introduction about the US capital city."*
 
 ```output
 step 01 | seq= 10 |  32.5 ms | ' Washington'
@@ -118,7 +118,7 @@ With KV cache:             step 5 uses stored K/V for 1–4, adds K/V for 5
                            step N does 1×L attention + table lookup
 ```
 
-Memory cost grows (you're storing more K/V every step), but **compute cost per step becomes roughly constant** once you pass the first step.
+Memory cost grows (you're storing more K/V every step), but *compute cost per step becomes roughly constant* once you pass the first step.
 
 ---
 
@@ -242,7 +242,7 @@ The call blocks until all 128 tokens are ready. Fine for batch jobs.
 | `max_tokens` | Stop after this many new tokens |
 | `stop` | Stop on specific strings (e.g. `["\n"]`) |
 
-**Same prompt, two settings — from the run:**
+*Same prompt, two settings — from the run:*
 
 ```
 [greedy (T=0)]    The capital of France is Paris. It is the largest city in
@@ -260,9 +260,9 @@ Same model. Same weights. Entirely different output character.
 
 ### Batching: one of the biggest wins
 
-vLLM can run multiple prompts in a **single** forward pass. The GPU is fully occupied; prompts share compute rather than queuing behind each other.
+vLLM can run multiple prompts in a *single* forward pass. The GPU is fully occupied; prompts share compute rather than queuing behind each other.
 
-**Measured:**
+*Measured:*
 
 ```
 4 prompts in one batch : 0.379s   (~688 output tokens/s)

@@ -3,6 +3,8 @@ import BaseHead from '../../components/BaseHead.astro';
 import ConceptsBookSidebar from '../../components/ConceptsBookSidebar.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
+import PageToc from '../../components/PageToc.astro';
+import SectionSearch from '../../components/SectionSearch.astro';
 import { SITE_TITLE } from '../../consts';
 import { getCollection, render } from 'astro:content';
 import {
@@ -31,6 +33,7 @@ const concepts = await getCollection('concepts');
 const { series: allSeries } = groupConceptsBySeries(concepts);
 const seriesContext = getSeriesContext(entry, concepts);
 const isHub = isSeriesHub(entry.id);
+const hasBookNav = Boolean(seriesContext);
 
 const backHref = seriesContext && !isHub ? seriesContext.series.hubPath : '/concepts';
 const backLabel = seriesContext && !isHub ? seriesContext.series.title : 'All books';
@@ -52,142 +55,175 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 	</head>
 	<body>
 		<Header />
-		{seriesContext && (
-			<ConceptsBookSidebar
-				allSeries={allSeries}
-				currentSeriesId={seriesContext.series.id}
-				currentEntryId={entry.id}
-				isHub={isHub}
-			/>
-		)}
-		<main class:list={['concepts-shell', { 'is-hub': isHub }]}>
-			<article class:list={['prose', 'concepts-article', { 'hub-article': isHub }]}>
-				<header class="article-header">
-					<div class="header-top">
-						<nav class="breadcrumbs" aria-label="Breadcrumb">
-							<a href="/concepts">Concepts</a>
-							{seriesContext && (
-								<>
-									<span class="separator">/</span>
-									{isHub ? (
-										<span aria-current="page">{seriesContext.series.title}</span>
-									) : (
-										<a href={seriesContext.series.hubPath}>{seriesContext.series.title}</a>
-									)}
-								</>
+		<div
+			class:list={[
+				'handbook-shell',
+				{ 'has-book-nav': hasBookNav, 'is-hub': isHub, 'no-toc': isHub },
+			]}
+		>
+			{
+				hasBookNav && (
+					<ConceptsBookSidebar
+						allSeries={allSeries}
+						currentSeriesId={seriesContext!.series.id}
+						currentEntryId={entry.id}
+						isHub={isHub}
+					/>
+				)
+			}
+
+			<main class="handbook-main">
+				<article class:list={['prose', 'concepts-article', { 'hub-article': isHub }]}>
+					{!isHub && <SectionSearch />}
+					<header class="article-header">
+						<div class="header-top">
+							<nav class="breadcrumbs" aria-label="Breadcrumb">
+								<a href="/concepts">Concepts</a>
+								{seriesContext && (
+									<>
+										<span class="separator">/</span>
+										{isHub ? (
+											<span aria-current="page">{seriesContext.series.title}</span>
+										) : (
+											<a href={seriesContext.series.hubPath}>{seriesContext.series.title}</a>
+										)}
+									</>
+								)}
+								{seriesContext && !isHub && (
+									<>
+										<span class="separator">/</span>
+										<span aria-current="page">{entry.data.title}</span>
+									</>
+								)}
+								{!seriesContext && (
+									<>
+										<span class="separator">/</span>
+										<span aria-current="page">{entry.data.title}</span>
+									</>
+								)}
+							</nav>
+							{hasBookNav && (
+								<button
+									type="button"
+									class="contents-btn"
+									data-sidebar-toggle
+									aria-expanded="false"
+									aria-controls="book-sidebar-panel"
+								>
+									Contents
+								</button>
 							)}
-							{seriesContext && !isHub && (
-								<>
-									<span class="separator">/</span>
-									<span aria-current="page">{entry.data.title}</span>
-								</>
+						</div>
+						<a href={backHref} class="back-link">&larr; {backLabel}</a>
+						{seriesContext && !isHub && currentIndex >= 0 && (
+							<p class="chapter-eyebrow">Chapter {currentIndex + 1} of {articles.length}</p>
+						)}
+						<h1>{entry.data.title}</h1>
+						<p class="description">{entry.data.description}</p>
+					</header>
+
+					{isHub && seriesContext ? (
+						<>
+							<section class="hub-chapters" aria-label="Chapters">
+								<h2 class="hub-chapters-title">Chapters</h2>
+								<ol class="hub-chapter-list">
+									{articles.map((article) => (
+										<li>
+											<a href={getConceptPath(article.id)}>
+												<span class="hub-chapter-title">{article.data.title}</span>
+												{article.data.description && (
+													<span class="hub-chapter-desc">{article.data.description}</span>
+												)}
+											</a>
+										</li>
+									))}
+								</ol>
+								{firstChapter && (
+									<p class="start-reading">
+										<a href={getConceptPath(firstChapter.id)}>
+											Start with Chapter 1 — {firstChapter.data.title} →
+										</a>
+									</p>
+								)}
+							</section>
+
+							<div class="hub-more">
+								<Content />
+							</div>
+						</>
+					) : (
+						<Content />
+					)}
+
+					{seriesContext && !isHub && currentIndex >= 0 && (
+						<nav class="page-nav" aria-label="Chapter navigation">
+							{isFirstChapter ? (
+								<a class="page-nav-link prev" href={seriesContext.series.hubPath}>
+									<span class="page-nav-direction">&larr; Contents</span>
+									<span class="page-nav-title">{seriesContext.series.title}</span>
+								</a>
+							) : prevArticle ? (
+								<a class="page-nav-link prev" href={getConceptPath(prevArticle.id)}>
+									<span class="page-nav-direction">&larr; Chapter {currentIndex}</span>
+									<span class="page-nav-title">{prevArticle.data.title}</span>
+								</a>
+							) : (
+								<span />
 							)}
-							{!seriesContext && (
-								<>
-									<span class="separator">/</span>
-									<span aria-current="page">{entry.data.title}</span>
-								</>
+							{nextArticle ? (
+								<a class="page-nav-link next" href={getConceptPath(nextArticle.id)}>
+									<span class="page-nav-direction">Chapter {currentIndex + 2} →</span>
+									<span class="page-nav-title">{nextArticle.data.title}</span>
+								</a>
+							) : isLastChapter ? (
+								<a class="page-nav-link next" href={seriesContext.series.hubPath}>
+									<span class="page-nav-direction">End of book →</span>
+									<span class="page-nav-title">Back to contents</span>
+								</a>
+							) : (
+								<span />
 							)}
 						</nav>
-						{seriesContext && (
-							<button
-								type="button"
-								class="contents-btn"
-								data-sidebar-toggle
-								aria-expanded="false"
-								aria-controls="book-sidebar-panel"
-							>
-								Contents
-							</button>
-						)}
-					</div>
-					<a href={backHref} class="back-link">&larr; {backLabel}</a>
-					{seriesContext && !isHub && currentIndex >= 0 && (
-						<p class="chapter-eyebrow">Chapter {currentIndex + 1} of {articles.length}</p>
 					)}
-					<h1>{entry.data.title}</h1>
-					<p class="description">{entry.data.description}</p>
-				</header>
+				</article>
+			</main>
 
-				{isHub && seriesContext ? (
-					<>
-						<section class="hub-chapters" aria-label="Chapters">
-							<h2 class="hub-chapters-title">Chapters</h2>
-							<ol class="hub-chapter-list">
-								{articles.map((article) => (
-									<li>
-										<a href={getConceptPath(article.id)}>
-											<span class="hub-chapter-title">{article.data.title}</span>
-											{article.data.description && (
-												<span class="hub-chapter-desc">{article.data.description}</span>
-											)}
-										</a>
-									</li>
-								))}
-							</ol>
-							{firstChapter && (
-								<p class="start-reading">
-									<a href={getConceptPath(firstChapter.id)}>
-										Start with Chapter 1 — {firstChapter.data.title} →
-									</a>
-								</p>
-							)}
-						</section>
-
-						<div class="hub-more">
-							<Content />
-						</div>
-					</>
-				) : (
-					<Content />
-				)}
-
-				{seriesContext && !isHub && currentIndex >= 0 && (
-					<nav class="page-nav" aria-label="Chapter navigation">
-						{isFirstChapter ? (
-							<a class="page-nav-link prev" href={seriesContext.series.hubPath}>
-								<span class="page-nav-direction">&larr; Contents</span>
-								<span class="page-nav-title">{seriesContext.series.title}</span>
-							</a>
-						) : prevArticle ? (
-							<a class="page-nav-link prev" href={getConceptPath(prevArticle.id)}>
-								<span class="page-nav-direction">&larr; Chapter {currentIndex}</span>
-								<span class="page-nav-title">{prevArticle.data.title}</span>
-							</a>
-						) : (
-							<span />
-						)}
-						{nextArticle ? (
-							<a class="page-nav-link next" href={getConceptPath(nextArticle.id)}>
-								<span class="page-nav-direction">Chapter {currentIndex + 2} →</span>
-								<span class="page-nav-title">{nextArticle.data.title}</span>
-							</a>
-						) : isLastChapter ? (
-							<a class="page-nav-link next" href={seriesContext.series.hubPath}>
-								<span class="page-nav-direction">End of book →</span>
-								<span class="page-nav-title">Back to contents</span>
-							</a>
-						) : (
-							<span />
-						)}
-					</nav>
-				)}
-			</article>
-		</main>
+			{!isHub && <PageToc />}
+		</div>
 		<Footer />
 	</body>
 </html>
 
 <style>
-	main.concepts-shell {
-		width: min(46rem, calc(100% - 2em));
+	.handbook-shell {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0 1.5rem;
+		width: min(72rem, calc(100% - 2em));
 		max-width: none;
-		margin-left: auto;
-		margin-right: auto;
+		margin: 0 auto;
+		padding: 1.5rem 0 3rem;
+		align-items: start;
 	}
 
-	main.concepts-shell.is-hub {
-		width: min(58rem, calc(100% - 2em));
+	.handbook-shell.has-book-nav:not(.no-toc) {
+		grid-template-columns: 15rem minmax(0, 1fr) 13.5rem;
+	}
+
+	.handbook-shell.has-book-nav.no-toc {
+		grid-template-columns: 15rem minmax(0, 1fr);
+	}
+
+	.handbook-shell:not(.has-book-nav):not(.no-toc) {
+		grid-template-columns: minmax(0, 1fr) 13.5rem;
+	}
+
+	.handbook-main {
+		width: 100%;
+		max-width: none;
+		margin: 0;
+		padding: 0;
+		min-width: 0;
 	}
 
 	.concepts-article {
@@ -209,10 +245,11 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 	}
 
 	.contents-btn {
+		display: none;
 		flex-shrink: 0;
 		font: inherit;
 		font-size: 0.82rem;
-		font-weight: 700;
+		font-weight: 600;
 		padding: 0.35rem 0.7rem;
 		border: 1px solid rgb(var(--gray-light));
 		border-radius: 999px;
@@ -264,7 +301,7 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 	.chapter-eyebrow {
 		margin: 0 0 0.35rem;
 		font-size: 0.78rem;
-		font-weight: 700;
+		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		color: rgb(var(--gray));
@@ -272,7 +309,7 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 
 	.article-header h1 {
 		font-size: 1.85rem;
-		font-weight: 700;
+		font-weight: 600;
 		letter-spacing: -0.015em;
 		line-height: 1.25;
 		margin-bottom: 0.5rem;
@@ -291,6 +328,7 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 
 	.hub-chapters-title {
 		font-size: 1.2rem;
+		font-weight: 600;
 		margin: 0 0 0.85rem;
 	}
 
@@ -323,7 +361,7 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 	.hub-chapter-list a::before {
 		content: counter(chapter) '.';
 		grid-row: 1 / span 2;
-		font-weight: 700;
+		font-weight: 600;
 		color: rgb(var(--gray));
 		padding-top: 0.1rem;
 	}
@@ -333,7 +371,7 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 	}
 
 	.hub-chapter-title {
-		font-weight: 700;
+		font-weight: 600;
 		line-height: 1.35;
 	}
 
@@ -400,7 +438,25 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 	}
 
 	.page-nav-title {
-		font-weight: 700;
+		font-weight: 600;
+	}
+
+	@media (max-width: 1099px) {
+		.handbook-shell,
+		.handbook-shell.has-book-nav:not(.no-toc),
+		.handbook-shell.has-book-nav.no-toc,
+		.handbook-shell:not(.has-book-nav):not(.no-toc) {
+			grid-template-columns: minmax(0, 1fr);
+			width: min(46rem, calc(100% - 2em));
+		}
+
+		.contents-btn {
+			display: inline-block;
+		}
+
+		.handbook-shell :global(.page-toc-rail) {
+			display: none;
+		}
 	}
 
 	@media (max-width: 640px) {
