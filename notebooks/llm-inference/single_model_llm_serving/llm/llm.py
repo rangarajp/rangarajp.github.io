@@ -12,7 +12,14 @@ from vllm import LLM as VLLM
 from vllm import SamplingParams
 
 class LLMEngine:
-    def __init__(self, model_path: str, vllm_model=None, vllm_kwargs: Dict[str, Any] | None = None):
+    def __init__(
+        self,
+        model_path: str,
+        vllm_model=None,
+        vllm_kwargs: Dict[str, Any] | None = None,
+        *,
+        enable_hf_worker: bool = True,
+    ):
         """
         Args:
             model_path: Local path (or HF id) used by ModelWorker / ModelManager.
@@ -20,17 +27,27 @@ class LLMEngine:
                         (e.g. from `LLM(model=MODEL_PATH, ...)` in the notebook).
             vllm_kwargs: Kwargs for `LLM(model=model_path, **vllm_kwargs)` when
                          `vllm_model` is not provided.
+            enable_hf_worker: If True, spawn a Transformers ModelWorker (second full
+                              copy on GPU). Set False for 7B+ so only vLLM loads —
+                              otherwise you OOM. HF endpoints then raise clearly.
         """
-        flow("LLMEngine", f"__init__ — model_path={model_path!r}")
+        flow("LLMEngine", f"__init__ — model_path={model_path!r} enable_hf_worker={enable_hf_worker}")
         self.model_path = model_path
+        self.enable_hf_worker = enable_hf_worker
         self.model_executor = ModelExecutor()
         self.workload_manager = WorkloadManager()
         self.max_tokens = 20
-        
+
         # Transformers worker (custom stack: /basic_generate, /generate, /generate_stream)
-        flow("LLMEngine", f"setup_worker({model_path!r}) — starts ModelWorker process")
-        self.model_executor.setup_worker(model_path)
-        
+        if enable_hf_worker:
+            flow("LLMEngine", f"setup_worker({model_path!r}) — starts ModelWorker process")
+            self.model_executor.setup_worker(model_path)
+        else:
+            flow_skip(
+                "ModelWorker / ModelManager",
+                "enable_hf_worker=False — skipping second GPU load (use /generate_vllm only)",
+            )
+
         # vLLM engine (only /generate_vllm)
         if vllm_model is not None:
             flow("LLMEngine", "reusing provided vLLM LLM(model_path) instance")
@@ -38,14 +55,24 @@ class LLMEngine:
         else:
             flow("LLMEngine", f"loading vLLM from {model_path!r}")
             self.vllm_model = VLLM(model=model_path, **(vllm_kwargs or {}))
-        
-        # Start processing loop in a separate thread
-        flow("LLMEngine", "starting requests_processing_loop thread (streaming only)")
-        self.thread = threading.Thread(target=self.requests_processing_loop, daemon=True)
-        self.thread.start()
-        
+
+        # Start processing loop in a separate thread (only useful with HF streaming)
+        if enable_hf_worker:
+            flow("LLMEngine", "starting requests_processing_loop thread (streaming only)")
+            self.thread = threading.Thread(target=self.requests_processing_loop, daemon=True)
+            self.thread.start()
+        else:
+            self.thread = None
+
         # Register cleanup
         atexit.register(self._cleanup)
+
+    def _require_hf_worker(self, endpoint: str) -> None:
+        if not self.enable_hf_worker:
+            raise RuntimeError(
+                f"{endpoint} needs the Transformers ModelWorker, but enable_hf_worker=False. "
+                "Use /generate_vllm, or restart with enable_hf_worker=True on a small model / extra GPU."
+            )
     
     def requests_processing_loop(self):
         """Process streaming requests in a loop."""
@@ -97,17 +124,23 @@ class LLMEngine:
     # process 1 request with only one prompt at a time.
     def basic_generate(self, prompt: str) -> str:
         flow("LLMEngine", f"basic_generate(prompt={prompt!r})")
+        if not self.enable_hf_worker:
+            flow_skip(
+                "ModelExecutor / ModelWorker",
+                "enable_hf_worker=False — basic_generate falls back to vLLM",
+            )
+            return self.generate_vllm([prompt])[0]
+
         flow_skip("WorkloadManager", "basic_generate builds Sequence locally; no add_request / get_next_batch")
 
         sequence = Sequence(str(uuid.uuid4()), prompt, None, None)
-        
+
         flow("LLMEngine", "→ ModelExecutor.execute_batch([sequence])")
-        # Execute the batch
         results = self.model_executor.execute_batch([sequence])
         flow("LLMEngine", "← result received from ModelExecutor")
 
-        return results[1][0]['generated_text']
-    
+        return results[1][0]["generated_text"]
+
     def _is_batch_finished(self, request_ids: List[str]) -> bool:
         for id in request_ids:
             if not self.workload_manager.is_sequence_finished(id):
@@ -117,13 +150,19 @@ class LLMEngine:
     # process multiple prompts in a request
     def generate(self, prompts: List[str]) -> List[str]:
         flow("LLMEngine", f"generate({len(prompts)} prompts) — uses WorkloadManager")
+        if not self.enable_hf_worker:
+            flow_skip(
+                "ModelExecutor / ModelWorker",
+                "enable_hf_worker=False — generate falls back to vLLM",
+            )
+            return self.generate_vllm(prompts)
 
         # Add all requests to workload manager
         request_ids = []
         for prompt in prompts:
             request_id = self.workload_manager.add_request(prompt)
             request_ids.append(request_id)
-        
+
         # Process requests in batches (from LoadManager) until all prompts of the request are finished
         while not self._is_batch_finished(request_ids):
             # Get next batch of requests
@@ -135,11 +174,13 @@ class LLMEngine:
             flow("LLMEngine", f"batch loop — {len(sequences)} seq(s) → ModelExecutor.execute_batch()")
             # Execute the next batch in one go, it may not be the same prompts as the prompts in the request.
             results = self.model_executor.execute_batch(sequences)
-        
+
             # Update results in workload manager
             for result in results[1]:
-                self.workload_manager.remove_active_sequence(result['request_id'])
-                self.workload_manager.update_sequence_output(result['request_id'], result['generated_text'], is_finished=True)
+                self.workload_manager.remove_active_sequence(result["request_id"])
+                self.workload_manager.update_sequence_output(
+                    result["request_id"], result["generated_text"], is_finished=True
+                )
 
         # Remove finished sequences from workload manager
         generated_texts = []
@@ -148,19 +189,41 @@ class LLMEngine:
             self.workload_manager.remove_finished_sequence(request_id)
 
         flow("LLMEngine", f"← returning {len(generated_texts)} generated texts")
-        return generated_texts 
-    
+        return generated_texts
+
     async def event_generator(self, loop, prompt: str):
         flow("LLMEngine", f"event_generator(prompt={prompt!r})")
+        if not self.enable_hf_worker:
+            # No HF streaming loop — generate once via vLLM and emit as SSE chunks
+            flow_skip(
+                "ModelExecutor / streaming loop",
+                "enable_hf_worker=False — generate_stream falls back to vLLM (chunked)",
+            )
+            text = self.generate_vllm([prompt])[0]
+            seq_id = str(uuid.uuid4())
+            # Emit roughly word-sized chunks so the client still sees a stream
+            buf = ""
+            for ch in text:
+                buf += ch
+                if ch.isspace() or len(buf) >= 12:
+                    payload = json.dumps({"token": buf, "sequence_id": seq_id})
+                    yield f"data: {payload}\n\n"
+                    buf = ""
+                    await asyncio.sleep(0)
+            if buf:
+                payload = json.dumps({"token": buf, "sequence_id": seq_id})
+                yield f"data: {payload}\n\n"
+            return
+
         asyncio.set_event_loop(loop)
         # Create a queue for this client's stream
         queue = asyncio.Queue()
-        
+
         # Add streaming request to workload manager with the queue
         seq_id = self.workload_manager.add_streaming_request(prompt, queue, loop)
         flow("LLMEngine", f"streaming seq {seq_id[:8]}… queued; waiting on client asyncio.Queue")
         flow("LLMEngine", "(tokens produced asynchronously by requests_processing_loop thread)")
-        
+
         try:
             while True:
                 # Get next token from queue

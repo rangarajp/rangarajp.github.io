@@ -15,10 +15,10 @@ class TestMultiModelLLMServing(unittest.TestCase):
     def setUpClass(cls):
         cls.client = TestClient(app)
         cls.model_ids = {
-            "qwen": "qwen2.5-0.5b",
+            "qwen": "qwen2.5-7b",
             "tinyllama": "tinyllama-1.1b",
         }
-        cls.qwen_path = REPO_ROOT / "models" / "Qwen2.5-0.5B-Instruct"
+        cls.qwen_path = REPO_ROOT / "models" / "Qwen2.5-7B"
         cls.tiny_path = REPO_ROOT / "models" / "TinyLlama-1.1B-Chat-v1.0"
 
     def test_list_models(self):
@@ -39,7 +39,7 @@ class TestMultiModelLLMServing(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
 
     @unittest.skipUnless(
-        (REPO_ROOT / "models" / "Qwen2.5-0.5B-Instruct" / "config.json").exists(),
+        (REPO_ROOT / "models" / "Qwen2.5-7B" / "config.json").exists(),
         "Qwen2.5 checkpoint not found under models/",
     )
     def test_generate_qwen(self):
@@ -78,7 +78,7 @@ class TestMultiModelLLMServing(unittest.TestCase):
         self.assertEqual(data["model_id"], self.model_ids["tinyllama"])
 
     @unittest.skipUnless(
-        (REPO_ROOT / "models" / "Qwen2.5-0.5B-Instruct" / "config.json").exists()
+        (REPO_ROOT / "models" / "Qwen2.5-7B" / "config.json").exists()
         and (REPO_ROOT / "models" / "TinyLlama-1.1B-Chat-v1.0" / "config.json").exists(),
         "Both local LLM checkpoints required for cache test",
     )

@@ -1,13 +1,13 @@
 {
     "models": [
         {
-            "id": "qwen2.5-0.5b",
-            "name": "Qwen2.5-0.5B-Instruct",
-            "path": "Qwen2.5-0.5B-Instruct",
+            "id": "qwen2.5-7b",
+            "name": "Qwen2.5-7B",
+            "path": "Qwen2.5-7B",
             "type": "llm",
             "framework": "transformers",
             "version": "1.0.0",
-            "description": "Qwen2.5 0.5B Instruct — local causal LM (under MODELS_DIR)"
+            "description": "Qwen2.5 7B — local causal LM (under MODELS_DIR)"
         },
         {
             "id": "tinyllama-1.1b",

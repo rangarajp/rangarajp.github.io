@@ -5,7 +5,7 @@ Serves multiple local causal LMs behind one FastAPI process with an LRU model ca
 
 | Model ID | Checkpoint |
 |----------|------------|
-| `qwen2.5-0.5b` | `models/Qwen2.5-0.5B-Instruct` |
+| `qwen2.5-7b` | `models/Qwen2.5-7B` |
 | `tinyllama-1.1b` | `models/TinyLlama-1.1B-Chat-v1.0` |
 
 Both paths are resolved separately via gitignored `../local_paths.json`
@@ -14,7 +14,7 @@ Both paths are resolved separately via gitignored `../local_paths.json`
 - `MULTI_MODEL_NOTEBOOK_DIR` — serving package (`app/`, `config/`)
 - `MODELS_DIR` — local checkpoints
 
-`config/models.json` stores folder names under `MODELS_DIR` (e.g. `Qwen2.5-0.5B-Instruct`), not absolute machine paths.
+`config/models.json` stores folder names under `MODELS_DIR` (e.g. `Qwen2.5-7B`), not absolute machine paths.
 
 ## Setup
 
@@ -34,7 +34,7 @@ cp ../local_paths.example.json ../local_paths.json
 # edit MODELS_DIR and MULTI_MODEL_NOTEBOOK_DIR
 ```
 
-Place checkpoints under `MODELS_DIR` (`Qwen2.5-0.5B-Instruct`, `TinyLlama-1.1B-Chat-v1.0`).
+Place checkpoints under `MODELS_DIR` (`Qwen2.5-7B`, `TinyLlama-1.1B-Chat-v1.0`).
 
 3. Run the service — either from the CLI or notebooks:
 
@@ -62,7 +62,7 @@ curl http://localhost:8001/models
 ```bash
 curl -X POST http://localhost:8001/generate \
   -H "Content-Type: application/json" \
-  -d "{\"model_id\": \"qwen2.5-0.5b\", \"prompt\": \"Explain KV cache in one sentence.\", \"max_new_tokens\": 64}"
+  -d "{\"model_id\": \"qwen2.5-7b\", \"prompt\": \"Explain KV cache in one sentence.\", \"max_new_tokens\": 64}"
 ```
 
 ```bash
@@ -76,7 +76,7 @@ curl -X POST http://localhost:8001/generate \
 ```bash
 curl -X POST http://localhost:8001/predict \
   -H "Content-Type: application/json" \
-  -d "{\"model_id\": \"qwen2.5-0.5b\", \"input_data\": {\"prompt\": \"Hello\", \"max_new_tokens\": 32}}"
+  -d "{\"model_id\": \"qwen2.5-7b\", \"input_data\": {\"prompt\": \"Hello\", \"max_new_tokens\": 32}}"
 ```
 
 `input_data` may also be a plain string prompt.

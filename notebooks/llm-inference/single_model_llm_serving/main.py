@@ -1,14 +1,19 @@
 from fastapi import FastAPI, BackgroundTasks, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from llm import LLMEngine
-from llm.flow import flow, flow_banner, flow_done, flow_skip
 from typing import List
 import asyncio
 import multiprocessing
 import atexit
 import signal
 import os
+
+# Pin GPU before vLLM/torch init in worker processes (override with env CUDA_DEVICE=2|3)
+_CUDA_DEVICE = os.environ.get("CUDA_DEVICE", "2")
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", _CUDA_DEVICE)
+
+from llm import LLMEngine
+from llm.flow import flow, flow_banner, flow_done, flow_skip
 
 # Local Qwen checkpoint (override with env MODEL_PATH, or local_paths.json)
 def _default_model_path() -> str:
@@ -24,7 +29,7 @@ def _default_model_path() -> str:
 
         return str(model_path("QWEN_MODEL"))
     except Exception:
-        return "Qwen2.5-0.5B-Instruct"
+        return "Qwen2.5-7B"
 
 
 MODEL_PATH = _default_model_path()
@@ -54,11 +59,13 @@ def get_llm():
                 model_path=MODEL_PATH,
                 vllm_kwargs={
                     "dtype": "float16",
-                    "gpu_memory_utilization": 0.15,
+                    "gpu_memory_utilization": 0.85,
                     "max_model_len": 1024,
                     "max_num_seqs": 4,
                     "enforce_eager": True,
                 },
+                # 7B cannot fit vLLM + HF twice on one GPU
+                enable_hf_worker=os.environ.get("ENABLE_HF_WORKER", "0") == "1",
             )
             # Register cleanup
             atexit.register(cleanup)

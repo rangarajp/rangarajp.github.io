@@ -16,7 +16,7 @@ Client
   ▼
 FastAPI Gateway :8000
   │
-  ├──► Qwen2.5-0.5B / vLLM :8001
+  ├──► Qwen2.5-7B / vLLM :8001
   │
   └──► TinyLlama-1.1B / vLLM :8002
                          │

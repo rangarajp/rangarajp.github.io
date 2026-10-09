@@ -1,6 +1,6 @@
 ---
 title: 'LLM Inference Optimizations — Batching'
-description: 'Why GPUs need batching, why static batches fail with uneven prompts, and how continuous batching plus chunked prefill keep the boat full without stranding passengers.'
+description: 'Static, dynamic, and continuous batching — plus chunked prefill — so the GPU stays full without stranding short requests behind long ones.'
 pubDate: 'Sep 15 2026'
 order: 7
 heroImage: '../../../assets/blog-placeholder-3.jpg'
@@ -8,7 +8,7 @@ heroImage: '../../../assets/blog-placeholder-3.jpg'
 
 Serving one prompt at a time wastes a GPU. Serving many at once without a plan wastes latency. Batching is the optimization that sits between those two failures.
 
-This chapter is the boat story: why you fill seats, what goes wrong when passengers need trips of different lengths, and how modern engines pick up and drop off continuously — including when a long boarding (prefill) would otherwise block everyone else.
+This chapter is the boat story: why you fill seats, what goes wrong with static and dynamic closed batches, and how continuous batching plus chunked prefill keep the ferry moving — including when a long boarding (prefill) would otherwise block everyone else.
 
 Prerequisite mental model: [prefill vs decode and KV cache](./vllm-basics-kv-cache). For how a server wires the loop, see [Serving Engine Internals](./serving-engine-internals).
 
@@ -56,9 +56,16 @@ Batching also matters in prefill. Larger effective batch / token counts make mat
 
 ---
 
-## 3. Static batching — wait for the whole boat to finish
+## 3. Static batching — wait for a fixed-size group
 
-Naive batching works like a charter that will not leave the dock until every seat is filled, then will not return until *every* passenger has completed their entire journey.
+The simplest form of batching is *static batching*. The server waits until a fixed number of requests arrive, then processes them together as one batch. Nothing new boards until that whole group is done.
+
+<figure>
+
+![Three fixed-size batches of four requests each, processed one after another along a time axis](./images/static-batching.png)
+
+<figcaption><span class="figure-label">Figure 1.</span> Static batching: fixed-size batches processed one after another</figcaption>
+</figure>
 
 *How it runs:*
 
@@ -66,6 +73,11 @@ Naive batching works like a charter that will not leave the dock until every sea
 2. Pad them to the same length  
 3. Run prefill + decode until *all* sequences in that batch are done  
 4. Only then admit the next batch  
+
+While static batching is easy to implement, it has notable downsides.
+
+- *First request waits for the last.* The earliest arrival in a batch is forced to wait until the batch fills — like a printer that will not start until a fixed number of documents are queued, no matter how long the last one takes to arrive.  
+- *Uneven work inside the batch.* In LLM inference some requests finish in a few tokens; others run long chain-of-thought. Everyone waits for the slowest sequence, so seats sit idle after short requests finish and latency climbs.  
 
 *Boat picture:* eight tourists board together. One wants a 2-stop hop; another wants a 200-stop cruise. The ferry will not drop the short rider at stop 2 and free that seat. Everyone stays on until the longest trip ends. New tourists on the dock watch an almost-empty boat cruise past because the charter rules say “same group only.”
 
@@ -80,13 +92,42 @@ Naive batching works like a charter that will not leave the dock until every sea
 
 Padding is the silent tax. If prompts are lengths `[8, 8, 8, 512]`, a naive tensor batch shaped `(4, 512)` spends most of its work on pad positions that mean nothing — empty seats with sandbags so the rows “look” rectangular.
 
-Static batching is simple and fine for offline jobs where you already have a pile of prompts and care about throughput, not interactive latency. It is a poor fit for a live API.
+Static batching is fine for offline jobs where you already have a pile of prompts and care about throughput, not interactive latency. It is a poor fit for a live API.
 
 ---
 
-## 4. Continuous batching — pick up and drop off every stop
+## 4. Dynamic batching — leave on a timer or when full
 
-Continuous batching (also called *iteration-level* or *in-flight* batching) changes the unit of scheduling from “whole request” to “one iteration.”
+*Dynamic batching* still groups requests into batches, but it does not insist on a fixed size. It sets a time window and processes whatever has arrived by then. If the batch hits its size limit sooner, it launches immediately — like a bus that leaves on a schedule *or* when it is full, whichever comes first.
+
+<figure>
+
+![Four batches of varying request counts along a time axis](./images/dynamic-batching.png)
+
+<figcaption><span class="figure-label">Figure 2.</span> Dynamic batching: batch size varies with arrivals</figcaption>
+</figure>
+
+Dynamic batching balances throughput and latency better than static: early requests are not delayed indefinitely waiting for a full charter. The trade-offs remain:
+
+- Batches may launch underfull, so GPU efficiency is not always maxed  
+- Like static batching, the *longest* request in a batch still defines when the batch finishes — short requests wait for that slowest member before the next group can start  
+
+So dynamic batching softens the “wait forever to fill” problem. It does not fix uneven generation lengths inside a closed batch.
+
+---
+
+## 5. Continuous batching — pick up and drop off every stop
+
+For LLM inference, output lengths vary widely. Static and dynamic batching keep short requests stuck until the longest one in the *same closed batch* finishes. That leaves GPU seats unsaturated.
+
+*Continuous batching* (also called *in-flight* or *iteration-level* batching) addresses that. It does not force the entire batch to complete before returning results. Each sequence finishes independently; as soon as one slot frees, the server inserts a new request. Think of an assembly line: as soon as one item is done, a new one takes its place so the line stays full.
+
+<figure>
+
+![Side-by-side grids: static batching leaves idle slots after short sequences finish; continuous batching fills those slots with new sequences across T1–T8](./images/continuous-batching.jpg)
+
+<figcaption><span class="figure-label">Figure 3.</span> Generating seven sequences with continuous batching — finished slots are replaced in-flight (right) instead of staying empty (left). Source: Anyscale</figcaption>
+</figure>
 
 *Rules of the modern ferry:*
 
@@ -104,11 +145,11 @@ Iteration t+1: [A decode] [B decode] [E prefill/decode] [D decode]
 
 *Boat picture:* the ferry runs a tight loop of short hops. At each pier it lets people off who reached their stop and lets new people on if a seat is free. A two-stop rider does not hostage a two-hundred-stop rider. The dock clears steadily instead of in giant charter waves.
 
-| Static batching | Continuous batching |
-| --------------- | ------------------- |
-| Batch membership fixed until all done | Membership changes every iteration |
-| Seat freed only at end of charter | Seat freed at EOS / cancel |
-| Great for offline bulk | Default for interactive serving (vLLM, TGI, TensorRT-LLM, …) |
+| Static / dynamic | Continuous batching |
+| ---------------- | ------------------- |
+| Batch membership fixed until all in the group are done | Membership changes every iteration |
+| Seat freed only at end of that closed batch | Seat freed at EOS / cancel |
+| Great for offline bulk / simple servers | Default for interactive serving (vLLM, TGI, TensorRT-LLM, …) |
 | Padding + idle early finishers | Running set stays closer to “full useful seats” |
 
 This is why production engines talk about `max_num_seqs` and KV memory pools rather than “batch size 32 until done.” The boat’s capacity is a *ceiling on concurrent passengers*, not a fixed tour group.
@@ -119,7 +160,7 @@ Passengers still have different luggage sizes (prompt lengths) and different des
 
 ---
 
-## 5. Prefill vs decode on the same boat
+## 6. Prefill vs decode on the same boat
 
 Recall two phases per passenger:
 
@@ -137,7 +178,7 @@ Boat picture: the ferry is mid-route with 20 happy passengers. One new tourist s
 
 ---
 
-## 6. Chunked prefill — board luggage in pieces
+## 7. Chunked prefill — board luggage in pieces
 
 Chunked prefill splits a long prompt into token chunks (e.g. 512 or 2048 at a time). Between chunks, the engine can still run decode steps for passengers already on board.
 
@@ -166,7 +207,7 @@ Chunked prefill is how you keep *efficient pick and drop* when the dock has both
 
 ---
 
-## 7. Putting the route together
+## 8. Putting the route together
 
 End-to-end, a well-run inference ferry looks like this:
 
@@ -193,16 +234,17 @@ End-to-end, a well-run inference ferry looks like this:
 4. *Cap seats by memory* — KV cache is the real seat belt count, not a vanity batch size  
 5. *Track tickets* — sequence ids so pick/drop never mix up who gets which answer  
 
-Static batching is a charter bus. Continuous batching is a city ferry with open boarding. Chunked prefill is the rule that freight loads in stages so the ferry schedule still serves everyone.
+Static batching is a charter bus. Dynamic batching is a bus that leaves on a timer or when full. Continuous batching is a city ferry with open boarding. Chunked prefill is the rule that freight loads in stages so the ferry schedule still serves everyone.
 
 ---
 
-## 8. Takeaways
+## 9. Takeaways
 
 1. *Why batch* — share weight loads across sequences; empty seats are burned money.  
-2. *Why static fails* — uneven prompt/output lengths → padding waste and seats held by finished riders.  
-3. *Continuous batching* — pick up and drop off every iteration so the boat stays useful.  
-4. *Chunked prefill* — board long prompts in pieces so one heavy boarding does not freeze riders already on the water.  
-5. *Same analogy everywhere* — queue = dock, batch = boat, prefill = boarding, decode = hop, EOS = drop-off, KV = luggage already stowed for the rest of the trip.
+2. *Static* — fixed group until all done; first request waits for fill, short requests wait for the longest.  
+3. *Dynamic* — time window or size limit; better latency than static, but still a closed batch.  
+4. *Continuous* — pick up and drop off every iteration so seats stay useful under uneven output lengths.  
+5. *Chunked prefill* — board long prompts in pieces so one heavy boarding does not freeze riders already on the water.  
+6. *Same analogy everywhere* — queue = dock, batch = boat, prefill = boarding, decode = hop, EOS = drop-off, KV = luggage already stowed for the rest of the trip.
 
 Next: [Quantization](./inference-optimizations-quantization) — fewer bits per weight so more passengers (and longer trips) fit in the same pantry.
