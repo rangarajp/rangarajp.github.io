@@ -1,19 +1,17 @@
 ---
 title: "The inference problem"
-description: "Training versus inference, the generation loop, latency/throughput/cost, memory bandwidth, and roofline."
+description: "A user sends a prompt and waits for an answer."
 section: learn
 pubDate: 2026-10-29
-part: 1
 chapter: 1
 order: 1
-tags: ["llm-inference", "systems", "hands-on"]
 ---
 
 A user sends a prompt and waits for an answer. The model has already been trained, yet producing that answer still requires repeated computation, access to billions of stored weights, and memory for the conversation. When many users arrive together, the server must share those resources without making every answer slow.
 
 This is the inference problem: turn a trained model into a service that delivers useful results within a latency, memory, and cost budget. Before studying individual optimizations, we need to understand the work an answer creates and why different parts of that work stress the machine differently.
 
-## 1. Training versus inference: fundamentally different goals
+## 1.1 Training versus inference: fundamentally different goals
 
 *Training* changes a model. It processes examples, calculates a loss, propagates gradients backward through the network, and updates learned parameters. The system needs memory for parameters, gradients, optimizer state, and activations retained for backpropagation. A common systems goal is to process a large training workload efficiently enough to finish within the available time and budget.
 
@@ -33,7 +31,7 @@ Interactive chat emphasizes responsiveness. An offline document-processing job m
 
 The practical consequence is that fitting the weights is only the first check. We also need enough memory for the requests we admit, and enough execution capacity to serve them at the desired pace.
 
-## 2. The token generation loop explained
+## 1.2 The token generation loop explained
 
 Consider a prompt that has already been converted to token IDs. The model reads that known prefix and predicts what can come next. After a token is selected, it becomes part of the prefix for the following prediction. This dependency is what makes ordinary autoregressive generation a loop.
 
@@ -51,7 +49,7 @@ Prefill exposes many known positions to the GPU at once. Their projection and fe
 
 The *KV cache* avoids recomputing old keys and values. It is not a cache of model weights or finished answers. Each new query still attends to retained context, so longer context increases cache storage and attention work. We will derive the tensor shapes later; for now, distinguish the shared weights from state that belongs to a particular request.
 
-## 3. Latency, throughput, and cost: the operating tradeoff
+## 1.3 Latency, throughput, and cost: the iron triangle
 
 A serving system has several clocks and one shared resource budget. The right configuration depends on which clock matters to the application.
 
@@ -87,7 +85,7 @@ Larger batches can amortize weight movement and improve total output throughput.
 
 A useful production objective is *goodput*: requests or tokens delivered within the stated latency and quality objectives per wall-clock second. High raw throughput with many missed deadlines can be less valuable than a lower throughput that consistently meets them.
 
-## 4. Memory bandwidth: why low-concurrency decode can be slow
+## 1.4 Memory bandwidth: the decode bottleneck
 
 A GPU needs both arithmetic units and a way to supply their operands. Its device memory stores far more data than the on-chip caches can retain. A large dense model therefore repeatedly moves weight data from device memory toward the compute units during generation.
 
@@ -109,7 +107,7 @@ The 7 ms calculation is an ideal resource bound under the stated streaming and b
 
 Caching and bandwidth solve different problems. KV reuse removes repeated computation over old prefix positions. Quantization can reduce the weight bytes moved. Grouped-query attention can reduce retained KV bytes. Batching increases reuse across independent work. None makes memory traffic disappear.
 
-## 5. The roofline model
+## 1.5 The roofline model
 
 The roofline model connects those observations using *arithmetic intensity*: operations performed per byte transferred across a specified memory boundary.
 
@@ -145,7 +143,7 @@ for token_rows in (1, 64, 512):
 
 This is why prefill and decode often respond to different optimizations. Long prompt matrices can provide enough reuse to make arithmetic throughput important. Single-stream decode often remains limited by moving weights and state. Long-context attention, higher concurrency, quantization, and different kernels can move the bottleneck, so these are workload tendencies rather than permanent labels attached to a model.
 
-### Loading the model and reading its weights are different transfers
+#### Loading the model and reading its weights are different transfers
 
 “The model is already on the GPU” means its weights are resident in *high-bandwidth memory* (HBM). The arithmetic units still need those weights brought into the much smaller on-chip storage used during computation.
 
@@ -160,7 +158,7 @@ During a forward pass, each layer reads the weights it needs. A kernel can reuse
 
 The KV cache stores previous tokens' keys and values, avoiding their recomputation. It does not hold the model's weights close to the arithmetic units, and attention must also read the relevant cached K/V values during decoding.
 
-### Training also reads weights: it gets more work from each read
+#### Training also reads weights: it gets more work from each read
 
 Training moves weights from HBM into on-chip storage too. The difference is how much computation a kernel can perform with each loaded tile. For a linear layer:
 
@@ -183,9 +181,13 @@ Training therefore *amortizes* weight movement across more arithmetic. Its backw
 
 NVIDIA's [matrix multiplication performance guide](https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-multiplication/index.html) explains the relationship between matrix shape, reuse, and arithmetic intensity. The arithmetic-intensity estimate above puts numbers on this distinction.
 
-The next chapter examines the hardware behind these limits: compute units, memory hierarchy, and precision. We then follow tokens through the transformer before studying the optimizations that reduce its work and memory traffic.
+The following discussion examines the hardware behind these limits: compute units, memory hierarchy, and precision. We then follow tokens through the transformer before studying the optimizations that reduce its work and memory traffic.
 
-## Hands-on: trace one request
+## Hands-on extensions
+
+Use these experiments to connect the mechanisms above to measurements. They are proposed exercises unless a recorded result is explicitly identified.
+
+### Hands-on: trace one request
 
 Send one streamed request to the teaching server and record arrival, first delivery, final delivery, input length, and output length. Publish an annotated timing table that separates prompt execution from client-visible waiting and delivery. Keep the calculations above as estimates and the request trace as a separate measurement.
 

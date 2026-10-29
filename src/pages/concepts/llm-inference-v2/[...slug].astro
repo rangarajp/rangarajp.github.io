@@ -1,7 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Layout from '../../../components/inference-v2/Layout.astro';
-import { collectionIdToSlug, NAV_PAGES, INFERENCE_V2_BASE } from '../../../lib/inference-v2';
+import { collectionIdToSlug, NAV_PAGES, INFERENCE_V2_BASE, CHAPTER_REDIRECTS, learnChapters } from '../../../lib/inference-v2';
 
 export async function getStaticPaths() {
  const entries = await getCollection('inferenceV2');
@@ -10,7 +10,9 @@ export async function getStaticPaths() {
   params: { slug: page.slug }, props: { page, entry: byId.get(page.slug) ?? null },
  }));
 }
-const { page, entry } = Astro.props;
+const { page: legacyPage, entry } = Astro.props;
+const page = learnChapters().find(ch => ch.slug === legacyPage.slug) ?? legacyPage;
+if (CHAPTER_REDIRECTS[page.slug]) return Astro.redirect(INFERENCE_V2_BASE + "/" + CHAPTER_REDIRECTS[page.slug] + "/", 301);
 // Keep old links working without maintaining extra indexes or empty sections.
 if (!entry) return Astro.redirect(INFERENCE_V2_BASE + '/', 301);
 const { Content } = await render(entry);

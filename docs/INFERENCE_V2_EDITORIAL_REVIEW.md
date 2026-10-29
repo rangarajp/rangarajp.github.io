@@ -1,3 +1,7 @@
+# Current structure
+
+The book now has 14 consolidated chapters matching the supplied PDF. See `INFERENCE_V2_PDF_SECTION_AUDIT.md` for the current section mapping. The review below is retained as the historical record of source content and notebook evidence; its 32-chapter numbering is superseded.
+
 # Inference v2 editorial review
 
 All 32 written chapters were reviewed for scope, transitions, terminology, source context, and hands-on opportunities. A single internal reading order powers chapter numbers, sidebar, and previous/next navigation. GPU fundamentals now precedes memory sizing, the measured PyTorch baseline precedes advanced optimization, and vLLM precedes the single-model server walkthrough. No extra user-facing tracks or roadmap were added.

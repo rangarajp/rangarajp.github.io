@@ -31,7 +31,7 @@
 	if (rail && list) {
 		const article = document.querySelector('.infv2-article');
 		if (article) {
-			const headings = Array.from(article.querySelectorAll('h2, h3')).filter(
+			const headings = Array.from(article.querySelectorAll('h2')).filter(
 				(heading) => !heading.closest('.infv2-header') && !heading.closest('.infv2-page-nav'),
 			);
 			headings.forEach((heading, index) => {

@@ -476,47 +476,102 @@ export function getNavPage(slug: string): NavPage | undefined {
 }
 
 /** One sequence for the chapter list, sidebar, and previous/next links. */
-// Follow the supplied PDF topic sequence; retain detailed blog and lab chapters within each topic.
-const READING_ORDER = [
-  "learn/inference-problem",
-  "learn/gpu-fundamentals",
-  "learn/memory-footprint",
-  "learn/inference-mathematics",
-  "learn/from-text-to-tokens",
-  "learn/transformer-forward-pass",
-  "learn/logits-and-sampling",
-  "learn/autoregressive-generation",
-  "learn/prefill-decode-kv-cache",
-  "learn/attention-variants",
-  "learn/pytorch-baseline",
-  "learn/quantization",
-  "learn/speculative-decoding",
-  "learn/kv-cache",
-  "learn/paged-attention",
-  "learn/flashattention",
-  "learn/kernel-fusion-cuda-graphs",
-  "learn/continuous-batching",
-  "learn/caching-batching-scheduling",
-  "learn/vllm-internals",
-  "learn/data-parallelism",
-  "learn/tensor-parallelism",
-  "learn/pipeline-parallelism",
-  "learn/expert-parallelism",
-  "learn/context-parallelism",
-  "learn/edge-inference",
-  "learn/inference-time-scaling",
-  "learn/gateway-registry-routing",
-  "learn/latency-throughput-goodput",
-  "learn/observability-slos",
-  "learn/capacity-and-cost",
-  "learn/future-of-inference"
+export const BOOK_CHAPTERS = [
+  {
+    "slug": "learn/inference-problem",
+    "title": "The inference problem",
+    "description": "A user sends a prompt and waits for an answer."
+  },
+  {
+    "slug": "learn/gpu-fundamentals",
+    "title": "Hardware foundations for inference",
+    "description": "The roofline model tells us which resource can limit a workload."
+  },
+  {
+    "slug": "learn/transformer-forward-pass",
+    "title": "Transformer inference mechanics",
+    "description": "A request turns text into vectors, transforms those vectors through attention and feed-forward layers, and selects a token from vocabulary scores."
+  },
+  {
+    "slug": "learn/quantization",
+    "title": "Quantization",
+    "description": "The model\u2019s weights are fixed during inference, but their representation can change."
+  },
+  {
+    "slug": "learn/speculative-decoding",
+    "title": "Speculative decoding",
+    "description": "Small-batch decoding often leaves arithmetic capacity unused while the model streams weights."
+  },
+  {
+    "slug": "learn/kv-cache",
+    "title": "KV cache optimization",
+    "description": "The cache saves computation, but it also becomes a growing memory commitment for every active request."
+  },
+  {
+    "slug": "learn/flashattention",
+    "title": "Kernel engineering and FlashAttention",
+    "description": "Cache management determines which state remains available."
+  },
+  {
+    "slug": "learn/continuous-batching",
+    "title": "Serving systems architecture",
+    "description": "A fast forward pass is one component of a service."
+  },
+  {
+    "slug": "learn/data-parallelism",
+    "title": "Parallelism for large model inference",
+    "description": "A model can exceed one device\u2019s capacity, or a service can outgrow one worker\u2019s throughput."
+  },
+  {
+    "slug": "learn/context-parallelism",
+    "title": "Long-context and memory management",
+    "description": "Long context increases both retained state and attention work."
+  },
+  {
+    "slug": "learn/edge-inference",
+    "title": "Edge and on-device inference",
+    "description": "On-device inference brings computation closer to the user and can support offline use."
+  },
+  {
+    "slug": "learn/inference-time-scaling",
+    "title": "Inference-time compute scaling",
+    "description": "Efficient execution makes each unit of model work cheaper."
+  },
+  {
+    "slug": "learn/observability-slos",
+    "title": "Observability and production engineering",
+    "description": "Production adds responsibilities beyond generating correct tokens: requests must complete reliably, latency must remain within targets, and resource costs must be attributable."
+  },
+  {
+    "slug": "learn/future-of-inference",
+    "title": "The future of inference",
+    "description": "New generation methods and hardware should be evaluated against the same question: how much useful output do they deliver within a latency, memory, energy, and quality budget? This chapter considers changes to the generation algorithm and to the architecture itself.."
+  }
 ];
 
+export const CHAPTER_REDIRECTS: Record<string, string> = {
+  "learn/memory-footprint": "learn/gpu-fundamentals",
+  "learn/inference-mathematics": "learn/gpu-fundamentals",
+  "learn/from-text-to-tokens": "learn/transformer-forward-pass",
+  "learn/logits-and-sampling": "learn/transformer-forward-pass",
+  "learn/autoregressive-generation": "learn/transformer-forward-pass",
+  "learn/prefill-decode-kv-cache": "learn/transformer-forward-pass",
+  "learn/attention-variants": "learn/transformer-forward-pass",
+  "learn/pytorch-baseline": "learn/transformer-forward-pass",
+  "learn/paged-attention": "learn/kv-cache",
+  "learn/kernel-fusion-cuda-graphs": "learn/flashattention",
+  "learn/caching-batching-scheduling": "learn/continuous-batching",
+  "learn/vllm-internals": "learn/continuous-batching",
+  "learn/tensor-parallelism": "learn/data-parallelism",
+  "learn/pipeline-parallelism": "learn/data-parallelism",
+  "learn/expert-parallelism": "learn/data-parallelism",
+  "learn/gateway-registry-routing": "learn/observability-slos",
+  "learn/latency-throughput-goodput": "learn/observability-slos",
+  "learn/capacity-and-cost": "learn/observability-slos"
+};
+
 export function learnChapters(): NavPage[] {
- const written = NAV_PAGES.filter(page => page.section === 'learn' && page.part != null && page.status !== 'planned');
- const rank = new Map(READING_ORDER.map((slug, index) => [slug, index]));
- return written.sort((a, b) => (rank.get(a.slug) ?? 999) - (rank.get(b.slug) ?? 999))
-  .map((page, index) => ({ ...page, chapter: index + 1 }));
+ return BOOK_CHAPTERS.map((chapter, index) => ({ ...chapter, section: "learn", part: 1, status: "complete", chapter: index + 1 }));
 }
 
 export function neighbors(slug: string): { prev: NavPage | null; next: NavPage | null } {

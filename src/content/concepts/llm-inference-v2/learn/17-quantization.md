@@ -1,26 +1,15 @@
 ---
 title: "Quantization"
-description: "Number formats, PTQ, QAT, activation outliers, and a runnable rounding experiment."
+description: "The model\u2019s weights are fixed during inference, but their representation can change."
 section: learn
 pubDate: 2026-10-29
-part: 3
-chapter: 17
-order: 17
-tags: ["llm-inference", "systems", "hands-on"]
+chapter: 4
+order: 4
 ---
 
-The baseline establishes how the model runs at its original precision. Quantization changes how those weights and activations are represented, reducing storage or traffic when a suitable kernel can exploit the format.
+The model’s weights are fixed during inference, but their representation can change. Quantization reduces the bytes required to store or move numbers, trading numerical error against memory and execution cost. Start with formats, then examine how calibration and training control that error.
 
-LLMs are “large” mostly because they store billions of numbers. Quantization asks a simple question: can we store each number with fewer bits and still get almost the same answers?
-
-This chapter builds that intuition from bits upward — memory math, float layouts, the staircase picture, weight histograms, quantization error — then walks one technique in detail: *symmetric absmax*.
-
-Inspired by [A Visual Guide to Quantization](https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-quantization) (Maarten Grootendorst) and the walkthrough in [LLM Quantization Explained](https://www.youtube.com/watch?v=37g8S71LfmQ). Figures below are originals drawn for this book.
-
-Related: [GPU memory budgets](./memory-footprint), [batching](./continuous-batching).
-
-
-## 1. Why quantization — same model, different memory
+## 4.1 Why quantization matters
 
 The *architecture* of a 70B model does not change when you go from FP32 to INT4. The *size of each weight* does.
 
@@ -48,10 +37,13 @@ Lower precision can reduce weight traffic and enable faster supported arithmetic
 
 Trade-off in one line: lower bits → less memory (and often more tokens/sec on bandwidth-bound decode) → more rounding error → possible quality loss.
 
+## 4.2 Number formats
 
-## 2. Basics — bits, bytes, and how floats store a number
+The visual explanations and examples develop the ideas in [A Visual Guide to Quantization](https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-quantization) by Maarten Grootendorst and [LLM Quantization Explained](https://www.youtube.com/watch?v=37g8S71LfmQ). Figures are originals drawn for this blog.
 
-### Bits and bytes
+### Basics — bits, bytes, and how floats store a number
+
+#### Bits and bytes
 
 A *bit* is 0 or 1. With $n$ bits you can represent $2^n$ distinct patterns.
 
@@ -65,7 +57,7 @@ Eight bits = one *byte*. So FP32 is 4 bytes per value, INT8 is 1 byte, INT4 is h
 
 Example: the integer *173* in one byte is `10101101` → $128 + 32 + 8 + 4 + 1$.
 
-### Floating-point layouts (IEEE-style)
+#### Floating-point layouts (IEEE-style)
 
 A float is not “a decimal with infinite precision.” It is a fixed bit budget split into:
 
@@ -92,7 +84,7 @@ A float is not “a decimal with infinite precision.” It is a fixed bit budget
 
 Bit width is the storage budget. Numerical precision also depends on how those bits are divided between exponent and fraction, or on the quantizer scale. An integer code may represent a non-integer reconstructed weight through that scale.
 
-### Number formats: storage range is not quantization quality
+#### Number formats: storage range is not quantization quality
 
 The PDF's format comparison is useful because equal bit width does not imply equal range or resolution. Floating-point exponent bits provide range; fraction bits provide precision within that range. Integer quantization instead uses scales, and sometimes zero points, to relate storage codes to real values.
 
@@ -110,7 +102,7 @@ The symmetric examples below deliberately use the subsets `[-127, 127]` and `[-7
 
 FP8 definitions: [NVIDIA Transformer Engine format primer](https://docs.nvidia.com/deeplearning/transformer-engine-releases/release-2.4/user-guide/examples/fp8_primer.html).
 
-### One concrete weight: 0.73
+#### One concrete weight: 0.73
 
 Take a weight $w = 0.73$ and a symmetric range roughly $[-1, 1]$ (as in the video’s worked example). Store it at different widths and reconstruct:
 
@@ -128,7 +120,7 @@ Take a weight $w = 0.73$ and a symmetric range roughly $[-1, 1]$ (as in the vide
 | INT8 | integer index × scale | ~0.31% |
 | INT4 | very coarse index × scale | ~2% |
 
-#### Worked example — why INT8 stores `93` for `0.73`
+##### Worked example — why INT8 stores `93` for `0.73`
 
 Assume *symmetric absmax* on the range $[-1,\ 1]$ (so $\alpha = 1$) and signed INT8 codes in $[-127,\ 127]$.
 
@@ -162,8 +154,7 @@ Same recipe for INT4 on $[-1,\ 1]$ uses $s = 1/7$: $\mathrm{round}(0.73 \times 7
 
 Integers need a *scale* (and sometimes a *zero-point*) so you can map between “real” weight space and a small integer grid. That mapping *is* quantization.
 
-
-## 3. The staircase — visual intuition (and why LLMs care)
+### The staircase — visual intuition (and why LLMs care)
 
 Imagine a smooth curve of weight values (or any continuous signal). High-bit floats can follow it almost continuously. Low-bit integers can only sit on a fixed set of horizontal levels — so the curve becomes a *staircase*.
 
@@ -181,16 +172,15 @@ Imagine a smooth curve of weight values (or any continuous signal). High-bit flo
 | INT4 | 15 usable (e.g. $[-7,7]$) | coarse stairs |
 | INT2 | 4 | usually too coarse for LLM weights |
 
-### Why this matters for LLMs
+#### Why this matters for LLMs
 
 1. *Fit* — Figure 1: 70B in FP16 may need multi-GPU; INT4 often fits one card (weights only).  
-2. *Bandwidth* — decode is often HBM-bound ([GPU Architecture](./memory-footprint)). Moving 4-bit weights instead of 16-bit moves fewer bytes per token.  
+2. *Bandwidth* — decode is often HBM-bound ([GPU Architecture](./gpu-fundamentals)). Moving 4-bit weights instead of 16-bit moves fewer bytes per token.  
 3. *Quality* — neural nets tolerate small weight noise; INT8 is often nearly free. INT4 needs care (calibration, GPTQ/AWQ or compatible GGUF quantization schemes). INT2 is rarely “just absmax the whole matrix.”
 
 The mathematical network can stay the same while its stored representation and execution graph change to accommodate packing and quantization operations.
 
-
-## 4. Histograms — FP weights vs quantized weights
+### Histograms — FP weights vs quantized weights
 
 Real LLM weights are not uniform. They cluster near zero, with a long tail of larger magnitudes (outliers). Histograms make the staircase concrete: continuous density collapses onto discrete bins.
 
@@ -209,8 +199,7 @@ What to notice:
 
 That is why production 4-bit methods often quantize *per group / per channel* and protect sensitive weights — not one global scale for the entire model.
 
-
-## 5. Quants and errors
+### Quants and errors
 
 *Quantize* → map float $w$ to integer $q$.  
 *Dequantize* → map $q$ back to an approximate float $\hat{w}$.
@@ -234,19 +223,18 @@ Rules of thumb:
 - *Outliers* inflate the scale → larger steps for *everyone* → small weights get crushed.  
 - *Clipping* (choosing a tighter range than $\max|w|$) can protect the bulk of the distribution while sacrificing outliers — a calibration choice.
 
-
-## 6. One technique in detail — symmetric absmax
+### One technique in detail — symmetric absmax
 
 Many LLM recipes start from *linear* quantization. The simplest useful variant is *symmetric absmax* (also called absmax quantization in [Maarten’s visual guide](https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-quantization)).
 
-### Idea
+#### Idea
 
 1. Look at a tensor (or channel / group) of weights $w$.  
 2. Find $\alpha = \max_i |w_i|$.  
 3. Map $[-\alpha,\ \alpha]$ onto the signed integer range, e.g. INT8 $[-127,\ 127]$ (restricted symmetric range).  
 4. Zero in float stays zero in integer — that is the *symmetric* part.
 
-### Formulas (FP → INT8)
+#### Formulas (FP → INT8)
 
 $$
 s = \frac{\alpha}{127}, \qquad
@@ -274,7 +262,7 @@ Worked values from the figure:
 
 Tiny mismatches ($\pm 0.01$) *are* the quantization error.
 
-### Why practitioners still move beyond plain absmax
+#### Why practitioners still move beyond plain absmax
 
 | Limit | What happens | Common fix |
 | ----- | ------------ | ---------- |
@@ -287,10 +275,7 @@ Absmax is the right first mental model: *choose a range, choose a grid, round, k
 
 *(Asymmetric / zero-point quantization maps $[\min w,\ \max w]$ onto $[q_{\min},\ q_{\max}]$ with an integer zero-point $z$: real zero is represented by code $z$, which need not be integer code zero — see the same visual guide for the side-by-side.)*
 
-
-
-
-## 7. Round-trip a weight vector
+### Round-trip a weight vector
 
 ```python
 # Pure Python; no GPU, model download, or external packages.
@@ -306,7 +291,7 @@ for bits in (8, 4):
 
 Python integers are not packed INT4 storage. This example demonstrates rounding and reconstruction, not compressed allocation or kernel speed.
 
-## 8. Post-training quantization
+## 4.3 Post-training quantization methods
 
 ### GPTQ: compensate for rounding where it affects outputs
 
@@ -324,7 +309,7 @@ For row-vector activations $X$ and weights $W$, an invertible diagonal matrix $D
 
 *QuIP#* and *AQLM* investigate very low bit representations using transformations or codebooks. Compare their full runtime paths and quality, rather than treating a nominal bit width as a speed ranking. Calibration examples should resemble production prompts, languages, and code distributions.
 
-## 9. Quantization-aware training
+## 4.4 Quantization-aware training
 
 QAT exposes the model to quantization error while parameters can still change. A common teaching operator first rounds to a grid and then reconstructs a floating-point approximation:
 
@@ -336,7 +321,7 @@ The forward pass therefore sees the effect of limited resolution. Since rounding
 
 PTQ is often a cheaper first experiment because it does not require a full training loop. QAT becomes attractive when adaptation recovers enough task quality to justify its data, training, and validation cost. It is not automatically superior for every checkpoint or budget.
 
-## 10. Activation quantization challenges and validation
+## 4.5 Activation quantization challenges
 
 Weights are fixed and can be analyzed offline. Activations vary with prompts, languages, positions, and context lengths. A channel containing occasional large values can force a broad quantizer scale, leaving ordinary values with too few useful levels. Clipping narrows the range but changes the computation by sacrificing outliers.
 
@@ -348,6 +333,10 @@ Hold model, prompt set, concurrency, and output budget fixed. Compare memory, TT
 
 Primary reading: [GPTQ](https://arxiv.org/abs/2210.17323) and [AWQ](https://arxiv.org/abs/2306.00978).
 
-## Hands-on: connect weight error to task behavior
+## Hands-on extensions
+
+Use these experiments to connect the mechanisms above to measurements. They are proposed exercises unless a recorded result is explicitly identified.
+
+### Hands-on: connect weight error to task behavior
 
 Start with the CPU absmax experiment, then compare an FP16 baseline with one supported quantized model on the V100. Publish weight/total memory, decode timing, and results on a small fixed task set. Record scales, packing format, and kernel support; smaller files alone do not prove faster execution.

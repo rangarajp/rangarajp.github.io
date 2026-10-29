@@ -22,7 +22,7 @@ for (const entry of await fs.readdir(new URL('src/content/', root), { recursive:
  files++;
 }
 // Render real article bodies as regression cases: aligned RoPE and Q/K/V projections.
-const rope = (await processor.render(await fs.readFile(new URL('src/content/concepts/llm-inference-v2/learn/01-from-text-to-tokens.md', root), 'utf8'))).code;
+const rope = (await processor.render(await fs.readFile(new URL('src/content/concepts/llm-inference-v2/learn/02-transformer-forward-pass.md', root), 'utf8'))).code;
 assert(rope.includes('katex-display') && rope.includes('aligned'), 'RoPE must render as aligned display math');
 const qkv = (await processor.render(await fs.readFile(new URL('src/content/concepts/llm-inference-v2/learn/02-transformer-forward-pass.md', root), 'utf8'))).code;
 assert(qkv.includes('katex-display') && !qkv.includes('katex-error'), 'Q/K/V projections must render');
