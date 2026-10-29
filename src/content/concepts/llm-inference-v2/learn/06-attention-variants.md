@@ -129,7 +129,7 @@ You should see a clean 8 : 2 : 1 ratio, because that is what `kv_heads` you pass
 ---
 
 
-Continue with [the inference problem](./inference-problem) for the full reading map, then [hardware foundations](./gpu-fundamentals), [quantization](./quantization), and [KV cache optimization](./kv-cache).
+Next, establish a [PyTorch baseline](./pytorch-baseline) with these tensor shapes in mind. The optimization chapters then begin with [quantization](./quantization), followed by speculative decoding and KV cache optimization.
 
 **Papers worth the original wording:** Vaswani et al., *Attention Is All You Need* (the MHA formula). Shazeer, *Fast Transformer Decoding* (MQA). Ainslie et al., *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints*. DeepSeek-AI, *DeepSeek-V2* (MLA). Su et al., *RoFormer* (the rotation introduced in [text to tokens](./from-text-to-tokens)).
 

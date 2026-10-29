@@ -8,7 +8,7 @@ chapter: 12
 order: 12
 ---
 
-The model mechanics, memory budget, and metrics are in place. Establish a controlled reference here before introducing paging, batching, lower precision, or a serving engine.
+The model mechanics and memory budget are in place. Use the opening chapter’s latency definitions to establish a measurement baseline. Establish a controlled reference here before introducing paging, batching, lower precision, or a serving engine.
 
 Before tuning a serving engine, establish a small baseline that you can inspect. The original guide and working notes recommend building intuition in PyTorch first: measure, identify the resource limit, change one mechanism, and measure again.
 

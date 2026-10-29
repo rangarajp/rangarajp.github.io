@@ -9,7 +9,7 @@ order: 25
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-The individual mechanisms are now familiar. Use vLLM as the integrated engine example: load a model, submit prompts, and stream results before tracing a teaching server’s internal request path.
+The individual mechanisms are now familiar. Use vLLM as the integrated engine example: load a model, submit prompts, and stream results and connect its behavior to the request lifecycle in the teaching server.
 
 Start with a supported GPU installation of vLLM. This chapter adapts the original [vLLM notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/basic_vLLM_v1.ipynb). Its recorded environment used vLLM 0.6.1.post1; the basic `LLM`/`SamplingParams` interface remains the entry point, while internal async APIs differ by release.
 

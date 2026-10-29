@@ -22,7 +22,7 @@ Training and inference use the same forward pass. They keep different state, and
 | What you repeat | Full sequences, in large batches, for days | One new token, for a person who is waiting |
 | The number you care about | Tokens per second across the job, and the loss | Time to the first token, time between later tokens, and cost per request |
 
-During training, a single slow step is fine if the GPU stays full and the loss moves. During inference, the weights do not move. The work is a forward pass from a prompt to the next id, then another forward pass, until the reply is done. Optimizer state is gone. The KV cache, introduced in the next chapter, is the new piece of memory that grows with the conversation.
+During training, a single slow step is fine if the GPU stays full and the loss moves. During inference, the weight values stay fixed, while their data still moves from HBM toward the compute units. The work is a forward pass from a prompt to the next id, then another forward pass, until the reply is done. Optimizer state is gone. The KV cache, introduced in the next chapter, is the new piece of memory that grows with the conversation.
 
 A 200 ms reply feels immediate. A multi-second wait before the first token feels broken, even when the model is the same checkpoint you trained. That is why inference work is organized around the loop below, not around a throughput number for a week-long job.
 

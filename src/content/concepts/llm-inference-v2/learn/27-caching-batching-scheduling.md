@@ -9,7 +9,7 @@ order: 26
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-The vLLM chapter establishes the engine-facing API. This teaching server exposes the lifecycle behind an API: request IDs, queues, workers, streaming, and cleanup. Its custom endpoints are a separate lab interface.
+Batching establishes the scheduling choices. This teaching server exposes the lifecycle behind an API: request IDs, queues, workers, streaming, and cleanup. Its custom endpoints are a separate lab interface.
 
 These examples use the repository's [single-model teaching server](https://github.com/rangarajp/rangarajp.github.io/tree/main/notebooks/llm-inference/single_model_llm_serving). Its custom endpoints and FLOW logs are not the public vLLM API. Start the companion lab before running client snippets. Recorded outputs below are historical observations, not measurements from this revision.
 

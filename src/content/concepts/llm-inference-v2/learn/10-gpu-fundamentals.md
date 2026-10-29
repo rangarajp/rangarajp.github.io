@@ -9,7 +9,7 @@ order: 8
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-The model computation is now clear; the next step is understanding where it runs. This chapter explains execution and data movement inside a GPU. The following chapter turns that hardware model into a memory budget.
+The inference problem and roofline model identify the resource limits; now we examine the hardware behind them. This chapter explains execution and data movement inside a GPU. The following chapter turns that hardware model into a memory budget.
 
 Concrete numbers below use the *H100 SXM5* (Hopper) unless noted. Full GH100 silicon has 144 SMs; the shipping SXM5 product exposes 132.
 

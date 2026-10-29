@@ -9,7 +9,7 @@ order: 17
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-Batching reuses weights across requests. Quantization changes how those weights and activations are represented, reducing storage or traffic when a suitable kernel can exploit the format.
+The baseline establishes how the model runs at its original precision. Quantization changes how those weights and activations are represented, reducing storage or traffic when a suitable kernel can exploit the format.
 
 LLMs are “large” mostly because they store billions of numbers. Quantization asks a simple question: can we store each number with fewer bits and still get almost the same answers?
 

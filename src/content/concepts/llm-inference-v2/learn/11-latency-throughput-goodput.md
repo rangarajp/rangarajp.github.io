@@ -9,7 +9,7 @@ order: 11
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-Resource estimates describe model work; users experience an entire request. This chapter defines the service metrics and percentiles used by the baseline and serving experiments that follow.
+Resource estimates describe model work; users experience an entire request. This chapter defines the service metrics and percentiles needed to interpret the earlier labs and build production observability.
 
 The model and hardware chapters establish what runs; service metrics establish what the user experiences. *Training* learns model weights from data. *Inference* is serving that model in production — turning prompts into tokens under latency, cost, and reliability constraints.
 

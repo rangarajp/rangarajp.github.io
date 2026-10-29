@@ -24,3 +24,9 @@ The first chapter is rewritten as a self-contained explanation using the PDF's f
 Technical adaptations preserve accuracy rather than copying simplified claims: Llama-2-70B KV uses 8 KV heads; roofline is a resource bound; prefill/decode regimes depend on workload; paged allocation still has tail waste; retained quantization error can affect later tokens; speculation is not universally lossless without the exact sampling procedure; separate SLO pass rates do not establish joint compliance; no unverified hardware speedup, price, model-quality guarantee, or unpublished system detail is asserted.
 
 The book's training-oriented backward-pass discussion is not presented as inference work. Hardware-specific kernel examples are explained conceptually or linked to the relevant chapter rather than claiming V100 support. No interview questions were added.
+
+## Editorial order and use of evidence
+
+The reading order follows the PDF topic progression: inference problem → hardware → transformer mechanics → quantization → speculation → KV optimization → kernels → serving → parallelism → long context → edge → inference-time scaling → production → future directions. Detailed blog chapters and notebook examples remain within their relevant topic, using a single chapter list. Memory sizing and mathematics extend hardware foundations; the PyTorch baseline closes transformer mechanics.
+
+Within the opening chapter, keep the PDF’s five main sections. Introduce bandwidth and roofline first, then explain model loading versus repeated HBM reads and training’s weight reuse as subsections of roofline. Use theory → mechanism → worked example → recorded notebook evidence or proposed hands-on where applicable. Preserve links and distinguish measured V100 outputs from illustrative estimates and unexecuted exercises. Exclude interview questions. Future additions should extend the relevant explanation rather than interrupting the prerequisite sequence.

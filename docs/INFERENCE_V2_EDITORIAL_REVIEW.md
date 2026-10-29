@@ -48,3 +48,5 @@ Volta compatibility notes are based on NVIDIA's Volta tuning documentation and t
 - `37-edge-inference.md`: measure a real edge device.
 - `38-inference-time-scaling.md`: spend a fixed candidate budget.
 - `39-future-of-inference.md`: compare one alternative at matched quality.
+
+The PDF topic sequence in `INFERENCE_V2_PDF_SECTION_AUDIT.md` now governs chapter order; earlier numbering in this review describes the previous arrangement. Content and recorded-lab evidence remain applicable.

@@ -91,23 +91,6 @@ A useful production objective is *goodput*: requests or tokens delivered within 
 
 A GPU needs both arithmetic units and a way to supply their operands. Its device memory stores far more data than the on-chip caches can retain. A large dense model therefore repeatedly moves weight data from device memory toward the compute units during generation.
 
-### Loading the model and reading its weights are different transfers
-
-“The model is already on the GPU” means its weights are resident in *high-bandwidth memory* (HBM). The arithmetic units still need those weights brought into the much smaller on-chip storage used during computation.
-
-| Transfer | When it happens |
-| --- | --- |
-| Disk/CPU RAM → GPU HBM | Usually once when loading the model |
-| GPU HBM → on-chip storage used by compute units | Repeated during model execution |
-
-The first row describes a typical serving setup where the model remains resident; CPU offloading or swapping can introduce further host-to-device transfers. The second row is the traffic relevant to the decode bandwidth limit discussed here. On-chip storage includes caches, shared memory, and registers; the exact data path depends on the kernel and GPU architecture.
-
-During a forward pass, each layer reads the weights it needs. A kernel can reuse a loaded *tile* of weights while processing that operation, but a large model cannot retain all its weights on chip across the entire pass. As subsequent layers run, earlier data is generally displaced. When the next generated token reaches the first layer again, that layer generally reads its weights from HBM again. Keeping the model in HBM avoids reloading it from the host; it does not eliminate these repeated device-memory reads.
-
-The KV cache stores previous tokens' keys and values, avoiding their recomputation. It does not hold the model's weights close to the arithmetic units, and attention must also read the relevant cached K/V values during decoding.
-
-### Why those reads matter at batch one
-
 For seven billion parameters stored at two bytes each:
 
 $$
@@ -125,29 +108,6 @@ At batch one, that read supports one next-token prediction. With multiple indepe
 The 7 ms calculation is an ideal resource bound under the stated streaming and bandwidth assumptions. It is not a benchmark for the V100, and arithmetic time should not simply be added to it as though computation and movement never overlap. Actual execution also includes KV reads, activation traffic, launch overhead, synchronization, and imperfect use of the memory system.
 
 Caching and bandwidth solve different problems. KV reuse removes repeated computation over old prefix positions. Quantization can reduce the weight bytes moved. Grouped-query attention can reduce retained KV bytes. Batching increases reuse across independent work. None makes memory traffic disappear.
-
-### Training also reads weights: it gets more work from each read
-
-Training moves weights from HBM into on-chip storage too. The difference is how much computation a kernel can perform with each loaded tile. For a linear layer:
-
-$$
-Y = XW,\qquad
-X\in\mathbb{R}^{M\times d_{\mathrm{in}}},\qquad
-W\in\mathbb{R}^{d_{\mathrm{in}}\times d_{\mathrm{out}}}
-$$
-
-Here $M$ is the number of token rows processed together. During training, a projection commonly combines batch and sequence positions into many rows. Although autoregressive attention uses a causal mask, the known training sequence lets the layer process those positions in parallel. During ordinary batch-one decoding, the same projection receives just one new token row. Batched decoding supplies one row per active sequence.
-
-| Property | Training with many token rows | Batch-one decoding |
-| --- | --- | --- |
-| Weight movement from HBM | Repeated during execution | Repeated during execution |
-| Reuse of a loaded weight tile | Across many token rows | For one token row |
-| Work per byte read | Usually higher | Usually lower |
-| Common limit for large linear layers | Compute throughput | Memory bandwidth |
-
-Training therefore *amortizes* weight movement across more arithmetic. Its backward pass adds further matrix multiplications, along with gradient and activation traffic; optimizer updates add memory traffic too. This does not make every training operation compute-bound. Small matrices and operations with little reuse can still be memory-bound. Long-prompt prefill benefits from processing many rows for the same reason that training's forward projections do.
-
-NVIDIA's [matrix multiplication performance guide](https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-multiplication/index.html) explains the relationship between matrix shape, reuse, and arithmetic intensity. The next section puts numbers on this distinction.
 
 ## 5. The roofline model
 
@@ -185,7 +145,45 @@ for token_rows in (1, 64, 512):
 
 This is why prefill and decode often respond to different optimizations. Long prompt matrices can provide enough reuse to make arithmetic throughput important. Single-stream decode often remains limited by moving weights and state. Long-context attention, higher concurrency, quantization, and different kernels can move the bottleneck, so these are workload tendencies rather than permanent labels attached to a model.
 
-The next chapter starts the same story from the input: how text becomes tokens and vectors. From there we can follow a forward pass, build the generation loop, and connect its tensor shapes to the resource limits introduced here.
+### Loading the model and reading its weights are different transfers
+
+“The model is already on the GPU” means its weights are resident in *high-bandwidth memory* (HBM). The arithmetic units still need those weights brought into the much smaller on-chip storage used during computation.
+
+| Transfer | When it happens |
+| --- | --- |
+| Disk/CPU RAM → GPU HBM | Usually once when loading the model |
+| GPU HBM → on-chip storage used by compute units | Repeated during model execution |
+
+The first row describes a typical serving setup where the model remains resident; CPU offloading or swapping can introduce further host-to-device transfers. The second row is the traffic relevant to the decode bandwidth limit discussed here. On-chip storage includes caches, shared memory, and registers; the exact data path depends on the kernel and GPU architecture.
+
+During a forward pass, each layer reads the weights it needs. A kernel can reuse a loaded *tile* of weights while processing that operation, but a large model cannot retain all its weights on chip across the entire pass. As subsequent layers run, earlier data is generally displaced. When the next generated token reaches the first layer again, that layer generally reads its weights from HBM again. Keeping the model in HBM avoids reloading it from the host; it does not eliminate these repeated device-memory reads.
+
+The KV cache stores previous tokens' keys and values, avoiding their recomputation. It does not hold the model's weights close to the arithmetic units, and attention must also read the relevant cached K/V values during decoding.
+
+### Training also reads weights: it gets more work from each read
+
+Training moves weights from HBM into on-chip storage too. The difference is how much computation a kernel can perform with each loaded tile. For a linear layer:
+
+$$
+Y = XW,\qquad
+X\in\mathbb{R}^{M\times d_{\mathrm{in}}},\qquad
+W\in\mathbb{R}^{d_{\mathrm{in}}\times d_{\mathrm{out}}}
+$$
+
+Here $M$ is the number of token rows processed together. During training, a projection commonly combines batch and sequence positions into many rows. Although autoregressive attention uses a causal mask, the known training sequence lets the layer process those positions in parallel. During ordinary batch-one decoding, the same projection receives just one new token row. Batched decoding supplies one row per active sequence.
+
+| Property | Training with many token rows | Batch-one decoding |
+| --- | --- | --- |
+| Weight movement from HBM | Repeated during execution | Repeated during execution |
+| Reuse of a loaded weight tile | Across many token rows | For one token row |
+| Work per byte read | Usually higher | Usually lower |
+| Common limit for large linear layers | Compute throughput | Memory bandwidth |
+
+Training therefore *amortizes* weight movement across more arithmetic. Its backward pass adds further matrix multiplications, along with gradient and activation traffic; optimizer updates add memory traffic too. This does not make every training operation compute-bound. Small matrices and operations with little reuse can still be memory-bound. Long-prompt prefill benefits from processing many rows for the same reason that training's forward projections do.
+
+NVIDIA's [matrix multiplication performance guide](https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-multiplication/index.html) explains the relationship between matrix shape, reuse, and arithmetic intensity. The arithmetic-intensity estimate above puts numbers on this distinction.
+
+The next chapter examines the hardware behind these limits: compute units, memory hierarchy, and precision. We then follow tokens through the transformer before studying the optimizations that reduce its work and memory traffic.
 
 ## Hands-on: trace one request
 

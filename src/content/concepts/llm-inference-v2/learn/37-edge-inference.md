@@ -9,7 +9,7 @@ order: 30
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-Server capacity planning assumes a shared fleet. On-device inference changes the constraints to local memory, power, thermals, and offline behavior while keeping the same need for task-quality measurement.
+The previous chapters distribute large models and long contexts across server resources. On-device inference changes the constraints to local memory, power, thermals, and offline behavior while keeping the same need for task-quality measurement.
 
 On-device inference trades server dependence for local memory, battery, and thermal constraints. The relevant target is sustained useful response quality on the actual device.
 
