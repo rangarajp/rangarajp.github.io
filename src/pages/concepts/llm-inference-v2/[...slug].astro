@@ -45,8 +45,9 @@ const parts = [1, 2, 3, 4, 5, 6].map((part) => ({
 		isLearnIndex && (
 			<>
 				<p>
-					Each topic has one Learn page. Statuses are honest: most chapters are still planned. Labs
-					belong in the chapter, not in a separate silo.
+					Start with <a href={inferenceV2Path('learn/inference-problem')}>the inference problem</a>
+					for a topic-by-topic reading map. Theory and coding experiments live together.
+					Topics without an article remain marked planned.
 				</p>
 				{parts.map((group) => (
 					<section>

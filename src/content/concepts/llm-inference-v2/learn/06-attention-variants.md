@@ -63,7 +63,7 @@ Holding batch, tokens, head width, and layers fixed, cache bytes are proportiona
 
 That comparison is the cache only. It is not a claim about end-to-end tokens per second. The MLP weights, which often dominate the byte load during decode, do not shrink when you drop KV heads.
 
-Attention scores need the query heads and the key heads to line up. A GQA kernel can broadcast each KV head across its group without writing a physical copy. This expand makes the shapes obvious:
+Attention scores need the query heads and the key heads to line up. A GQA kernel can broadcast each KV head across its group without writing a physical copy. The following expansion makes the shapes obvious. The final reshape may materialize copies; a production GQA kernel avoids storing these repeated heads:
 
 ```python
 import torch
@@ -88,9 +88,6 @@ print(tuple(q.shape), tuple(k.shape), tuple(scores.shape))
 
 `scores` is still `[B, Hq, T, T]`. The savings are in `k` and `v`, which is what the cache keeps. The score matrix is not stored in the cache. It is recomputed each step, ideally without ever writing the full \(T \times T\) block to HBM.
 
-**Check yourself:** For `B=1`, `T=1024`, `Hq=8`, `Hkv=2`, `d_h=128`, what are `Q` and `K` before the expand?
-
-`Q` is `[1, 8, 1024, 128]`. `K` is `[1, 2, 1024, 128]`.
 
 ## 4. Multi-head latent attention
 
@@ -130,16 +127,11 @@ for name, heads in (("MHA", 8), ("GQA", 2), ("MQA", 1)):
 
 You should see a clean 8 : 2 : 1 ratio, because that is what `kv_heads` you passed in. Change `head_dim` or `layers` and all three rows scale together. Change only `kv_heads` and that row moves.
 
-### Mini challenge
-
-1. Keep `B`, `T`, `d_h`, and the layer count fixed. Move from `kv_heads=8` to `kv_heads=2`. What happens to the element count? Why is "the model is four times faster" an unjustified conclusion?
-2. In `repeat_kv`, predict `k_full.shape` for `Hkv=8` and `Hq=8`. How does that differ from `Hkv=1` and `Hq=8`?
-3. Llama-2-70B uses 64 query heads and 8 KV heads. How many query heads share each KV head? What is the cache ratio versus an otherwise identical MHA model?
 
 ---
 
-**Continue learning:** [← Previous chapter](./05-prefill-decode-kv-cache.md)
+**Continue learning:** [← Previous chapter](./prefill-decode-kv-cache)
 
-Part 1 stops here. Later parts pick up the same cache: how bytes, bandwidth, and FLOPs are measured, then how serving systems page the cache, batch the decode steps, and quantize the weights.
+Continue with [the inference problem](./inference-problem) for the full reading map, then [hardware foundations](./gpu-fundamentals), [quantization](./quantization), and [KV cache optimization](./kv-cache).
 
 **Papers worth the original wording:** Vaswani et al., *Attention Is All You Need* (the MHA formula). Shazeer, *Fast Transformer Decoding* (MQA). Ainslie et al., *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints*. DeepSeek-AI, *DeepSeek-V2* (MLA). Su et al., *RoFormer* (the rotation used in chapter 1).

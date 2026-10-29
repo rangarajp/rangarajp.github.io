@@ -162,16 +162,8 @@ Prefill does not write the answer. It writes the prompt's keys and values, and t
 
 The KV cache does not remove attention. The new query still scores against every cached key. Caching removes the *recompute* of old keys and values. The stored state grows by one token per step, per layer.
 
-**Check yourself:** Does the KV cache store the model's weights?
 
-No. It stores keys and values computed for the current sequence. The weights are a separate, shared parameter set.
-
-### Mini challenge
-
-1. Using `kv_bytes`, compute the FP16 cache for Llama-2-70B (`layers=80`, `kv_heads=8`, `head_dim=128`) at 4096 tokens. Then recompute with `kv_heads=64`. Which input did you change, and which factor fell out of the formula?
-2. Why does doubling the prompt length change time to first token when the user only wants two output tokens?
-3. `gemv_intensity(4096, 4096)` is about 1. Multiply the FLOP count by a batch of 64 (the weights are loaded once and reused). Does the intensity clear a ridge of 156 FLOP/byte, or do you still need a much larger batch?
 
 ---
 
-**Continue learning:** [← Previous chapter](./04-autoregressive-generation.md) · [Next chapter →](./06-attention-variants.md)
+**Continue learning:** [← Previous chapter](./autoregressive-generation) · [Next chapter →](./attention-variants)

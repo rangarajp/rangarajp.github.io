@@ -123,16 +123,8 @@ def stable_softmax(z):
 
 For `logits = [2.0, 1.0]`, `stable_softmax(logits)` and `stable_softmax(logits - 100)` match. The next chapter's `argmax` path never builds this distribution. Sampling does.
 
-**Check yourself:** If `powertrain` is two or more tokens, is it produced by a single vocabulary logit?
 
-No. Each step selects one id. The tokenizer decodes the id sequence into text after the loop finishes, or incrementally if you stream.
-
-### Mini challenge
-
-1. Add a fifth logit, `5.0`, and print `probs.sum()`. It should be 1, at temperature 1 and at temperature 2.
-2. Explain why `temperature=0` must not go through the division. Which token would greedy selection return for the original four logits?
-3. Set `top_p=0.70` on the original logits at temperature 1. Which tokens survive? (`cooling` is about 0.644, so the nucleus has to include the next token to cross 0.70.)
 
 ---
 
-**Continue learning:** [← Previous chapter](./02-transformer-forward-pass.md) · [Next chapter →](./04-autoregressive-generation.md)
+**Continue learning:** [← Previous chapter](./transformer-forward-pass) · [Next chapter →](./autoregressive-generation)

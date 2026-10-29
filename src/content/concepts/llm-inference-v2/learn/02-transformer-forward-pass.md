@@ -32,7 +32,7 @@ Token IDs
 
 For a sequence of \(T\) tokens and width \(D\), the hidden state stays \(X \in \mathbb{R}^{B \times T \times D}\) from the embedding through the last block. Attention mixes tokens. The feed-forward network mixes features *inside* one token. Neither step changes \(B\), \(T\), or \(D\).
 
-For teaching, follow a *pre-norm* block. Modern Llama-style models use this order. GPT-2 uses post-norm, but the two sublayers are the same idea.
+For teaching, follow a *pre-norm* block. Modern Llama-style models use this order. GPT-2 also uses pre-norm, with LayerNorm rather than the RMSNorm used by Llama.
 
 ```text
 x ────────────────┐
@@ -136,9 +136,6 @@ print(weights[0, 0])  # row t may only use columns 0..t
 
 Elements above the diagonal of `weights` are zero. Row 0 puts all of its mass on column 0. Row 3 may use columns 0, 1, 2, and 3. If the query at position 3 matches the keys at positions 1 and 2, its output is a mixture of those value vectors, plus its own. It cannot read position 4.
 
-**Check yourself:** Why does the output return to `[B, T, D]` after the head split?
-
-Each head produces `dh` features. Concatenating `H` heads restores `H × dh = D`.
 
 ## 4. Track the shapes
 
@@ -170,12 +167,7 @@ A useful split:
 
 The attention output is not a sentence. It is another stack of hidden vectors. Only the vocabulary projection in the next chapter turns the last vector into token scores.
 
-### Mini challenge
-
-1. Change `T` from 4 to 6 in the attention code. Predict `weights.shape` before you run it. Which entries must be zero?
-2. `gpt2_mlp` with `D = 8` needs `w_up` of shape `[8, 32]` and `w_down` of shape `[32, 8]`. What is the output shape for an input of `[2, 6, 8]`?
-3. Count the multiplies in `x @ w_up` for one token: \(D \times 4D\) multiplies, plus the same again for the down projection. How does that count change if the batch is 8 and the sequence is 6? (Each position does the same MLP. Positions do not share the arithmetic.)
 
 ---
 
-**Continue learning:** [← Previous chapter](./01-from-text-to-tokens.md) · [Next chapter →](./03-logits-and-sampling.md)
+**Continue learning:** [← Previous chapter](./from-text-to-tokens) · [Next chapter →](./logits-and-sampling)

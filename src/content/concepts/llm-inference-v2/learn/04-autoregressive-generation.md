@@ -102,9 +102,6 @@ The forward pass returns logits at every position. Generation uses the last row 
 
 The second dimension of `ids` is the only shape that changes in this loop. `V` is fixed by the tokenizer. The hidden width is fixed by the checkpoint. What grows is the context the next distribution conditions on, and, once caching is on, the KV cache that stores it.
 
-**Check yourself:** Why can't this decoder pick token 15 before token 14?
-
-The distribution for token 15 is computed from the prefix that includes token 14. Until 14 has been chosen and appended, that prefix does not exist.
 
 ## 5. Two choices that do not change the dependency
 
@@ -115,14 +112,7 @@ The example makes two independent choices:
 
 Changing either choice does not remove the dependency. Token \(t+1\) is a function of the prefix through token \(t\).
 
-### Mini challenge
-
-1. Print `ids.shape` on every iteration and write down the second dimension. It should increase by 1 even when the decoded piece is a single space or a subword.
-2. Run the same prompt twice with greedy decoding and `torch.manual_seed` unused. The text should match. Then change `argmax` to a temperature sample and run twice. The text can diverge.
-3. Count the forward passes for a prompt of \(P\) tokens and \(N\) new tokens in this uncached loop. You launch \(N\) forwards, and the \(k\)-th one processes \(P+k-1\) tokens. That sum is why the cache exists.
-
-**Resource note:** The script downloads a small model on first use. The loop structure is the point of the chapter. You do not need the download to follow the shape table.
 
 ---
 
-**Continue learning:** [← Previous chapter](./03-logits-and-sampling.md) · [Next chapter →](./05-prefill-decode-kv-cache.md)
+**Continue learning:** [← Previous chapter](./logits-and-sampling) · [Next chapter →](./prefill-decode-kv-cache)

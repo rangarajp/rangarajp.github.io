@@ -124,7 +124,7 @@ q^{(2i+1)}_m &= q_{2i}\sin(m\theta_i) + q_{2i+1}\cos(m\theta_i)
 \end{aligned}
 \]
 
-with \(\theta_i = 10000^{-2i/d}\). The same rotation is applied to keys. After that, the dot product \(\langle q_m, k_n \rangle\) depends on the *difference* \(m - n\), not on the absolute indices. Values are not rotated.
+with \(\theta_i = 10000^{-2i/d}\). The same rotation is applied to keys. For fixed, unrotated query and key vectors, the dot product \(\langle q_m, k_n \rangle\) depends on the *difference* \(m - n\), not on the absolute indices. Values are not rotated.
 
 ```python
 import torch
@@ -153,7 +153,7 @@ print(float(dot_5_8), float(dot_0_3))  # equal, up to rounding
 
 That relative-offset property is why a cached key can stay in the KV cache with the position it was given at prefill. On the next decode step you rotate only the new query and the new key. You do not re-embed the whole prompt.
 
-Early dimension pairs spin quickly as the position index grows. Later pairs spin slowly. A model trained up to position 4096 has only seen a limited range of the fast angles. Feed position 16000 with the original schedule and those fast dimensions land on angles that never appeared in training, so attention scores stop meaning what they meant. *NTK-aware scaling* and *YaRN* stretch the frequency schedule so the angles at the new maximum length stay in a range the model can use. The embedding table does not change. Only the angles applied to queries and keys change.
+Early dimension pairs rotate faster than later pairs. RoPE makes position differences available to attention, but it does not guarantee useful extrapolation beyond the training context. Longer distances change the distribution of relative-position patterns; repeated rotations and training exposure both matter. NTK-aware scaling and YaRN modify the frequency schedule to support longer contexts. Use the checkpoint's supported configuration and validate retrieval quality at the intended length rather than changing a maximum-length flag alone.
 
 At inference time the practical rule is: the position id of a new token is the length of the prefix, not zero, and it must match the position used when that token's key was written into the cache.
 
@@ -183,23 +183,14 @@ You should see `[40, 716, 1804, 6275]` and four pieces. Change `excellent` to `e
 
 *Optional comparison:* load `Qwen/Qwen2.5-0.5B-Instruct` with Hugging Face `AutoTokenizer` and encode the same three strings. Two models can assign different IDs and different boundaries to the same sentence. Later chapters use Qwen for generation; those IDs will not match the GPT-2 table above.
 
-**Check yourself:** Why can two models assign different token IDs to the same sentence?
-
-Their tokenizer vocabularies and merge tables differ. An ID is only meaningful inside one vocabulary. The embedding row `40` in GPT-2 is unrelated to whatever string sits at index `40` in Qwen.
 
 ### Quick shape practice
 
 If `B=2`, `T=12`, and `D=768`, the token-ID tensor is `[2, 12]` and the token-embedding output is `[2, 12, 768]`. Batch size does not change embedding width. Sequence length does not change `V`.
 
-### Mini challenge
-
-1. Encode `"I am doing excellent"` and `"I am doing excaellent"` with GPT-2. How many extra tokens did the misspelling cost?
-2. Encode the tea / `<|endoftext|>` string with `allowed_special={"<|endoftext|>"}`. Which ID is the special marker? What happens if you omit `allowed_special`?
-3. In the embedding snippet, predict `input_embeddings.shape` if you change `emb_dim` from `256` to `768` and leave `inputs` alone.
-4. In the RoPE snippet, change the second pair of positions from `(0, 3)` to `(0, 4)`. The two dot products should stop matching. Why?
 
 ---
 
-**Continue learning:** [Next chapter →](./02-transformer-forward-pass.md)
+**Continue learning:** [Next chapter →](./transformer-forward-pass)
 
 **Notebooks:** [`notebooks/LLM_Scratch/0_transformers_101.ipynb`](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/LLM_Scratch/0_transformers_101.ipynb) · [`1_transformers_202.ipynb`](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/LLM_Scratch/1_transformers_202.ipynb) · companion walkthrough: [GPT from scratch](/build-from-scratch/gpt)
