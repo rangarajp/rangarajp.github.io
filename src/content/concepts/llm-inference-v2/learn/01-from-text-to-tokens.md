@@ -9,8 +9,6 @@ order: 1
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-# From text to tokens
-
 **Difficulty:** Beginner  
 **Big question:** How does a model see a sentence?  
 **You will build:** A GPT-2 BPE inspection script, an embedding lookup, and a small rotary-position check.

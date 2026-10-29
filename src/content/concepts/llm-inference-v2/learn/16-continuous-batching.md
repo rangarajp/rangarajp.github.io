@@ -9,8 +9,6 @@ order: 16
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Serving systems architecture
-
 An inference server combines request validation, tokenization, a waiting queue, a scheduler, KV allocation, model execution, sampling, and streamed delivery. The scheduler coordinates scarce token slots and cache blocks; it does not merely collect HTTP requests.
 
 ## 1. Static and continuous batching

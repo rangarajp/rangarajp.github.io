@@ -9,8 +9,6 @@ order: 23
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Mixture of experts inference
-
 A mixture-of-experts (MoE) layer routes each token to a subset of expert feed-forward networks. Attention and shared components still run. Fewer active parameters per token can reduce arithmetic relative to activating every expert, but all potentially selected experts must remain accessible somewhere.
 
 ## 1. Total versus active parameters

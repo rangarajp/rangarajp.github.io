@@ -9,8 +9,6 @@ order: 17
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Quantization
-
 Quantization represents values with a smaller set of numbers. It reduces storage and sometimes data movement or arithmetic cost. It also introduces error; the useful result is the smallest representation that preserves the task quality you need.
 
 ## 1. Why quantization matters

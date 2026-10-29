@@ -1,6 +1,6 @@
 ---
 title: "The inference problem"
-description: "A reading map from token generation to production, with latency and bandwidth estimates."
+description: "Why inference is a systems problem, with latency and bandwidth estimates."
 section: learn
 pubDate: 2026-10-29
 part: 1
@@ -8,8 +8,6 @@ chapter: 0
 order: 0
 tags: ["llm-inference", "systems", "hands-on"]
 ---
-
-# The inference problem
 
 A model produces token scores. An inference system must turn those scores into useful answers while sharing finite memory, compute, and time across users. This guide follows the topic progression of Lamhot Siagian's *Efficient LLM Inference: Systems, Algorithms & Production Engineering*, second edition (2026), with original explanations and coding experiments adapted to this blog. Its interview material is omitted.
 
@@ -51,23 +49,4 @@ print(weight_bytes / bandwidth * 1000)  # 7 ms, ideal weight-read bound
 
 This is a lower bound under a full weight-streaming assumption, not a predicted token latency. The roofline bound is `min(peak_flops, intensity * bandwidth)`. Batch reuse raises intensity; long-context attention adds work and cache traffic. A bottleneck can move as concurrency and context change.
 
-## 5. Read the PDF topics through this blog
-
-| PDF topic | Blog chapters and experiments |
-|---|---|
-| The inference problem | This chapter; request timing and bandwidth bounds |
-| Hardware foundations | [GPU fundamentals](./gpu-fundamentals); memory hierarchy |
-| Transformer mechanics | Existing chapters 1–6; tensor shapes and generation |
-| Quantization | [Quantization](./quantization); integer rounding and reconstruction |
-| Speculative decoding | [Draft and verify](./speculative-decoding); acceptance and cost |
-| KV cache optimization | [KV cache](./kv-cache) and [PagedAttention](./paged-attention) |
-| Kernels and FlashAttention | [FlashAttention](./flashattention) and [kernel engineering](./kernel-fusion-cuda-graphs) |
-| Serving architecture | [Continuous batching](./continuous-batching); prefill/decode scheduling |
-| Parallelism and MoE | [Tensor parallelism](./tensor-parallelism), [pipeline parallelism](./pipeline-parallelism), [expert parallelism](./expert-parallelism) |
-| Long context | [Context parallelism](./context-parallelism); compression and recurrent state |
-| Edge inference | [On-device inference](./edge-inference); a memory budget |
-| Inference-time scaling | [Compute budgets](./inference-time-scaling); verified candidates |
-| Observability and production | [Metrics and SLOs](./observability-slos), [capacity and cost](./capacity-and-cost) |
-| Future directions | [The future of inference](./future-of-inference); useful work per byte |
-
-The examples distinguish executable CPU experiments from deployment concepts. GPU kernels and engine features require compatible hardware and runtime versions. No speedup in this guide should be read as universal.
+Continue with [from text to tokens](./from-text-to-tokens). The chapter list follows the same sequence from fundamentals through optimization and production serving.

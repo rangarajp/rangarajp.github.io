@@ -9,8 +9,6 @@ order: 10
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Hardware foundations for inference
-
 A GPU accelerates work by running many threads and reusing data. Its advertised FLOP rate is useful only when the kernel exposes enough parallel work and supplies operands quickly enough.
 
 ## 1. GPU architecture

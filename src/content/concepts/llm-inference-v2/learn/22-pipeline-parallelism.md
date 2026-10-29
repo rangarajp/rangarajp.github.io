@@ -9,8 +9,6 @@ order: 22
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Pipeline parallelism
-
 Pipeline parallelism assigns groups of layers to different devices. Activations move between stages while weights stay on their assigned device. It reduces per-device weight storage without requiring every layer to run across every GPU.
 
 ## 1. Why bubbles appear

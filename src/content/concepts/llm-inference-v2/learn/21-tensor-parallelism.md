@@ -9,8 +9,6 @@ order: 21
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Parallelism for large model inference
-
 A model may need multiple devices because its weights and request state exceed one GPU's memory, or because a particular workload benefits from extra compute. Parallelism adds communication, so capacity gain and latency gain are separate claims.
 
 ## 1. Tensor parallelism

@@ -9,8 +9,6 @@ order: 15
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# PagedAttention
-
 A contiguous reservation sized for every request's maximum answer wastes memory when answers stop early. PagedAttention separates a sequence's logical token positions from the physical blocks holding its KV tensors.
 
 ## 1. Logical and physical blocks

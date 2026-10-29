@@ -9,8 +9,6 @@ order: 2
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-# One forward pass through a decoder transformer
-
 **Difficulty:** Beginner → Intermediate  
 **Big question:** What transforms input embeddings into next-token scores?  
 **You will build:** A shape-aware causal attention step, then a tiny feed-forward step beside it.
@@ -153,7 +151,7 @@ Standard multi-head attention, with `B = 1`, `T = 4`, `D = 8`, `H = 2`, so `dh =
 
 The score tensor is the one that grows with \(T^2\). For `T = 4` that is nothing. For a 128k context it is the tensor you do not want to materialize in GPU memory. Later chapters on kernels come back to that. Here, notice only that `Q`, `K`, and `V` themselves are linear in \(T\), while the scores are quadratic.
 
-Grouped-query attention and latent attention change the key and value shapes. The query path in this table is the multi-head case. Chapter 6 redraws `K` and `V`.
+Grouped-query attention and latent attention change the key and value shapes. The query path in this table is the multi-head case. [Attention variants](./attention-variants) redraws `K` and `V`.
 
 ## 5. Why the blocks are stacked
 

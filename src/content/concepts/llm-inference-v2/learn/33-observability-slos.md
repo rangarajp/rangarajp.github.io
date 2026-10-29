@@ -9,8 +9,6 @@ order: 33
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Observability and production engineering
-
 An engine benchmark cannot tell you whether users receive timely answers through the full application. Instrument arrival, queue admission, prefill, first delivered token, subsequent tokens, completion, and cancellation. A correlation ID connects those events without logging private prompts by default.
 
 ## 1. Key metrics

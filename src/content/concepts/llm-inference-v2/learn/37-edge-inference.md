@@ -9,8 +9,6 @@ order: 37
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Edge and on-device inference
-
 On-device inference trades server dependence for local memory, battery, and thermal constraints. The relevant target is sustained useful response quality on the actual device.
 
 ## 1. Budget memory before loading

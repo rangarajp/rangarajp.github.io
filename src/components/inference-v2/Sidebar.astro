@@ -1,83 +1,28 @@
 ---
-import {
-	chaptersByPart,
-	inferenceV2Path,
-	type NavPage,
-} from '../../lib/inference-v2';
-
-type Props = {
-	currentSlug: string;
-};
-
+import { learnChapters, inferenceV2Path } from '../../lib/inference-v2';
+type Props = { currentSlug: string };
 const { currentSlug } = Astro.props;
-const parts = chaptersByPart();
-
-function isActive(slug: string) {
-	return currentSlug === slug;
-}
-
-const topLinks: { slug: string; label: string }[] = [
-	{ slug: '', label: 'Home' },
-	{ slug: 'learn', label: 'Learn' },
-	{ slug: 'reference', label: 'Reference' },
-	{ slug: 'journal', label: 'Build journal' },
-];
+const chapters = learnChapters();
 ---
-
 <aside class="infv2-nav" data-infv2-sidebar>
-	<div class="infv2-nav-backdrop" data-infv2-close hidden></div>
-	<div id="infv2-sidebar-panel" class="infv2-nav-panel">
-		<div class="infv2-nav-toolbar">
-			<a class="infv2-nav-home" href={inferenceV2Path('')}>Handbook</a>
-			<button type="button" class="infv2-nav-close" data-infv2-close aria-label="Close contents">
-				Close
-			</button>
-		</div>
-		<nav aria-label="Handbook contents">
-			<ul class="infv2-top">
-				{
-					topLinks.map((link) => (
-						<li>
-							<a
-								href={inferenceV2Path(link.slug)}
-								class:list={[{ active: isActive(link.slug) }]}
-							>
-								{link.label}
-							</a>
-						</li>
-					))
-				}
-			</ul>
-			{
-				parts.map((group) => {
-					const open = group.chapters.some((ch) => ch.slug === currentSlug);
-					return (
-						<details class="infv2-part" open={open || undefined}>
-							<summary>
-								<span class="infv2-part-label">Part {group.part}</span>
-								<span class="infv2-part-title">{group.title}</span>
-							</summary>
-							<ul class="infv2-chapters">
-								{group.chapters.map((ch: NavPage) => {
-									const active = isActive(ch.slug);
-									const planned = ch.status === 'planned';
-									return (
-										<li class:list={[{ active, planned }]}>
-											<a href={inferenceV2Path(ch.slug)}>
-												<span class="num">{ch.chapter}</span>
-												<span class="ttl">{ch.title}</span>
-												<span class={`st is-${ch.status}`}>{ch.status}</span>
-											</a>
-										</li>
-									);
-								})}
-							</ul>
-						</details>
-					);
-				})
-			}
-		</nav>
-	</div>
+ <div class="infv2-nav-backdrop" data-infv2-close hidden></div>
+ <div id="infv2-sidebar-panel" class="infv2-nav-panel">
+  <div class="infv2-nav-toolbar">
+   <a class="infv2-nav-home" href={inferenceV2Path('')}>All chapters</a>
+   <button type="button" class="infv2-nav-close" data-infv2-close aria-label="Close chapters">Close</button>
+  </div>
+  <nav aria-label="Chapters">
+   <ol class="infv2-chapters">
+    {chapters.map(ch => (
+     <li class:list={[{ active: ch.slug === currentSlug }]}>
+      <a href={inferenceV2Path(ch.slug)} aria-current={ch.slug === currentSlug ? 'page' : undefined}>
+       <span class="num">{ch.chapter}.</span><span class="ttl">{ch.title}</span>
+      </a>
+     </li>
+    ))}
+   </ol>
+  </nav>
+ </div>
 </aside>
 
 <script>
@@ -179,55 +124,6 @@ const topLinks: { slug: string; label: string }[] = [
 		cursor: pointer;
 	}
 
-	.infv2-top {
-		list-style: none;
-		margin: 0 0 0.85rem;
-		padding: 0;
-	}
-
-	.infv2-top a {
-		display: block;
-		padding: 0.28rem 0.35rem;
-		text-decoration: none;
-		color: rgb(var(--gray-dark));
-		border-radius: 4px;
-		font-weight: 600;
-	}
-
-	.infv2-top a.active,
-	.infv2-top a:hover {
-		color: var(--accent);
-	}
-
-	.infv2-part {
-		margin-bottom: 0.35rem;
-	}
-
-	.infv2-part summary {
-		cursor: pointer;
-		list-style: none;
-		padding: 0.4rem 0.2rem;
-		user-select: none;
-	}
-
-	.infv2-part summary::-webkit-details-marker {
-		display: none;
-	}
-
-	.infv2-part-label {
-		display: block;
-		font-size: 0.68rem;
-		font-weight: 700;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: rgb(var(--gray));
-	}
-
-	.infv2-part-title {
-		font-weight: 600;
-		font-size: 0.86rem;
-	}
-
 	.infv2-chapters {
 		list-style: none;
 		margin: 0 0 0.5rem;
@@ -255,9 +151,6 @@ const topLinks: { slug: string; label: string }[] = [
 		font-weight: 600;
 	}
 
-	.infv2-chapters li.planned a {
-		color: rgb(var(--gray));
-	}
 
 	.num {
 		font-size: 0.72rem;
@@ -270,14 +163,6 @@ const topLinks: { slug: string; label: string }[] = [
 		grid-column: 2;
 	}
 
-	.st {
-		grid-column: 2;
-		font-size: 0.65rem;
-		font-weight: 700;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: rgb(var(--gray));
-	}
 
 	@media (max-width: 1099px) {
 		.infv2-nav-backdrop {

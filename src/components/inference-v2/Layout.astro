@@ -4,11 +4,10 @@ import Footer from '../Footer.astro';
 import Header from '../Header.astro';
 import { SITE_TITLE } from '../../consts';
 import {
-	getNavPage,
+	learnChapters,
 	INFERENCE_V2_BASE,
 	inferenceV2Path,
 	neighbors,
-	PART_TITLES,
 	type NavPage,
 } from '../../lib/inference-v2';
 import '../../styles/inference-v2.css';
@@ -20,11 +19,10 @@ type Props = {
 	description: string;
 	slug: string;
 	showToc?: boolean;
-	jumps?: boolean;
 };
 
-const { title, description, slug, showToc = true, jumps = false } = Astro.props;
-const page: NavPage | undefined = getNavPage(slug);
+const { title, description, slug, showToc = true } = Astro.props;
+const page: NavPage | undefined = learnChapters().find(ch => ch.slug === slug);
 const { prev, next } = neighbors(slug);
 
 
@@ -32,12 +30,7 @@ const crumbs: { href?: string; label: string }[] = [
 	{ href: '/concepts', label: 'Concepts' },
 	{ href: INFERENCE_V2_BASE, label: 'Inference v2' },
 ];
-if (slug.startsWith('learn')) {
-	crumbs.push({ href: inferenceV2Path('learn'), label: 'Learn' });
-}
-if (slug === 'reference') crumbs.push({ label: 'Reference' });
-else if (slug === 'journal') crumbs.push({ label: 'Build journal' });
-else if (slug && slug !== 'learn') crumbs.push({ label: title });
+if (slug) crumbs.push({ label: title });
 ---
 
 <!doctype html>
@@ -51,7 +44,7 @@ else if (slug && slug !== 'learn') crumbs.push({ label: title });
 		<div class="infv2">
 			<div class:list={['infv2-shell', showToc ? 'has-toc' : 'no-toc']}>
 				<Sidebar currentSlug={slug} />
-				<main data-pagefind-body={page?.status !== 'planned' ? true : undefined} class="infv2-main" id="infv2-content">
+				<main data-pagefind-body class="infv2-main" id="infv2-content">
 					<article class="prose infv2-article">
 						<header class="infv2-header">
 							<div class="infv2-header-top">
@@ -85,39 +78,10 @@ else if (slug && slug !== 'learn') crumbs.push({ label: title });
 									</button>
 								</div>
 							</div>
-							{
-								page?.part && (
-									<p class="infv2-eyebrow">
-										Part {page.part} — {PART_TITLES[page.part]}
-										{page.chapter ? ` · Chapter ${page.chapter}` : ''}
-									</p>
-								)
-							}
+       {page && <p class="infv2-eyebrow">Chapter {page.chapter}</p>}
 							<h1>{title}</h1>
 							<p class="infv2-lede">{description}</p>
-							{
-								page && (
-									<ul class="infv2-meta">
-										<li>
-											<span class={`infv2-status is-${page.status}`}>{page.status}</span>
-										</li>
-										{page.difficulty && <li>{page.difficulty}</li>}
-										{page.tags?.map((tag) => <li>#{tag}</li>)}
-									</ul>
-								)
-							}
 						</header>
-
-						{
-							jumps && (
-								<nav class="infv2-jumps" aria-label="Jump to section type">
-									<a href="#concept">Concept</a>
-									<a href="#mathematics">Math</a>
-									<a href="#build-it">Code</a>
-									<a href="#measure-it">Measure</a>
-								</nav>
-							)
-						}
 
 						<slot />
 

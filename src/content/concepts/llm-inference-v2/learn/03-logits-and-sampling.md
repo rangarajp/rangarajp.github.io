@@ -9,8 +9,6 @@ order: 3
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-# From hidden states to the next token
-
 **Difficulty:** Beginner  
 **Big question:** How does a vector become a token?  
 **You will build:** A logits-to-token experiment with temperature, top-k, and top-p.

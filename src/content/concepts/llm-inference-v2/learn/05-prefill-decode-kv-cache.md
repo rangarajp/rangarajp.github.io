@@ -9,8 +9,6 @@ order: 5
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-# Prefill, decode, and the first KV cache intuition
-
 **Difficulty:** Intermediate  
 **Big question:** Why does the first output token behave differently from the tokens after it?  
 **You will build:** A tiny append-only KV cache, a byte calculator, and a back-of-the-envelope bandwidth bound.
@@ -112,7 +110,7 @@ Use KV heads, not query heads. Llama-2-70B has 80 layers, 64 query heads, and **
 2 × 80 × 8 × 4096 × 128 × 2 bytes ≈ 1.34 GB
 ```
 
-If you plug in 64 heads by mistake, the same formula prints about 10.7 GB. That number is the multi-head counterfactual, not this checkpoint. The bug is common because model cards list both head counts, and the cache follows the smaller one. Chapter 6 is about why the smaller count exists.
+If you plug in 64 heads by mistake, the same formula prints about 10.7 GB. That number is the multi-head counterfactual, not this checkpoint. The bug is common because model cards list both head counts, and the cache follows the smaller one. [Attention variants](./attention-variants) explains why the smaller count exists.
 
 These are closed-form byte counts under the formula above. They omit allocator padding, paged-cache waste, and the weights. They are not a measured memory profile.
 
@@ -138,7 +136,7 @@ A 7-billion-parameter model in 16-bit weights is about \(7 \times 10^9 \times 2\
 
 Raise the batch, or the prompt length, and the same loaded weight is reused across more rows. Intensity scales with that row count. A long prefill can approach the ridge. A single-token decode cannot. Batching many independent decodes amortizes the weight load. It does not shrink the latency of the slowest request for free, which is the tradeoff in the next section.
 
-Part 2 of this handbook measures a specific GPU, a specific kernel, and a specific model. The numbers in this section are arithmetic with stated assumptions, not a benchmark table.
+A useful benchmark measures a specific GPU, a specific kernel, and a specific model. The numbers in this section are arithmetic with stated assumptions, not a benchmark table.
 
 ## 5. Latency, throughput, and cost
 

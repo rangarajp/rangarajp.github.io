@@ -9,8 +9,6 @@ order: 6
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-# Attention heads: MHA, MQA, GQA, and MLA
-
 **Difficulty:** Intermediate  
 **Big question:** Why do some models store fewer key/value heads than query heads?  
 **You will build:** A grouped-query shape check and a KV-byte comparison. Not a full latent-attention implementation.
@@ -134,4 +132,4 @@ You should see a clean 8 : 2 : 1 ratio, because that is what `kv_heads` you pass
 
 Continue with [the inference problem](./inference-problem) for the full reading map, then [hardware foundations](./gpu-fundamentals), [quantization](./quantization), and [KV cache optimization](./kv-cache).
 
-**Papers worth the original wording:** Vaswani et al., *Attention Is All You Need* (the MHA formula). Shazeer, *Fast Transformer Decoding* (MQA). Ainslie et al., *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints*. DeepSeek-AI, *DeepSeek-V2* (MLA). Su et al., *RoFormer* (the rotation used in chapter 1).
+**Papers worth the original wording:** Vaswani et al., *Attention Is All You Need* (the MHA formula). Shazeer, *Fast Transformer Decoding* (MQA). Ainslie et al., *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints*. DeepSeek-AI, *DeepSeek-V2* (MLA). Su et al., *RoFormer* (the rotation introduced in [text to tokens](./from-text-to-tokens)).

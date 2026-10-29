@@ -9,8 +9,6 @@ order: 4
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-# Autoregressive generation: why inference is a loop
-
 **Difficulty:** Beginner → Intermediate  
 **Big question:** Why does a finished model still run once per output token?  
 **You will build:** A greedy generation loop on a small instruct model, with the cache turned off so the growing sequence stays visible.

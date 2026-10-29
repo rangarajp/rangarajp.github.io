@@ -9,8 +9,6 @@ order: 24
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Long-context and memory management
-
 Long context increases more than the input token bill. It grows KV state, prefill attention arithmetic, and the cache each decode query must read. Context capacity and reliable use of distant information are separate properties.
 
 ## 1. The quadratic attention problem

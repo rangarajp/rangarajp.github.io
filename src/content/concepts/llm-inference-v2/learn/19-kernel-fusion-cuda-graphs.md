@@ -9,8 +9,6 @@ order: 19
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Kernel fusion, compilation, and CUDA graphs
-
 Decode consists of many operations on relatively small activation tensors. When kernels are short, launch and dispatch overhead can become a material part of latency.
 
 ## 1. Fusion

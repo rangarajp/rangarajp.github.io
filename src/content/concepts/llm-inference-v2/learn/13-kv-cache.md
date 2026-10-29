@@ -9,8 +9,6 @@ order: 13
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# KV cache optimization
-
 The [foundation cache example](./prefill-decode-kv-cache) appends tensors with `torch.cat`. That is easy to inspect, but repeated concatenation reallocates and copies state. A serving engine reserves or pages storage and writes new keys and values into available slots.
 
 ## 1. The memory budget

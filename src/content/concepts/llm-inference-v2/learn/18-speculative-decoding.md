@@ -9,8 +9,6 @@ order: 18
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Speculative decoding
-
 Autoregressive decoding repeatedly reads a large model to emit one token. Speculation asks a cheaper draft mechanism to propose several tokens, then verifies them with the target in a parallel forward pass.
 
 ## 1. Draft and verify

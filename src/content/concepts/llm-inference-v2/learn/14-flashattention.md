@@ -9,8 +9,6 @@ order: 14
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Kernel engineering and FlashAttention
-
 Naive attention writes a score matrix and probability matrix proportional to $T^2$ into device memory. FlashAttention tiles the computation so those full intermediates need not live in HBM. It preserves dense attention semantics up to floating-point differences; it does not make dense attention linear in arithmetic work.
 
 ## 1. IO-aware exact attention

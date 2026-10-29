@@ -44,7 +44,7 @@ export const NAV_PAGES: NavPage[] = [
 	{
 		slug: "learn/inference-problem",
 		title: "The inference problem",
-		description: "A reading map from token generation to production, with latency and bandwidth estimates.",
+		description: "Why inference is a systems problem, with latency and bandwidth estimates.",
 		part: 1,
 		chapter: 0,
 		section: 'learn',
@@ -461,42 +461,6 @@ export const NAV_PAGES: NavPage[] = [
 	},
 ];
 
-export const LEARNING_TRACKS = [
-	{
-		id: 'fundamentals',
-		title: 'Fundamentals',
-		description: 'How a decoder generates tokens, and what the GPU is doing.',
-		slugs: [
-			'learn/from-text-to-tokens',
-			'learn/transformer-forward-pass',
-			'learn/prefill-decode-kv-cache',
-			'learn/attention-variants',
-		],
-	},
-	{
-		id: 'optimization',
-		title: 'Optimization',
-		description: 'Make decode cheaper without changing the model card.',
-		slugs: [
-			'learn/kv-cache',
-			'learn/continuous-batching',
-			'learn/quantization',
-			'learn/speculative-decoding',
-		],
-	},
-	{
-		id: 'production',
-		title: 'Production serving',
-		description: 'From a generate loop to a system you can operate.',
-		slugs: [
-			'learn/pytorch-baseline',
-			'learn/vllm-internals',
-			'learn/gateway-registry-routing',
-			'learn/observability-slos',
-		],
-	},
-];
-
 export function inferenceV2Path(slug: string): string {
 	if (!slug) return INFERENCE_V2_BASE;
 	return `${INFERENCE_V2_BASE}/${slug}`;
@@ -511,16 +475,10 @@ export function getNavPage(slug: string): NavPage | undefined {
 	return NAV_PAGES.find((page) => page.slug === slug);
 }
 
+/** One reading order: published chapter files only, numbered without gaps. */
 export function learnChapters(): NavPage[] {
-	return NAV_PAGES.filter((page) => page.section === 'learn' && page.part != null);
-}
-
-export function chaptersByPart(): { part: number; title: string; chapters: NavPage[] }[] {
-	return [1, 2, 3, 4, 5, 6].map((part) => ({
-		part,
-		title: PART_TITLES[part],
-		chapters: learnChapters().filter((page) => page.part === part),
-	}));
+ return NAV_PAGES.filter((page) => page.section === 'learn' && page.part != null && page.status !== 'planned')
+  .map((page, index) => ({ ...page, chapter: index + 1 }));
 }
 
 export function neighbors(slug: string): { prev: NavPage | null; next: NavPage | null } {

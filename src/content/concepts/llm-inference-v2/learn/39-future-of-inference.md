@@ -9,8 +9,6 @@ order: 39
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# The future of inference
-
 Future inference methods should be evaluated against the same contract as today's engines: useful outputs, resource use, latency, and quality under a defined workload. A new generation mechanism changes the work rather than making it disappear.
 
 ## 1. Diffusion-based language models

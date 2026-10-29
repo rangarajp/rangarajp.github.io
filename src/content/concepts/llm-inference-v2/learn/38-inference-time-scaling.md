@@ -9,8 +9,6 @@ order: 38
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Inference-time compute scaling
-
 Some tasks benefit from spending additional inference compute: generating alternatives, checking a solution, or revising after a tool result. The objective is better verified task success per unit of time and cost, not more generated text.
 
 ## 1. Longer reasoning and its cost

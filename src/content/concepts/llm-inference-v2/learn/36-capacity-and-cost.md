@@ -9,8 +9,6 @@ order: 36
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-# Capacity planning and cost per token
-
 Plan capacity from a measured workload that satisfies latency and quality objectives. Maximum unconstrained tokens per second can overstate the amount of useful service you can sell or deliver.
 
 ## 1. Cost modeling
