@@ -1,6 +1,6 @@
 ---
 title: "The inference problem"
-description: "Why inference is a systems problem, with latency and bandwidth estimates."
+description: "Training versus inference, the generation loop, latency/throughput/cost, memory bandwidth, and roofline."
 section: learn
 pubDate: 2026-10-29
 part: 1
@@ -9,50 +9,135 @@ order: 1
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-Start with the service objective: useful answers within a memory, latency, and cost budget. The next chapters follow one request into the model before changing how that request is executed.
+A user sends a prompt and waits for an answer. The model has already been trained, yet producing that answer still requires repeated computation, access to billions of stored weights, and memory for the conversation. When many users arrive together, the server must share those resources without making every answer slow.
 
-A model produces token scores. An inference system must turn those scores into useful answers while sharing finite memory, compute, and time across users. This guide follows the topic progression of Lamhot Siagian's *Efficient LLM Inference: Systems, Algorithms & Production Engineering*, second edition (2026), with original explanations and coding experiments adapted to this blog.
+This is the inference problem: turn a trained model into a service that delivers useful results within a latency, memory, and cost budget. Before studying individual optimizations, we need to understand the work an answer creates and why different parts of that work stress the machine differently.
 
-## 1. Training versus inference
+## 1. Training versus inference: fundamentally different goals
 
-Training computes a loss, backpropagates gradients, and updates parameters. Ordinary inference freezes those parameters. It still allocates temporary activations and sequence state, so fitting the weights is only the first capacity check.
+*Training* changes a model. It processes examples, calculates a loss, propagates gradients backward through the network, and updates learned parameters. The system needs memory for parameters, gradients, optimizer state, and activations retained for backpropagation. A common systems goal is to process a large training workload efficiently enough to finish within the available time and budget.
 
-Training often favors large batches and sustained throughput. Interactive inference also cares about queueing and the time each user waits. Offline inference can favor throughput instead. These are workload choices, rather than properties of the word inference.
+*Inference* uses a trained model to compute predictions without updating its parameters. For a decoder language model, those predictions are distributions over the next token. Weights remain fixed, but the input and the sequence state change as an answer grows.
 
-## 2. The token generation loop
+That distinction changes both the memory budget and the performance objective. Removing backpropagation eliminates gradients and optimizer state from ordinary inference. It does not make inference stateless: every active conversation still needs its own context, temporary computation, and usually a growing key/value cache.
 
-Read [text to tokens](./from-text-to-tokens), [the forward pass](./transformer-forward-pass), [sampling](./logits-and-sampling), and [autoregressive generation](./autoregressive-generation) as one worked sequence. Prefill computes the prompt and selects the first output token; subsequent decode passes consume previously selected tokens. [Prefill and KV caching](./prefill-decode-kv-cache) explains how to avoid projecting old tokens again.
+| Concern | Training | Language-model inference |
+|---|---|---|
+| Parameters | Updated through optimization | Fixed during ordinary generation |
+| Repeated work | Forward, backward, and optimizer steps | Prompt processing followed by generation steps |
+| Additional state | Gradients, optimizer state, saved activations | Temporary activations and per-sequence KV state |
+| Typical batch objective | Efficient progress over a large dataset | Useful service across requests with different lengths |
+| User-visible constraint | Training completion time | First-token delay and the pace of the answer |
 
-## 3. Latency, throughput, and cost
+Interactive chat emphasizes responsiveness. An offline document-processing job may instead favor throughput. Neither objective removes quality and cost: a fast incorrect response or a cheap service that misses every deadline is not a successful deployment.
 
-Time to first token (TTFT) includes queueing, preprocessing, prefill, sampling, and delivery. Inter-token latency measures gaps in the stream. Throughput counts tokens across requests over wall time. Goodput counts work delivered within a specified service objective. Always state whether a throughput number counts input tokens, output tokens, or both.
+The practical consequence is that fitting the weights is only the first check. We also need enough memory for the requests we admit, and enough execution capacity to serve them at the desired pace.
+
+## 2. The token generation loop explained
+
+Consider a prompt that has already been converted to token IDs. The model reads that known prefix and predicts what can come next. After a token is selected, it becomes part of the prefix for the following prediction. This dependency is what makes ordinary autoregressive generation a loop.
+
+The request has two phases:
+
+1. *Prefill:* process the known prompt positions together under a causal attention mask. Build the keys and values needed for later attention. The logits at the final prompt position select the first output token.
+2. *Decode:* feed the previously selected token through the model, add its keys and values to the retained state, attend over the available prefix, and select the next output token.
+3. Repeat decode until an end condition is reached, such as an end-of-sequence token, a configured stop condition, or an output-token limit.
+
+For a prompt with 512 tokens and an answer with three generated tokens, prefill processes the 512 known positions and selects the first output token. The first decode pass consumes that token and selects the second. A second decode pass consumes the second and selects the third. If the request stops there, the third selected token need not be fed through another forward pass.
+
+This detail explains why the first token behaves differently from the rest: a nonempty answer of $C$ tokens normally has one prefill and $C-1$ subsequent generation steps.
+
+Prefill exposes many known positions to the GPU at once. Their projection and feed-forward computations can reuse weights across a matrix of token vectors. Decode at low concurrency exposes much less work per step, even though it still needs the model weights. Batching independent decode requests can restore some of that reuse; it cannot remove the within-request dependency between successive selected tokens.
+
+The *KV cache* avoids recomputing old keys and values. It is not a cache of model weights or finished answers. Each new query still attends to retained context, so longer context increases cache storage and attention work. We will derive the tensor shapes later; for now, distinguish the shared weights from state that belongs to a particular request.
+
+## 3. Latency, throughput, and cost: the operating tradeoff
+
+A serving system has several clocks and one shared resource budget. The right configuration depends on which clock matters to the application.
+
+| Objective | What it measures | A useful improvement | The tradeoff to measure |
+|---|---|---|---|
+| Latency | How long a request waits and how quickly it streams | Less queueing, less prompt work, efficient decode | Reserved capacity can sit idle |
+| Throughput | Work delivered across requests per wall-clock second | Reuse weights across a well-filled batch | More waiting or longer execution steps can hurt individual requests |
+| Cost | Resources paid for per useful completed task or token | Better utilization, fewer bytes or less unnecessary work | Quality and latency must still meet the target |
+
+*Time to first token* (TTFT) is measured from request arrival to first delivery. It includes queueing, preprocessing, prompt execution, sampling, and delivery work. *Inter-token latency* (ITL) is the gap between delivered tokens. *Time per output token* (TPOT), as used here, is the mean post-first-token gap. It is undefined for a one-token answer.
+
+For $C>1$ and consistently defined delivery timestamps:
+
+$$
+T_{\mathrm{E2E}} = T_{\mathrm{TTFT}} + (C-1)\,\overline{T_{\mathrm{ITL}}}
+$$
+
+Queueing is already included in TTFT; adding it again would double-count waiting. A separate timer around only the model's prompt forward pass is a prefill measurement, not client TTFT.
 
 ```python
-# A hypothetical request, in seconds; this is arithmetic, not a benchmark.
-queue, preprocess, prefill, first_delivery = 0.020, 0.005, 0.080, 0.005
-output_tokens, decode_step = 101, 0.010
-ttft = queue + preprocess + prefill + first_delivery
-end_to_end = ttft + (output_tokens - 1) * decode_step
-print(round(ttft, 3), round(end_to_end, 3))  # 0.11, 1.11
+# Illustrative request timings in seconds, not a measured model run.
+queue, preprocessing, prefill, first_delivery = 0.020, 0.005, 0.080, 0.005
+output_tokens, mean_gap = 101, 0.010
+ttft = queue + preprocessing + prefill + first_delivery
+e2e = ttft + (output_tokens - 1) * mean_gap
+print('TTFT:', round(ttft, 3), 's')  # 0.11
+print('Complete answer:', round(e2e, 3), 's')  # 1.11
 ```
 
-There are 100 gaps after the first of 101 tokens. Doubling answer length mostly increases decode time; doubling prompt length changes prefill and cache requirements. Batching can improve efficiency, but increases waiting or step duration in some regimes. Measure both latency and throughput.
+Two users can see different responsiveness from the same model. A long prompt adds prompt-processing work; a long answer adds more sequential generation steps; a busy queue adds waiting before either starts. An optimization that improves one of these does not necessarily improve the others.
 
-## 4. Memory bandwidth and the roofline
+Larger batches can amortize weight movement and improve total output throughput. They can also increase batch-formation delay or execution time per step. The relationship is not a rule that latency always worsens: under some loads, improved utilization reduces queueing. Measure the actual operating point rather than maximizing batch size in isolation.
 
-For a dense model with $P$ parameters, a useful first approximation is $2P$ forward FLOPs per processed token, excluding attention and other overhead. A single FP16 weight read costs $2P$ bytes. At batch one that is roughly one FLOP per weight byte: a bandwidth-heavy operation.
+A useful production objective is *goodput*: requests or tokens delivered within the stated latency and quality objectives per wall-clock second. High raw throughput with many missed deadlines can be less valuable than a lower throughput that consistently meets them.
+
+## 4. Memory bandwidth: why low-concurrency decode can be slow
+
+A GPU needs both arithmetic units and a way to supply their operands. Its device memory stores far more data than the on-chip caches can retain. A large dense model therefore repeatedly moves weight data from device memory toward the compute units during generation.
+
+For seven billion parameters stored at two bytes each:
+
+$$
+M_{\mathrm{weights}} = 7\times10^9\times2 = 14\times10^9\ \mathrm{bytes}
+$$
+
+If a step streams those 14 GB once through a memory system sustaining 2 TB/s, the ideal weight-read time is:
+
+$$
+T_{\mathrm{weight\ read}} = \frac{14\times10^9}{2\times10^{12}} = 0.007\ \mathrm{s} = 7\ \mathrm{ms}
+$$
+
+At batch one, that read supports one next-token prediction. With multiple independent token rows, a matrix operation can reuse loaded weights across them, producing more useful work for the traffic paid. This is the reason batching can improve throughput even when the model parameters do not change.
+
+The 7 ms calculation is an ideal resource bound under the stated streaming and bandwidth assumptions. It is not a benchmark for the V100, and arithmetic time should not simply be added to it as though computation and movement never overlap. Actual execution also includes KV reads, activation traffic, launch overhead, synchronization, and imperfect use of the memory system.
+
+Caching and bandwidth solve different problems. KV reuse removes repeated computation over old prefix positions. Quantization can reduce the weight bytes moved. Grouped-query attention can reduce retained KV bytes. Batching increases reuse across independent work. None makes memory traffic disappear.
+
+## 5. The roofline model
+
+The roofline model connects those observations using *arithmetic intensity*: operations performed per byte transferred across a specified memory boundary.
+
+$$
+I = \frac{\mathrm{FLOPs}}{\mathrm{bytes\ moved}}, \qquad
+P_{\mathrm{attainable}} \leq \min\!\left(P_{\mathrm{peak}},\ I\,B_{\mathrm{memory}}\right)
+$$
+
+Here $P_{\mathrm{peak}}$ is the relevant peak operation rate and $B_{\mathrm{memory}}$ is bandwidth in bytes per second. Their ratio is the *ridge intensity*. Below that ridge, the bandwidth term is the tighter ideal bound. Above it, peak arithmetic throughput is tighter. Real kernels can fall below either roof.
+
+A matrix-vector projection at batch one performs roughly two operations per weight. If each weight occupies two bytes and is read once, its weight-dominated intensity is about one FLOP per byte. More token rows reuse those weights, raising intensity toward the matrix-matrix regime.
 
 ```python
-parameters = 7e9
-weight_bytes = parameters * 2
-bandwidth = 2e12  # illustrative bytes/s, not measured bandwidth
-print(weight_bytes / bandwidth * 1000)  # 7 ms, ideal weight-read bound
+# One FP16 projection; count input reads, weight reads, and output writes.
+inner = output = 4096
+for token_rows in (1, 64, 512):
+    flops = 2 * token_rows * inner * output
+    moved = 2 * (token_rows * inner + inner * output + token_rows * output)
+    print(token_rows, round(flops / moved, 2), 'FLOP/byte')
+# Approximately 1.00, 62.06, 409.60 FLOP/byte.
 ```
 
-This is a lower bound under a full weight-streaming assumption, not a predicted token latency. The roofline bound is `min(peak_flops, intensity * bandwidth)`. Batch reuse raises intensity; long-context attention adds work and cache traffic. A bottleneck can move as concurrency and context change.
+This is why prefill and decode often respond to different optimizations. Long prompt matrices can provide enough reuse to make arithmetic throughput important. Single-stream decode often remains limited by moving weights and state. Long-context attention, higher concurrency, quantization, and different kernels can move the bottleneck, so these are workload tendencies rather than permanent labels attached to a model.
 
-Continue with [from text to tokens](./from-text-to-tokens) to follow one prompt into the model.
+The next chapter starts the same story from the input: how text becomes tokens and vectors. From there we can follow a forward pass, build the generation loop, and connect its tensor shapes to the resource limits introduced here.
 
 ## Hands-on: trace one request
 
-Send one streamed request to the teaching server and record arrival, first delivery, final delivery, input length, and output length. Publish an annotated timing table separating queueing, prompt work, and streamed delivery.
+Send one streamed request to the teaching server and record arrival, first delivery, final delivery, input length, and output length. Publish an annotated timing table that separates prompt execution from client-visible waiting and delivery. Keep the calculations above as estimates and the request trace as a separate measurement.
+
+The conceptual sequence follows the opening chapter of the supplied *Efficient LLM Inference: Systems, Algorithms & Production Engineering*, second edition (Lamhot Siagian, 2026), adapted here with original examples and consistent metric definitions.

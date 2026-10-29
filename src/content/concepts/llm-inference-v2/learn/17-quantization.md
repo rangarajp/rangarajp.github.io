@@ -92,6 +92,24 @@ A float is not “a decimal with infinite precision.” It is a fixed bit budget
 
 Bit width is the storage budget. Numerical precision also depends on how those bits are divided between exponent and fraction, or on the quantizer scale. An integer code may represent a non-integer reconstructed weight through that scale.
 
+### Number formats: storage range is not quantization quality
+
+The PDF's format comparison is useful because equal bit width does not imply equal range or resolution. Floating-point exponent bits provide range; fraction bits provide precision within that range. Integer quantization instead uses scales, and sometimes zero points, to relate storage codes to real values.
+
+| Format | Storage bits | Representative finite range or signed codes | Interpretation |
+|---|---:|---|---|
+| FP32 | 32 | About $\pm3.4\times10^{38}$ | Wide-range reference format |
+| BF16 | 16 | About $\pm3.4\times10^{38}$ | FP32-like exponent range, fewer fraction bits |
+| FP16 | 16 | $\pm65{,}504$ | More fraction bits than BF16, narrower range |
+| FP8 E4M3 | 8 | $\pm448$ for the common finite-number variant | More fraction resolution, less range than E5M2 |
+| FP8 E5M2 | 8 | $\pm57{,}344$ | More range, fewer fraction bits |
+| Signed INT8 | 8 | $-128$ to $127$ | Real range depends on scale and zero point |
+| Signed INT4 | 4 | $-8$ to $7$ | Packed codes with significant calibration sensitivity |
+
+The symmetric examples below deliberately use the subsets `[-127, 127]` and `[-7, 7]` to keep positive and negative limits balanced. Their usable level counts differ from the full signed storage range. FP8 also needs scaling in practical use; its floating-point exponent does not remove calibration or quality checks. Native FP8 execution is not a V100 capability.
+
+FP8 definitions: [NVIDIA Transformer Engine format primer](https://docs.nvidia.com/deeplearning/transformer-engine-releases/release-2.4/user-guide/examples/fp8_primer.html).
+
 ### One concrete weight: 0.73
 
 Take a weight $w = 0.73$ and a symmetric range roughly $[-1, 1]$ (as in the video’s worked example). Store it at different widths and reconstruct:
@@ -290,19 +308,43 @@ Python integers are not packed INT4 storage. This example demonstrates rounding 
 
 ## 8. Post-training quantization
 
-*GPTQ* uses calibration activations and approximate second-order information to compensate quantization error across weights. *AWQ* uses activation information to choose channel scaling that protects important weights before quantization. Neither is simply rounding every tensor with one global scale.
+### GPTQ: compensate for rounding where it affects outputs
+
+Rounding every weight independently minimizes a local storage error, but a layer cares about the output of a matrix multiplication. A small error in a weight associated with a frequently large activation can matter more than a larger error in a rarely used direction.
+
+GPTQ uses calibration inputs to approximate that output sensitivity. As weights are quantized, it adjusts still-unquantized weights to compensate for error already introduced. The second-order approximation makes that redistribution more informed than one global round-and-clip pass. Calibration coverage, group size, and the deployed kernel all affect the result; four-bit storage alone does not guarantee a given quality level.
+
+### AWQ: use activation evidence to choose channel scaling
+
+AWQ also uses calibration activations, but emphasizes channel scaling before weight quantization. The goal is to protect directions whose errors have a large effect on layer outputs, while keeping the resulting representation suitable for efficient execution.
+
+For row-vector activations $X$ and weights $W$, an invertible diagonal matrix $D$ gives the exact unquantized identity $XW=(XD^{-1})(DW)$. Quantization is then applied to the transformed representation; rounding breaks exact equality and must be evaluated. This identity explains the scaling mechanism, not a claim that all AWQ implementations choose the same $D$ or always outperform other PTQ methods.
+
+### QuIP# and AQLM: change the representation at very low bit widths
 
 *QuIP#* and *AQLM* investigate very low bit representations using transformations or codebooks. Compare their full runtime paths and quality, rather than treating a nominal bit width as a speed ranking. Calibration examples should resemble production prompts, languages, and code distributions.
 
 ## 9. Quantization-aware training
 
-QAT simulates quantization effects during training so weights can adapt. It requires training resources and a deployment representation that matches the simulation. PTQ is often a cheaper initial experiment; QAT becomes relevant when its quality improvement justifies that extra work.
+QAT exposes the model to quantization error while parameters can still change. A common teaching operator first rounds to a grid and then reconstructs a floating-point approximation:
 
-## 10. Activation outliers and validation
+$$
+\hat{x}=s\,\operatorname{clip}\!\left(\operatorname{round}(x/s),q_{\min},q_{\max}\right)
+$$
 
-An unusually large channel can force a broad scale and waste integer levels on ordinary values. Per-channel scaling, smoothing transformations, clipping, or higher precision for sensitive operations address different versions of this problem. Clipping itself changes the computation.
+The forward pass therefore sees the effect of limited resolution. Since rounding does not provide a useful ordinary derivative, training typically uses a surrogate such as a straight-through estimator. Scale selection, clipping, and trainable parameters depend on the method. The simulated representation must match the intended deployment closely enough for the adaptation to carry over.
 
-Hold model, prompt set, concurrency, and output budget fixed. Compare memory, TTFT, decode latency, and task success against a higher-precision baseline. A checkpoint that fits but silently loses numerical accuracy is not a successful optimization.
+PTQ is often a cheaper first experiment because it does not require a full training loop. QAT becomes attractive when adaptation recovers enough task quality to justify its data, training, and validation cost. It is not automatically superior for every checkpoint or budget.
+
+## 10. Activation quantization challenges and validation
+
+Weights are fixed and can be analyzed offline. Activations vary with prompts, languages, positions, and context lengths. A channel containing occasional large values can force a broad quantizer scale, leaving ordinary values with too few useful levels. Clipping narrows the range but changes the computation by sacrificing outliers.
+
+Mixed-precision outlier methods keep sensitive components at higher precision and quantize the rest. SmoothQuant-style transformations redistribute scale between activations and weights using an identity such as $(XD^{-1})(DW)=XW$ before quantization. Floating-point low-bit formats provide a different range/resolution tradeoff, but still need appropriate scales and supported arithmetic.
+
+Compare weight-only, activation, and KV-cache quantization as separate choices. They change different byte streams and can affect accuracy, workspace, and latency differently. Evaluate the complete execution path rather than treating a smaller checkpoint file as a speed measurement.
+
+Hold model, prompt set, concurrency, and output budget fixed. Compare memory, TTFT, decode latency, and task success against a higher-precision baseline. Include the prompt types and context lengths where calibration may be weak. A checkpoint that fits but loses the task accuracy you need has not met the deployment objective.
 
 Primary reading: [GPTQ](https://arxiv.org/abs/2210.17323) and [AWQ](https://arxiv.org/abs/2306.00978).
 

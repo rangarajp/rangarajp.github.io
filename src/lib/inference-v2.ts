@@ -44,7 +44,7 @@ export const NAV_PAGES: NavPage[] = [
 	{
 		slug: "learn/inference-problem",
 		title: "The inference problem",
-		description: "Why inference is a systems problem, with latency and bandwidth estimates.",
+		description: "Training versus inference, the generation loop, latency/throughput/cost, memory bandwidth, and roofline.",
 		part: 1,
 		chapter: 0,
 		section: 'learn',

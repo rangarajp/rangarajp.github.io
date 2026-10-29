@@ -17,6 +17,14 @@ A mixture-of-experts (MoE) layer routes each token to a subset of expert feed-fo
 
 A model with many total parameters and a small active subset is not equivalent in memory to a dense model of the active size. It also pays routing, dispatch, and combination costs. Expert parallelism distributes experts across devices, often sending token activations through an all-to-all exchange.
 
+For selected experts $\mathcal{K}(x)$ and their routing weights $g_k(x)$, the expert contribution can be expressed as
+
+$$
+y(x)=\sum_{k\in\mathcal{K}(x)}g_k(x)\,E_k(x).
+$$
+
+The router selects computation, not free memory. A rarely selected expert still needs accessible weights, and moving a token to its device adds dispatch and combination traffic. Offloading experts to host memory or storage trades resident device capacity for loading latency and bandwidth. Report resident state and cold expert access separately from active arithmetic.
+
 ## 2. Inspect routing balance
 
 ```python

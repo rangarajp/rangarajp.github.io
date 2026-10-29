@@ -15,6 +15,15 @@ Autoregressive decoding repeatedly reads a large model to emit one token. Specul
 
 ## 1. Draft and verify
 
+The target can score the positions of a proposed continuation together even though producing those positions from scratch would require repeated next-token decisions. A speculative round uses that difference:
+
+1. A cheaper drafter proposes a short continuation from the current accepted prefix.
+2. The target evaluates those proposed positions in a causally correct verification pass.
+3. Acceptance decisions proceed in order, extending the accepted prefix until a rejection or the end of the draft.
+4. After rejection, emit a correctly sampled correction and discard later unaccepted proposals. If the whole draft is accepted, the target can provide a bonus token.
+
+Verification shares target-model work across proposed positions. It still pays for drafting, masks, cache management, and verification, and its benefit depends on how much proposed text survives.
+
 A greedy demonstration accepts draft tokens while they equal the target's greedy choices, then emits the target correction at the first mismatch. Exact *sampling* requires more: if draft probability is $q(x)$ and target probability is $p(x)$, accept a proposed token with probability $\min(1,p(x)/q(x))$. After rejection, sample from the normalized positive residual $\max(p-q,0)$ at that prefix. Accept/reject decisions proceed along the accepted prefix. If all drafts pass, the target can supply an additional token.
 
 Skipping the probability correction changes the target sampling distribution. Matching output text on one prompt does not prove exactness.
@@ -57,13 +66,25 @@ The geometric sum includes the correction or bonus token. Drafting four tokens i
 
 ## 3. Token tree verification
 
-A tree offers multiple possible continuations rather than one chain. A tree-aware mask allows each node to see only its ancestors. Verification can cover more alternatives, but extra nodes consume compute and temporary memory. A larger tree is useful only when extra accepted progress pays for that work.
+A linear draft commits to one proposed continuation at each position. A draft tree offers alternatives: two possible next tokens may each have their own proposed successors. The target can evaluate those nodes together, but the attention mask must make each node see only its prompt and ancestors, never unrelated branches.
 
-## 4. Medusa and EAGLE
+Verification then selects a valid accepted path using the decoding procedure's rules. Unselected branches are discarded. Their temporary state cannot simply be appended to the active request as though every branch had happened. Correct positions, masks, acceptance, and cache ownership are all part of implementing tree verification.
 
-Medusa adds prediction heads to propose future tokens from shared model features. EAGLE drafts through feature-level prediction and token information; its variants change how candidates are constructed and expanded. These require compatible trained components and engine support, rather than a generic setting usable by every checkpoint.
+A wider tree increases the chance of proposing a useful continuation, but also creates more target computation and temporary state. Choose tree size by accepted progress per unit of total work, not by candidate count alone.
 
-## 5. When speculation helps
+## 4. Medusa: multiple prediction heads
+
+Medusa adds trained heads that use a shared hidden representation to propose tokens at future offsets. Several inexpensive heads can therefore supply candidate continuations without running a separate full draft model for every proposal. The target still verifies candidates; a head's prediction is not evidence that every earlier predicted token will be accepted.
+
+The shared representation is an efficiency advantage and a modeling constraint. Additional heads must learn useful future-offset predictions, and the engine needs a compatible tree/verification path. Extra heads, their training, and verification all have costs, so this is not a free configuration flag for an arbitrary existing checkpoint.
+
+## 5. EAGLE: feature-based drafting
+
+EAGLE trains a lightweight drafter around model features and token information. Conditioning on token information helps address uncertainty about which continuation led to a future feature. Later variants also adapt the draft tree, changing where proposal work is spent.
+
+The operational question is the same as for a separate draft model or Medusa: how much accepted target-model progress is gained after paying for drafting, verification, state updates, and any extra memory? The mechanisms differ, so their acceptance rates and overhead must be measured on the actual task.
+
+## 6. When speculation helps
 
 Low-concurrency, bandwidth-heavy decode is a promising regime because verification can reuse target weights across proposed positions. At high concurrency the target may already exploit that reuse through batching. Poor draft agreement, expensive drafting, or tight memory can erase the benefit. Measure accepted tokens per round and end-to-end latency, including draft-model memory.
 

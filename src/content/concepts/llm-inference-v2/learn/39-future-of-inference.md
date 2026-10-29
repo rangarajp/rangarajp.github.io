@@ -41,6 +41,12 @@ Alternative hardware explores different energy and data-movement tradeoffs. Opti
 
 GQA, MLA, recurrent-state layers, conditional experts, and adaptive depth make serving constraints part of architecture design. Each has quality, training, and kernel implications. Byte-level tokenization changes sequence length and vocabulary costs rather than eliminating computation. Choose designs by useful work per byte and joule for the intended workload.
 
+Adaptive-depth approaches allocate different amounts of layer computation to different tokens or inputs. Early exit stops at a chosen intermediate representation; mixture-of-depths-style routing can skip some updates while continuing through later layers. Both need training, calibration, and a runtime that can exploit the changed workload without losing the quality target.
+
+Activation sparsity is useful when the zero or inactive pattern can be identified cheaply and a kernel avoids corresponding work. Unstructured sparsity that still executes dense matrix operations may provide little latency benefit. Likewise, byte-level modeling changes vocabulary and sequence-length tradeoffs; it does not simply remove the cost of representing text.
+
+These ideas share an inference-first question: which work and state are actually necessary for the intended task? The answer must include training changes, numerical behavior, data movement, and scheduler efficiency, not only a smaller theoretical operation count.
+
 Primary reading: [LLaDA](https://arxiv.org/abs/2502.09992), [multi-token prediction](https://arxiv.org/abs/2404.19737), and [Mixture-of-Depths](https://arxiv.org/abs/2404.02258).
 
 ## Hands-on: compare one alternative at matched quality

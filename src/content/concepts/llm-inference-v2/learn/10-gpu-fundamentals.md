@@ -198,6 +198,10 @@ CPUs offer large system memory and flexible control flow, but their effective ma
 
 More HBM capacity, faster interconnects, and new low-precision instructions help different bottlenecks. An interconnect upgrade helps sharded execution only when communication matters. More tensor throughput helps compute-heavy prefill only when the kernels can use it. Start with a trace and a memory budget before choosing hardware.
 
+Dedicated accelerators pursue different balances of arithmetic, storage, and interconnect. Large matrix arrays favor regular dense operations; SRAM-centric designs keep a smaller working set close to execution; larger integrated fabrics reduce some communication distances. Each choice moves a constraint rather than eliminating it: a model that exceeds the local working set still needs partitioning or another storage tier.
+
+For a new device, first establish model/operator support, accessible memory, supported precision, and the data path between devices. Then measure prompt and decode workloads separately. An attractive isolated kernel rate is not an end-to-end serving result.
+
 Continue with [the prefill/decode byte estimates](./prefill-decode-kv-cache) and [kernel engineering](./kernel-fusion-cuda-graphs).
 
 Hardware details: [NVIDIA Hopper tuning guide](https://docs.nvidia.com/cuda/hopper-tuning-guide/).

@@ -26,19 +26,29 @@ print(sum(lengths) * bytes_per_token / 2**20, 'MiB')  # 832 MiB
 
 That excludes padding, metadata, and workspace. Output reservations also matter: admitting requests using prompt length alone can exhaust memory later.
 
-## 2. Prefix caching
+## 2. PagedAttention: allocate retained state in blocks
+
+A request's final length is not known when it arrives. Reserving its maximum possible cache contiguously can leave large regions unused, while requiring one growing contiguous allocation can create allocation pressure. Paging separates logical sequence positions from physical storage blocks.
+
+The engine allocates usable blocks from a pool and records where each request's positions live. An attention kernel follows that mapping when reading keys and values. A partially filled final block still has tail waste; shared blocks also need ownership and copy-on-write rules. Paging improves allocation efficiency, not the size of each uncompressed KV element or the dense attention equation.
+
+The next chapter works through block addressing, sharing, and reclamation with code. Here the key budget distinction is between logical retained tokens, allocated block slots, and the engine's reserved pool.
+
+## 3. Prefix caching
 
 Requests with an identical prefix can reuse its computed KV state. Identity includes token IDs, model revision, adapter, position configuration, and other execution settings. Identical text under a different chat template may not produce identical tokens. Reuse must be scoped to the appropriate tenant or trust boundary.
 
 A prefix cache avoids prefill for the reused positions. It still retains memory, and the next decode query still attends over that state. It is different from semantic response caching, which returns an earlier answer to a sufficiently similar query and changes application behavior.
 
-## 3. StreamingLLM and attention sinks
+## 4. StreamingLLM and attention sinks
 
 StreamingLLM retains a few initial positions and a recent window. Some models assign substantial attention to initial tokens that act as sinks; keeping them can stabilize bounded-window streaming. It does not retain arbitrary facts from discarded middle tokens. Eviction changes the accessible context, so evaluate long-range task quality.
 
-## 4. KV cache quantization
+The retained state can be written as the union of initial sink positions and a recent window. That bounds storage, but it does not preserve the information content of a full unbounded conversation. If a required fact was evicted from the middle, the model needs another retrieval or memory mechanism to recover it.
 
-Lower-precision keys and values can reduce capacity and bandwidth requirements. Scales, outliers, and attention sensitivity make this a separate decision from weight quantization. Cache compression may introduce dequantization work and quality loss. Test at the intended context length, including retrieval of information far from the end.
+## 5. KV cache quantization
+
+Lower-precision keys and values can reduce capacity and bandwidth requirements. Scales, outliers, and attention sensitivity make this a separate decision from weight quantization. Cache compression may introduce dequantization work and quality loss. Its error is not confined to a disposable current step: retained approximations are reused by later queries and can affect future generated tokens. Test at the intended context length, including retrieval of information far from the end.
 
 Primary reading: [PagedAttention](https://arxiv.org/abs/2309.06180) and [StreamingLLM](https://arxiv.org/abs/2309.17453).
 

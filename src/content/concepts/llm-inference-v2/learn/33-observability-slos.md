@@ -13,6 +13,12 @@ The serving components are in place. Instrument their boundaries here to disting
 
 An engine benchmark cannot tell you whether users receive timely answers through the full application. Instrument arrival, queue admission, prefill, first delivered token, subsequent tokens, completion, and cancellation. A correlation ID connects those events without logging private prompts by default.
 
+## Production responsibilities beyond the engine
+
+A production service needs more than a model endpoint. Logging and tracing establish which model version handled a request and where time was spent. Metrics and alerts expose latency tails, failures, queue pressure, and resource saturation. Controlled rollouts compare versions under bounded traffic exposure, while capacity planning and cost attribution connect resource use to the teams or features consuming it.
+
+Keep request identifiers, model/configuration versions, token counts, timings, and error state available without indiscriminately logging private prompt content. The purpose of an observability field is to resolve a concrete operational question.
+
 ## 1. Key metrics
 
 | Metric | Definition | Diagnostic use |
@@ -33,6 +39,12 @@ print('TTFT:', times[0], 'TPOT:', round(tpot, 4), 'max gap:', round(max(gaps), 4
 ```
 
 TPOT is undefined for a one-token answer; do not divide by zero or substitute TTFT. Report request percentiles and output lengths together. Pooling every token gap weights long answers more heavily than short ones, so state your aggregation method.
+
+### Goodput, compliance, and model utilization
+
+Define goodput as SLO-qualified requests or tokens per unit time, and report the compliance fraction separately. TTFT and TPOT targets must be evaluated jointly on each request. If 95% meet each target independently, joint compliance would be 90.25%; real request timings are often correlated, so calculate the observed joint fraction instead of multiplying marginals.
+
+Model FLOP utilization compares estimated useful model operations per second with a relevant device peak. It can help interpret compute-heavy prefill, but a low number during bandwidth-limited decode does not by itself mean the implementation is poor. Pair it with memory traffic, achieved bandwidth, kernel shapes, and launch overhead. Use dense operation rates and the actual arithmetic format consistently.
 
 ## 2. Failure modes and debugging
 

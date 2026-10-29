@@ -13,6 +13,8 @@ Paging addresses allocation. FlashAttention addresses intermediate attention IO 
 
 Naive attention writes a score matrix and probability matrix proportional to $T^2$ into device memory. FlashAttention tiles the computation so those full intermediates need not live in HBM. It preserves dense attention semantics up to floating-point differences; it does not make dense attention linear in arithmetic work.
 
+A high-level expression can launch separate operations for scores, normalization, and the value-weighted result. Writing each intermediate to device memory and reading it back costs traffic even when the arithmetic is fast. Custom kernels can combine and tile those operations so more intermediate state remains on chip. Library kernels are often the right implementation; the point is to choose an execution path whose data movement matches the problem.
+
 ## 1. IO-aware exact attention
 
 A tile of queries processes tiles of keys and values. Instead of saving all scores, the kernel maintains each row's running maximum, normalization sum, and weighted value sum. SRAM holds the working tiles. The result is fewer HBM transfers and less intermediate storage.
@@ -20,6 +22,19 @@ A tile of queries processes tiles of keys and values. Instead of saving all scor
 ## 2. Online softmax
 
 When a new tile changes the maximum from $m$ to $m'$, rescale previous sums by $\exp(m-m')$ before adding the new contributions. This keeps exponentials numerically stable while preserving the normalization across tiles.
+
+For one query row, let $\mathcal{J}_i$ index the next key tile and $V_j$ be its value vectors. Maintain a maximum $m$, an unnormalized sum $\ell$, and a weighted-value accumulator $z$:
+
+$$
+\begin{aligned}
+m' &= \max\!\left(m,\max_{j\in\mathcal{J}_i}s_j\right),\\
+\ell' &= e^{m-m'}\ell+\sum_{j\in\mathcal{J}_i}e^{s_j-m'},\\
+z' &= e^{m-m'}z+\sum_{j\in\mathcal{J}_i}e^{s_j-m'}V_j,\\
+o &= z/\ell.
+\end{aligned}
+$$
+
+The same rescaling must be applied to the normalization sum and the value accumulator when the maximum changes. The output division is performed after all relevant key tiles have contributed. There is one scalar maximum and sum per query row, plus a vector accumulator of value width; the state is independent of the number of keys, not independent of head width.
 
 ```python
 import math

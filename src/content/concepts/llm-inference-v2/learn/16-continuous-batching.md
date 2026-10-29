@@ -18,6 +18,14 @@ This chapter is the boat story: why you fill seats, what goes wrong with static 
 Prerequisite mental model: [prefill vs decode and KV cache](./vllm-internals). For how a server wires the loop, see [Serving Engine Internals](./caching-batching-scheduling).
 
 
+## The production inference server around the batch
+
+A request enters through an API layer that validates model identity, applies access and rate limits, and manages delivery. Tokenization converts its text to IDs. The scheduler decides when prompt or decode work can run within token and memory budgets. The executor launches model operations, the KV allocator manages retained state, and the sampler converts output scores into selected tokens.
+
+These components form a feedback loop: each iteration changes request lengths, completion state, and available memory. Streaming must associate outputs with the right request while cancellation and failures release resources. A fast forward pass is necessary, but it is only one component of the serving system.
+
+The batching strategies below explain the scheduler's part of that system. The later server walkthrough exposes the request IDs, queues, and workers in code.
+
 ## 1. The boat — requests as passengers, the GPU as a ferry
 
 Think of the GPU as a ferry that runs short trips in a loop. Each trip is one *iteration*: a forward pass that advances every passenger currently on board.
@@ -260,6 +268,14 @@ Separate worker pools allow different hardware or batch policies for the two pha
 ## 11. SLO-aware scheduling
 
 A latency objective should specify a percentile and workload. Token budgets, aging of queued requests, admission limits, and reserved decode capacity help manage it. An unbounded queue converts overload into extreme tail latency. Explicit rejection or backpressure is often more predictable.
+
+### Scheduling policies and their costs
+
+FIFO is easy to reason about, but a long admitted prompt can delay short requests. Priority or length-aware scheduling changes who waits; it should include aging or another fairness mechanism to avoid starving expensive work. Estimated output length is uncertain, so predictions are scheduling hints rather than guarantees.
+
+Preemption can make room for urgent work, but retained KV state must be preserved, moved, or recomputed. Those choices consume memory, bandwidth, or compute. Admission control prevents overload from becoming an unbounded queue, while routing can send work to replicas with a more suitable queue or useful cached prefix.
+
+Express the objective in observable terms, such as p95 TTFT and post-first-token pace for a stated workload. Measure the combined compliance of actual requests rather than assuming that two separate percentile targets imply the same joint success rate.
 
 Primary reading: [Sarathi-Serve](https://arxiv.org/abs/2403.02310) and [PagedAttention](https://arxiv.org/abs/2309.06180).
 

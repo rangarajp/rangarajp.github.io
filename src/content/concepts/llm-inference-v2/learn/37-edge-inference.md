@@ -38,6 +38,10 @@ Track load time, first-token delay, sustained decode speed, peak memory, and ene
 
 Choosing fewer layers, narrower hidden states, GQA, or a smaller vocabulary changes quality and deployment cost. Architecture search evaluates such alternatives against device constraints, but it requires trained candidates or an appropriate proxy. An existing checkpoint cannot be arbitrarily reshaped without additional training.
 
+Hardware-aware architecture search can vary depth, hidden width, head layout, supported precision, or early-exit policies against an actual device objective. Parameter count alone is a weak latency predictor: alignment, memory access, and supported operators can make a smaller candidate slower. Measure the chosen runtime on the target device and validate the selected subnet's quality; a supernet or pruning recipe does not remove that requirement.
+
+Memory mapping a checkpoint can reduce eager copying and make loading practical, but it does not eliminate attention state or the need to fetch weight pages. Unified memory similarly changes where capacity comes from while leaving competition with the operating system and data movement in the execution budget.
+
 ## Hands-on: measure a real edge device
 
 Use a small supported local model on the intended CPU or edge device and repeat prompts long enough to reveal thermal behavior. Publish load time, sustained output rate, process memory, and task quality. A V100 run is the server reference, not evidence of on-device energy or battery life.
