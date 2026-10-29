@@ -15,7 +15,7 @@ tags: ["llm-inference", "fundamentals", "pytorch"]
 
 ## 1. Anatomy of one forward pass
 
-A decoder-only model (GPT-2, Llama, Qwen, Mistral) runs the same block \(L\) times. Weights differ per layer. The dataflow does not.
+A decoder-only model (GPT-2, Llama, Qwen, Mistral) runs the same block $L$ times. Weights differ per layer. The dataflow does not.
 
 ```text
 Token IDs
@@ -28,7 +28,7 @@ Token IDs
   → logits at every position
 ```
 
-For a sequence of \(T\) tokens and width \(D\), the hidden state stays \(X \in \mathbb{R}^{B \times T \times D}\) from the embedding through the last block. Attention mixes tokens. The feed-forward network mixes features *inside* one token. Neither step changes \(B\), \(T\), or \(D\).
+For a sequence of $T$ tokens and width $D$, the hidden state stays $X \in \mathbb{R}^{B \times T \times D}$ from the embedding through the last block. Attention mixes tokens. The feed-forward network mixes features *inside* one token. Neither step changes $B$, $T$, or $D$.
 
 For teaching, follow a *pre-norm* block. Modern Llama-style models use this order. GPT-2 also uses pre-norm, with LayerNorm rather than the RMSNorm used by Llama.
 
@@ -47,20 +47,24 @@ A residual adds the sublayer's update back onto its input, so each block learns 
 
 One head builds queries, keys, and values with learned projections:
 
-\[
+
+$$
 Q = X W_Q, \qquad K = X W_K, \qquad V = X W_V
-\]
+$$
 
-\[
+
+
+$$
 \mathrm{Attention}(Q,K,V) = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d_h}} + M\right) V
-\]
+$$
 
-- \(X\) is the hidden state, shape `[B, T, D]`.
-- \(Q\) asks which positions matter for this token.
-- \(K\) is what each position offers for that comparison.
-- \(V\) is the information that gets mixed.
-- \(d_h\) is the head width. Dividing by \(\sqrt{d_h}\) keeps the dot products from saturating softmax when \(d_h\) is large.
-- \(M\) is the causal mask. Future positions are set to \(-\infty\) before softmax, so token \(t\) cannot read tokens after \(t\).
+
+- $X$ is the hidden state, shape `[B, T, D]`.
+- $Q$ asks which positions matter for this token.
+- $K$ is what each position offers for that comparison.
+- $V$ is the information that gets mixed.
+- $d_h$ is the head width. Dividing by $\sqrt{d_h}$ keeps the dot products from saturating softmax when $d_h$ is large.
+- $M$ is the causal mask. Future positions are set to $-\infty$ before softmax, so token $t$ cannot read tokens after $t$.
 
 Consider the sentence:
 
@@ -68,7 +72,7 @@ Consider the sentence:
 
 To represent *it*, attention can mix earlier positions such as *battery* and *overheating*. The weights are computed from the vectors, not from a grammar rule. They are not guaranteed to match the explanation a person would give.
 
-After the heads are concatenated and projected, the feed-forward network runs independently at each position. GPT-2 uses a two-matrix MLP with GELU. Width expands to \(4D\), then returns to \(D\):
+After the heads are concatenated and projected, the feed-forward network runs independently at each position. GPT-2 uses a two-matrix MLP with GELU. Width expands to $4D$, then returns to $D$:
 
 ```python
 import torch
@@ -81,9 +85,11 @@ def gpt2_mlp(x, w_up, w_down):
 
 Llama-style models use *SwiGLU*, three matrices, with a gated product:
 
-\[
+
+$$
 \mathrm{FFN}(x) = \big(\mathrm{SiLU}(x W_1) \odot x W_3\big) W_2
-\]
+$$
+
 
 ```python
 def swiglu(x, w1, w3, w2):
@@ -91,7 +97,7 @@ def swiglu(x, w1, w3, w2):
     return (F.silu(x @ w1) * (x @ w3)) @ w2
 ```
 
-In both designs the MLP does not look at other positions. Mixing across the sequence already happened in attention. The MLP's job is a position-wise feature transform, and it holds a large share of the layer's parameters (the \(D \times 4D\) style matrices). That is why, during decode, most of the bytes you load from memory are these weights, not the attention scores.
+In both designs the MLP does not look at other positions. Mixing across the sequence already happened in attention. The MLP's job is a position-wise feature transform, and it holds a large share of the layer's parameters (the $D \times 4D$ style matrices). That is why, during decode, most of the bytes you load from memory are these weights, not the attention scores.
 
 ## 3. A minimal causal attention step
 
@@ -143,13 +149,13 @@ Standard multi-head attention, with `B = 1`, `T = 4`, `D = 8`, `H = 2`, so `dh =
 |---|---|---|
 | Input `X` | `[1, 4, 8]` | One hidden vector per token |
 | `Q`, `K`, `V` after the head split | `[1, 2, 4, 4]` | Two heads, each of width 4 |
-| Scores \(QK^\top\) | `[1, 2, 4, 4]` | Every query against every key |
+| Scores $QK^\top$ | `[1, 2, 4, 4]` | Every query against every key |
 | Attention result | `[1, 2, 4, 4]` | Weighted values |
 | Concatenated heads | `[1, 4, 8]` | Heads merged back to `D` |
 | MLP hidden | `[1, 4, 32]` | Expansion, here `4D`, still one row per token |
 | Block output | `[1, 4, 8]` | The residual restores width `D` |
 
-The score tensor is the one that grows with \(T^2\). For `T = 4` that is nothing. For a 128k context it is the tensor you do not want to materialize in GPU memory. Later chapters on kernels come back to that. Here, notice only that `Q`, `K`, and `V` themselves are linear in \(T\), while the scores are quadratic.
+The score tensor is the one that grows with $T^2$. For `T = 4` that is nothing. For a 128k context it is the tensor you do not want to materialize in GPU memory. Later chapters on kernels come back to that. Here, notice only that `Q`, `K`, and `V` themselves are linear in $T$, while the scores are quadratic.
 
 Grouped-query attention and latent attention change the key and value shapes. The query path in this table is the multi-head case. [Attention variants](./attention-variants) redraws `K` and `V`.
 

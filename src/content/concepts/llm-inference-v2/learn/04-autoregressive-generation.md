@@ -108,7 +108,7 @@ The example makes two independent choices:
 1. *Decoding strategy.* `argmax` is greedy. Sampling would draw from the probabilities in the previous chapter. Either way you append exactly one id before the next forward pass.
 2. *Computation strategy.* `use_cache=False` recomputes every position. A correct cache reuses keys and values for the prefix and runs the new token only. The next chapter builds that distinction. A wrong cache (feeding the full sequence *and* a past cache, or forgetting the position id) silently attends to the wrong places.
 
-Changing either choice does not remove the dependency. Token \(t+1\) is a function of the prefix through token \(t\).
+Changing either choice does not remove the dependency. Token $t+1$ is a function of the prefix through token $t$.
 
 
 ---

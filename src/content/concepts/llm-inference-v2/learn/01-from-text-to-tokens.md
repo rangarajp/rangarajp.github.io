@@ -115,14 +115,16 @@ The embedding table has no notion of order. Swap two token IDs and, without a po
 
 *Rotary position embeddings* (RoPE) leave the token embeddings alone. Inside each attention layer they rotate the query and key vectors by an angle that depends on the position index. The rotation is applied in pairs of dimensions:
 
-\[
+
+$$
 \begin{aligned}
 q^{(2i)}_m &= q_{2i}\cos(m\theta_i) - q_{2i+1}\sin(m\theta_i) \\
 q^{(2i+1)}_m &= q_{2i}\sin(m\theta_i) + q_{2i+1}\cos(m\theta_i)
 \end{aligned}
-\]
+$$
 
-with \(\theta_i = 10000^{-2i/d}\). The same rotation is applied to keys. For fixed, unrotated query and key vectors, the dot product \(\langle q_m, k_n \rangle\) depends on the *difference* \(m - n\), not on the absolute indices. Values are not rotated.
+
+with $\theta_i = 10000^{-2i/d}$. The same rotation is applied to keys. For fixed, unrotated query and key vectors, the dot product $\langle q_m, k_n \rangle$ depends on the *difference* $m - n$, not on the absolute indices. Values are not rotated.
 
 ```python
 import torch

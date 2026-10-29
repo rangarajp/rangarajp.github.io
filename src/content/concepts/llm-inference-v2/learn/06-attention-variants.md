@@ -13,7 +13,7 @@ tags: ["llm-inference", "fundamentals", "pytorch"]
 **Big question:** Why do some models store fewer key/value heads than query heads?  
 **You will build:** A grouped-query shape check and a KV-byte comparison. Not a full latent-attention implementation.
 
-The previous chapter's cache formula depends on \(n_{\text{kv}}\), the number of key/value heads. This chapter is why that number is a design choice.
+The previous chapter's cache formula depends on $n_{\text{kv}}$, the number of key/value heads. This chapter is why that number is a design choice.
 
 ## 1. Multi-head attention
 
@@ -37,7 +37,7 @@ Keys:                 K0
 Values:               V0
 ```
 
-The cache shrinks by about the query-head count, because \(n_{\text{kv}} = 1\). Every query head attends to that single K/V pair. The sharing is a capacity limit: one key space has to serve every query head. Models that use it are choosing a smaller cache, and they have to make up for that sharing in training. It is not a free speedup you can patch onto an MHA checkpoint without further work.
+The cache shrinks by about the query-head count, because $n_{\text{kv}} = 1$. Every query head attends to that single K/V pair. The sharing is a capacity limit: one key space has to serve every query head. Models that use it are choosing a smaller cache, and they have to make up for that sharing in training. It is not a free speedup you can patch onto an MHA checkpoint without further work.
 
 ## 3. Grouped-query attention
 
@@ -51,9 +51,9 @@ Q4 Q5 Q6 Q7 → K1, V1
 
 Llama-2-70B, Llama-3, Mistral, and Qwen2 use this pattern. Llama-2-70B uses 64 query heads and 8 KV heads, so each KV head serves 8 query heads. Against an MHA model with the same 64 query heads, the cache is 8 times smaller. Against MQA it is 8 times larger. The point of the group is that middle.
 
-Holding batch, tokens, head width, and layers fixed, cache bytes are proportional to \(n_{\text{kv}}\):
+Holding batch, tokens, head width, and layers fixed, cache bytes are proportional to $n_{\text{kv}}$:
 
-| Layout | \(n_{\text{kv}}\) for 8 query heads | Cache versus MHA |
+| Layout | $n_{\text{kv}}$ for 8 query heads | Cache versus MHA |
 |---|---:|---:|
 | MHA | 8 | 1× |
 | GQA, groups of 4 | 2 | 1/4 |
@@ -84,12 +84,12 @@ print(tuple(q.shape), tuple(k.shape), tuple(scores.shape))
 # [1, 8, 1024, 128]  [1, 2, 1024, 128]  [1, 8, 1024, 1024]
 ```
 
-`scores` is still `[B, Hq, T, T]`. The savings are in `k` and `v`, which is what the cache keeps. The score matrix is not stored in the cache. It is recomputed each step, ideally without ever writing the full \(T \times T\) block to HBM.
+`scores` is still `[B, Hq, T, T]`. The savings are in `k` and `v`, which is what the cache keeps. The score matrix is not stored in the cache. It is recomputed each step, ideally without ever writing the full $T \times T$ block to HBM.
 
 
 ## 4. Multi-head latent attention
 
-*Multi-head latent attention* (MLA), used by DeepSeek-V2 and later DeepSeek models, does not pick a smaller head count and stop. It compresses the key/value content of a token into a shorter latent vector of width \(c\), with \(c\) well below the usual \(n_{\text{kv}} \times d_h\), and stores that latent in the cache. Queries are still multi-head. On the way into the score, the latent is mapped back up so the heads can attend. Position handling is part of that design (some dimensions are kept uncompressed so rotary position can be applied), which is why MLA is not "GQA with one more reduction."
+*Multi-head latent attention* (MLA), used by DeepSeek-V2 and later DeepSeek models, does not pick a smaller head count and stop. It compresses the key/value content of a token into a shorter latent vector of width $c$, with $c$ well below the usual $n_{\text{kv}} \times d_h$, and stores that latent in the cache. Queries are still multi-head. On the way into the score, the latent is mapped back up so the heads can attend. Position handling is part of that design (some dimensions are kept uncompressed so rotary position can be applied), which is why MLA is not "GQA with one more reduction."
 
 The motive matches the earlier chapters: the cache grows with every token and every layer, and decode reads it on every step. A shorter stored vector is a shorter read. Published DeepSeek configurations cut that cached state several times versus MHA, on the order of 5–13× depending on the model, with the quality coming from training the compression jointly. Do not quote a single ratio as if it were a property of the name MLA.
 
@@ -106,11 +106,13 @@ A picture that is sometimes repeated, MHA : GQA : MLA ≈ 8 : 2 : 1, is one imag
 
 Per layer, ignoring padding, MHA, MQA, and GQA store:
 
-\[
-N = 2 \cdot B \cdot n_{\text{kv}} \cdot T \cdot d_h
-\]
 
-elements. Bytes are \(N\) times the element size, times the layer count. The symbol in that product is \(n_{\text{kv}}\), not the query-head count.
+$$
+N = 2 \cdot B \cdot n_{\text{kv}} \cdot T \cdot d_h
+$$
+
+
+elements. Bytes are $N$ times the element size, times the layer count. The symbol in that product is $n_{\text{kv}}$, not the query-head count.
 
 ```python
 def kv_bytes(layers, kv_heads, head_dim, tokens, bytes_per_elem=2, batch=1):

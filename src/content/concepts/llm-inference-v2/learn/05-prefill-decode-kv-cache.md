@@ -43,17 +43,19 @@ In a busy server a scheduler may interleave prefill work and decode work from di
 
 ## 2. What the KV cache stores
 
-Without a cache, step \(n\) recomputes keys and values for all \(n\) positions, in every layer. The uncached loop in the previous chapter does exactly that. The *KV cache* keeps those keys and values so the next step only projects the new token.
+Without a cache, step $n$ recomputes keys and values for all $n$ positions, in every layer. The uncached loop in the previous chapter does exactly that. The *KV cache* keeps those keys and values so the next step only projects the new token.
 
-The cache is not the weights. Weights are the learned matrices \(W_Q, W_K, W_V\), shared by every request and fixed at inference. The cache is activation state for *this* sequence. Drop the request and you may free the cache. You do not free the model.
+The cache is not the weights. Weights are the learned matrices $W_Q, W_K, W_V$, shared by every request and fixed at inference. The cache is activation state for *this* sequence. Drop the request and you may free the cache. You do not free the model.
 
 For one sequence, one layer, standard attention stores:
 
-\[
-\text{bytes} = 2 \times n_{\text{kv}} \times T \times d_h \times \text{bytes per element}
-\]
 
-The leading 2 is key and value. \(n_{\text{kv}}\) is the number of key/value heads, \(T\) is tokens stored so far, and \(d_h\) is the head width. Multiply by the layer count \(L\) and the batch \(B\).
+$$
+\text{bytes} = 2 \times n_{\text{kv}} \times T \times d_h \times \text{bytes per element}
+$$
+
+
+The leading 2 is key and value. $n_{\text{kv}}$ is the number of key/value heads, $T$ is tokens stored so far, and $d_h$ is the head width. Multiply by the layer count $L$ and the batch $B$.
 
 ```python
 def kv_bytes(layers, kv_heads, head_dim, tokens, bytes_per_elem=2, batch=1):
@@ -68,7 +70,7 @@ print("bytes per token:", per_token)  # 524_288 = 512 KiB
 print("MB at 1512 tokens:", kv_bytes(32, 32, 128, 1512) / 1e6)  # about 793
 ```
 
-A decode step appends one token's K and V. The read is the whole cache. After a long conversation the cache, not the new token, dominates attention's memory traffic. The projections \(W_Q, W_K, W_V, W_O\) and the MLP still have to be loaded too. Those weights do not grow with \(T\). The cache does.
+A decode step appends one token's K and V. The read is the whole cache. After a long conversation the cache, not the new token, dominates attention's memory traffic. The projections $W_Q, W_K, W_V, W_O$ and the MLP still have to be loaded too. Those weights do not grow with $T$. The cache does.
 
 This educational step shows the append. `q`, `k`, and `v` would come from linear layers in a real block. Here they are random so you can watch the shapes.
 
@@ -104,7 +106,7 @@ On the decode call, `Tq` is 1 and `Tk` is 5. There is no future token to mask: t
 
 ## 3. A worked memory estimate
 
-Use KV heads, not query heads. Llama-2-70B has 80 layers, 64 query heads, and **8 KV heads**, with \(d_h = 128\). At 4096 tokens, FP16, batch 1:
+Use KV heads, not query heads. Llama-2-70B has 80 layers, 64 query heads, and **8 KV heads**, with $d_h = 128$. At 4096 tokens, FP16, batch 1:
 
 ```text
 2 × 80 × 8 × 4096 × 128 × 2 bytes ≈ 1.34 GB
@@ -118,7 +120,7 @@ These are closed-form byte counts under the formula above. They omit allocator p
 
 Prefill multiplies a token matrix by a weight matrix: a GEMM whose token axis is the prompt length. Decode, at batch 1, multiplies a single vector by the same weight matrix: a GEMV.
 
-A useful ratio is *arithmetic intensity*, FLOPs per byte moved. For \(y = Wx\) with \(W\) shaped `[rows, cols]` in FP16, you do about `2 × rows × cols` FLOPs and you must load the matrix:
+A useful ratio is *arithmetic intensity*, FLOPs per byte moved. For $y = Wx$ with $W$ shaped `[rows, cols]` in FP16, you do about `2 × rows × cols` FLOPs and you must load the matrix:
 
 ```python
 def gemv_intensity(rows, cols, bytes_per_elem=2):
@@ -130,9 +132,9 @@ def gemv_intensity(rows, cols, bytes_per_elem=2):
 print(round(gemv_intensity(4096, 4096), 3))  # about 1.0 FLOP/byte
 ```
 
-The *ridge* of a chip is peak FLOP/s divided by peak memory bandwidth. An A100 80 GB SXM is about 312 TFLOP/s of FP16 tensor-core math (the dense rate, not the sparse 2×) and about 2.0 TB/s of HBM. The ridge is roughly \(312 / 2.0 \approx 156\) FLOP/byte. A GEMV at 1 FLOP/byte sits far below that ridge, so the step is limited by how fast weights move from HBM, not by peak FLOP/s.
+The *ridge* of a chip is peak FLOP/s divided by peak memory bandwidth. An A100 80 GB SXM is about 312 TFLOP/s of FP16 tensor-core math (the dense rate, not the sparse 2×) and about 2.0 TB/s of HBM. The ridge is roughly $312 / 2.0 \approx 156$ FLOP/byte. A GEMV at 1 FLOP/byte sits far below that ridge, so the step is limited by how fast weights move from HBM, not by peak FLOP/s.
 
-A 7-billion-parameter model in 16-bit weights is about \(7 \times 10^9 \times 2\) bytes \(= 14\) GB. Reading 14 GB at 2 TB/s takes \(14 / 2000\) seconds \(= 7\) ms. That is a lower bound for one decode step if the device streamed every weight byte once at the brochure bandwidth and did nothing else. Real decode also reads the KV cache, launches many kernels, and does not hold peak bandwidth on each of them. The bound is still the right picture: at batch 1 you pay a weight-load on the order of milliseconds to emit one token.
+A 7-billion-parameter model in 16-bit weights is about $7 \times 10^9 \times 2$ bytes $= 14$ GB. Reading 14 GB at 2 TB/s takes $14 / 2000$ seconds $= 7$ ms. That is a lower bound for one decode step if the device streamed every weight byte once at the brochure bandwidth and did nothing else. Real decode also reads the KV cache, launches many kernels, and does not hold peak bandwidth on each of them. The bound is still the right picture: at batch 1 you pay a weight-load on the order of milliseconds to emit one token.
 
 Raise the batch, or the prompt length, and the same loaded weight is reused across more rows. Intensity scales with that row count. A long prefill can approach the ridge. A single-token decode cannot. Batching many independent decodes amortizes the weight load. It does not shrink the latency of the slowest request for free, which is the tradeoff in the next section.
 
@@ -165,3 +167,25 @@ The KV cache does not remove attention. The new query still scores against every
 ---
 
 **Continue learning:** [← Previous chapter](./autoregressive-generation) · [Next chapter →](./attention-variants)
+
+## 7. Compare cached and uncached generation in the original lab
+
+The [original notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/basic_vLLM_v1.ipynb) used Qwen2.5-0.5B-Instruct with short prompts. Its uncached steps were about 31–35 ms and warmed cached steps about 30–31 ms. Those short traces do not establish a universal speedup or constant decode cost.
+
+<figure>
+
+![Original short-context run comparing per-step latency with and without a KV cache](../../llm-inference/images/kv-cache-comparison.png)
+
+<figcaption><span class="figure-label">Figure 2.</span> Historical cached and uncached traces from the small-model notebook</figcaption>
+</figure>
+
+Without cache reuse, full causal attention recomputation over a prefix has quadratic pairwise work in its length, plus projections and MLP work over all prefix positions. With caching, only the new position is projected, but it still scores against the retained keys. Attention work and cache reads therefore grow with context. Weight streaming and launch overhead can conceal that growth in a short run.
+
+<figure>
+
+![Original lab separates prompt prefill from repeated single-token decode steps](../../llm-inference/images/prefill-vs-decode.png)
+
+<figcaption><span class="figure-label">Figure 3.</span> The original lab separates the one-time prompt pass from later decode steps</figcaption>
+</figure>
+
+Use warmup and CUDA synchronization when comparing GPU timings. Hold the input, requested output length, model, and precision fixed, and record each step's prefix length. Report prefill separately from later decode steps; the first output token is selected by prefill.

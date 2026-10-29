@@ -83,3 +83,5 @@ This theme is based off of the lovely [Bear Blog](https://github.com/HermanMarti
 The Search link and Ctrl/Cmd+K open `/search/`. Pagefind indexes rendered article content from both inference guides and the rest of the blog, with section filters and highlighted excerpts. Planned chapter placeholders and navigation are excluded.
 
 `npm run build` builds Astro and generates the index in `dist/pagefind`. Use `npm run preview` to check search locally; the development server does not generate this index. After building, run `npm run test:search` for index smoke checks. GitHub Pages runs the same build command, so the index updates on deployment.
+
+Math authoring uses `$...$` inline and `$$...$$` for displays (outside code). After building, run `npm run test:math` to validate every published Markdown article and the RoPE/QKV regression cases. Content migration details are in `docs/INFERENCE_V2_CONTENT_COVERAGE.md`.

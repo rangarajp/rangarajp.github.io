@@ -15,27 +15,33 @@ tags: ["llm-inference", "fundamentals", "pytorch"]
 
 ## 1. The language model head
 
-After the last block and a final norm, every position still holds a vector of width \(D\):
+After the last block and a final norm, every position still holds a vector of width $D$:
 
-\[
+
+$$
 H \in \mathbb{R}^{B \times T \times D}
-\]
+$$
+
 
 A linear map, the *LM head*, scores the whole vocabulary at every position:
 
-\[
-Z = H W_{\mathrm{vocab}}, \qquad W_{\mathrm{vocab}} \in \mathbb{R}^{D \times V}
-\]
 
-\(V\) is the tokenizer vocabulary size, so \(Z\) has shape `[B, T, V]`. For GPT-2, \(V = 50257\). For a small Qwen it is on the order of 150,000. The head does not emit a word. It emits one score per vocabulary row.
+$$
+Z = H W_{\mathrm{vocab}}, \qquad W_{\mathrm{vocab}} \in \mathbb{R}^{D \times V}
+$$
+
+
+$V$ is the tokenizer vocabulary size, so $Z$ has shape `[B, T, V]`. For GPT-2, $V = 50257$. For a small Qwen it is on the order of 150,000. The head does not emit a word. It emits one score per vocabulary row.
 
 Ordinary next-token generation reads only the last position, `Z[:, -1, :]`, a vector of length `V`. Earlier positions have logits too. During training those positions each predict the following token. During generation you already know the prompt, so you sample from the last row and append.
 
 A *logit* is an unnormalized score. It can be negative. It does not sum to one. Softmax turns the row into a distribution:
 
-\[
+
+$$
 p_i = \frac{e^{z_i}}{\sum_j e^{z_j}}
-\]
+$$
+
 
 ## 2. A four-token numerical example
 
@@ -53,21 +59,23 @@ The probabilities sum to 1. They are the exact softmax of those four numbers, no
 Two different decisions sit on top of the same row:
 
 - *Greedy decoding* picks the largest logit. Here that is `cooling`, every time.
-- *Sampling* draws from \(p\). `cooling` is the most likely draw. It is not a guaranteed draw.
+- *Sampling* draws from $p$. `cooling` is the most likely draw. It is not a guaranteed draw.
 
 Greedy is the usual meaning of temperature 0. Do not implement it as `logits / 0`.
 
 ## 3. Temperature, top-k, and top-p
 
-Temperature \(\tau\) scales the logits *before* softmax:
+Temperature $\tau$ scales the logits *before* softmax:
 
-\[
+
+$$
 p_i = \mathrm{softmax}(z_i / \tau)
-\]
+$$
 
-A smaller positive \(\tau\) sharpens the distribution. A larger \(\tau\) flattens it. The ranking of the tokens does not change. Only the gaps do. These controls do not modify the trained weights. They modify the draw.
 
-Top-k keeps the \(k\) largest logits and sets the rest to \(-\infty\) before softmax. Top-p (*nucleus* sampling) keeps the smallest set of tokens whose probabilities sum to at least \(p\), walking from the largest probability downward. Both shrink the candidate set. They answer different questions: top-k caps the count, top-p caps the probability mass, so the count can change from step to step.
+A smaller positive $\tau$ sharpens the distribution. A larger $\tau$ flattens it. The ranking of the tokens does not change. Only the gaps do. These controls do not modify the trained weights. They modify the draw.
+
+Top-k keeps the $k$ largest logits and sets the rest to $-\infty$ before softmax. Top-p (*nucleus* sampling) keeps the smallest set of tokens whose probabilities sum to at least $p$, walking from the largest probability downward. Both shrink the candidate set. They answer different questions: top-k caps the count, top-p caps the probability mass, so the count can change from step to step.
 
 ```python
 import torch
@@ -102,7 +110,7 @@ probs, choice = sample_from(logits, top_k=2)
 print("top-2", {tok: round(p, 3) for tok, p in zip(tokens, probs.tolist())}, "→", choice)
 ```
 
-At \(\tau = 0.5\) almost all of the mass sits on `cooling`. At \(\tau = 2\) the four probabilities move closer together, so `normal` and `.` show up more often if you draw many times. With `top_k=2`, `normal` and `.` have probability 0. Their logits were discarded before softmax, and the remaining two probabilities were renormalized.
+At $\tau = 0.5$ almost all of the mass sits on `cooling`. At $\tau = 2$ the four probabilities move closer together, so `normal` and `.` show up more often if you draw many times. With `top_k=2`, `normal` and `.` have probability 0. Their logits were discarded before softmax, and the remaining two probabilities were renormalized.
 
 Run the temperature loop a few dozen times if you want to see the draw change. A single `multinomial` call is one sample, not the distribution itself.
 
@@ -110,7 +118,7 @@ Run the temperature loop a few dozen times if you want to see the draw change. A
 
 Even when the next word feels obvious, the LM head writes a score for every row: whole words, fragments, spaces, digits, and special tokens. If the tokenizer splits `powertrain` into two pieces, the model cannot emit the whole string in one step. It samples an id, appends it, and samples again. A different tokenizer might do that in one id. The head only chooses among the rows it was trained with.
 
-Softmax depends on differences, not on the absolute level of the logits. Subtracting the same constant from every entry leaves \(p\) unchanged. Implementations subtract the max logit first so the exponentials do not overflow:
+Softmax depends on differences, not on the absolute level of the logits. Subtracting the same constant from every entry leaves $p$ unchanged. Implementations subtract the max logit first so the exponentials do not overflow:
 
 ```python
 def stable_softmax(z):
