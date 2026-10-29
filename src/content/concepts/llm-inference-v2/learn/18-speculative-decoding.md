@@ -9,6 +9,8 @@ order: 18
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
+Quantization changes representation; speculation changes how much progress one target-model round can verify. Both need quality checks, but exact speculative sampling has a specific distribution-preservation requirement.
+
 Autoregressive decoding repeatedly reads a large model to emit one token. Speculation asks a cheaper draft mechanism to propose several tokens, then verifies them with the target in a parallel forward pass.
 
 ## 1. Draft and verify
@@ -66,3 +68,7 @@ Medusa adds prediction heads to propose future tokens from shared model features
 Low-concurrency, bandwidth-heavy decode is a promising regime because verification can reuse target weights across proposed positions. At high concurrency the target may already exploit that reuse through batching. Poor draft agreement, expensive drafting, or tight memory can erase the benefit. Measure accepted tokens per round and end-to-end latency, including draft-model memory.
 
 Primary reading: [exact speculative sampling](https://arxiv.org/abs/2211.17192), [Medusa](https://arxiv.org/abs/2401.10774), and [EAGLE](https://arxiv.org/abs/2401.15077).
+
+## Hands-on: measure acceptance and its overhead
+
+First publish the existing CPU acceptance experiment and its empirical distribution check. Then, with a compatible engine, sweep draft length and report accepted tokens per round, draft time, verification time, memory, and end-to-end latency. Treat the GPU stage as a proposed experiment.

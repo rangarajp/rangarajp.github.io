@@ -4,10 +4,12 @@ description: "Reasoning budgets, verifiers, process rewards, and bounded search.
 section: learn
 pubDate: 2026-10-29
 part: 6
-chapter: 38
-order: 38
+chapter: 31
+order: 31
 tags: ["llm-inference", "systems", "hands-on"]
 ---
+
+Representation and execution optimizations make a fixed task cheaper. This chapter considers spending additional bounded work to improve task success through alternatives, checks, and search.
 
 Some tasks benefit from spending additional inference compute: generating alternatives, checking a solution, or revising after a tool result. The objective is better verified task success per unit of time and cost, not more generated text.
 
@@ -40,3 +42,7 @@ A real system would generate candidates and charge their generation and checking
 DeepSeek-R1 illustrates training methods that encourage reasoning behavior. Public descriptions of o1-style systems support a discussion of spending inference compute, not an assertion that their internal architectures are identical or fully disclosed. The serving consequence is variable output length and less predictable occupancy. Bound work and measure distributions, including long-tail requests.
 
 Primary reading: [Scaling test-time compute](https://arxiv.org/abs/2408.03314) and [DeepSeek-R1](https://arxiv.org/abs/2501.12948).
+
+## Hands-on: spend a fixed candidate budget
+
+Use an executable arithmetic or coding checker to compare one candidate against several bounded candidates. Publish verified success, total generated tokens, verifier cost, and latency. Include failures where extra candidates repeat the same error.

@@ -57,6 +57,10 @@
 
 .prose p {
 	margin: 0 0 1rem;
+	text-align: justify;
+	text-align-last: left;
+	text-justify: inter-word;
+	hyphens: auto;
 }
 
 .prose .prose p,
@@ -242,4 +246,10 @@
 
 .prose blockquote p:last-child {
 	margin-bottom: 0;
+}
+
+/* Metadata and navigation labels keep their compact UI alignment. */
+.prose :is(header, nav, figcaption) p {
+ text-align: left;
+ hyphens: none;
 }

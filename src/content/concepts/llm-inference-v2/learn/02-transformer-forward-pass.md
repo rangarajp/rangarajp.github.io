@@ -4,14 +4,12 @@ description: "What one decoder layer does to hidden vectors: causal attention, a
 section: learn
 pubDate: 2026-10-29
 part: 1
-chapter: 2
-order: 2
+chapter: 3
+order: 3
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-**Difficulty:** Beginner → Intermediate  
-**Big question:** What transforms input embeddings into next-token scores?  
-**You will build:** A shape-aware causal attention step, then a tiny feed-forward step beside it.
+Tokenization supplies the input vectors. This chapter follows one forward pass and its tensor shapes; selecting a token from the resulting scores comes afterward.
 
 ## 1. Anatomy of one forward pass
 
@@ -171,7 +169,6 @@ A useful split:
 
 The attention output is not a sentence. It is another stack of hidden vectors. Only the vocabulary projection in the next chapter turns the last vector into token scores.
 
+## Hands-on: check attention shapes and masking
 
----
-
-**Continue learning:** [← Previous chapter](./from-text-to-tokens) · [Next chapter →](./logits-and-sampling)
+Run the toy attention block with three sequence lengths. Publish the Q/K/V and score shapes, a causal-weight heatmap, and the numerical check that future-token weights are zero. CPU is sufficient.

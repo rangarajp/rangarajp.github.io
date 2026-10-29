@@ -4,10 +4,12 @@ description: "Follow HTTP requests through sequence IDs, queues, batching, worke
 section: learn
 pubDate: 2026-10-29
 part: 5
-chapter: 27
-order: 27
+chapter: 26
+order: 26
 tags: ["llm-inference", "systems", "hands-on"]
 ---
+
+The vLLM chapter establishes the engine-facing API. This teaching server exposes the lifecycle behind an API: request IDs, queues, workers, streaming, and cleanup. Its custom endpoints are a separate lab interface.
 
 These examples use the repository's [single-model teaching server](https://github.com/rangarajp/rangarajp.github.io/tree/main/notebooks/llm-inference/single_model_llm_serving). Its custom endpoints and FLOW logs are not the public vLLM API. Start the companion lab before running client snippets. Recorded outputs below are historical observations, not measurements from this revision.
 
@@ -555,3 +557,7 @@ The lab is the *inside of one instance*. The figure is how you *replicate* that 
 Sequence IDs must survive queueing, batching, streaming, and result fan-out. Cancellation should mark work for removal, release the sequence's KV blocks, and stop delivery. A worker failure must fail outstanding requests rather than leave callers waiting forever. Backpressure bounds both the waiting queue and active cache reservations.
 
 The lab illustrates the control flow. Continuous batching in a production engine is a token-iteration scheduler; a wrapper around independent blocking `generate` calls is not sufficient to implement it.
+
+## Hands-on: trace cancellation and cleanup
+
+Run one basic, one batched, one streamed, and one cancelled request through the teaching server. Publish a request/sequence-ID trace showing admission, execution, delivery, and cleanup. Check that cancelled work releases state and cannot deliver another request’s tokens.

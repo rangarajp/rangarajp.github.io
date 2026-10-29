@@ -4,12 +4,14 @@ description: "Why inference is a systems problem, with latency and bandwidth est
 section: learn
 pubDate: 2026-10-29
 part: 1
-chapter: 0
-order: 0
+chapter: 1
+order: 1
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-A model produces token scores. An inference system must turn those scores into useful answers while sharing finite memory, compute, and time across users. This guide follows the topic progression of Lamhot Siagian's *Efficient LLM Inference: Systems, Algorithms & Production Engineering*, second edition (2026), with original explanations and coding experiments adapted to this blog. Its interview material is omitted.
+Start with the service objective: useful answers within a memory, latency, and cost budget. The next chapters follow one request into the model before changing how that request is executed.
+
+A model produces token scores. An inference system must turn those scores into useful answers while sharing finite memory, compute, and time across users. This guide follows the topic progression of Lamhot Siagian's *Efficient LLM Inference: Systems, Algorithms & Production Engineering*, second edition (2026), with original explanations and coding experiments adapted to this blog.
 
 ## 1. Training versus inference
 
@@ -49,4 +51,8 @@ print(weight_bytes / bandwidth * 1000)  # 7 ms, ideal weight-read bound
 
 This is a lower bound under a full weight-streaming assumption, not a predicted token latency. The roofline bound is `min(peak_flops, intensity * bandwidth)`. Batch reuse raises intensity; long-context attention adds work and cache traffic. A bottleneck can move as concurrency and context change.
 
-Continue with [from text to tokens](./from-text-to-tokens). The chapter list follows the same sequence from fundamentals through optimization and production serving.
+Continue with [from text to tokens](./from-text-to-tokens) to follow one prompt into the model.
+
+## Hands-on: trace one request
+
+Send one streamed request to the teaching server and record arrival, first delivery, final delivery, input length, and output length. Publish an annotated timing table separating queueing, prompt work, and streamed delivery.

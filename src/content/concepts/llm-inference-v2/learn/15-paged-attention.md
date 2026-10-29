@@ -4,10 +4,12 @@ description: "Logical token blocks, physical allocation, sharing, and fragmentat
 section: learn
 pubDate: 2026-10-29
 part: 3
-chapter: 15
-order: 15
+chapter: 14
+order: 14
 tags: ["llm-inference", "systems", "hands-on"]
 ---
+
+Cache reuse defines the state that must survive. Paging changes its allocation and sharing without changing the attention equation; attention-kernel IO is a separate optimization in the next chapter.
 
 A contiguous reservation sized for every request's maximum answer wastes memory when answers stop early. PagedAttention separates a sequence's logical token positions from the physical blocks holding its KV tensors.
 
@@ -39,3 +41,7 @@ A shared prefix can reference the same physical blocks with reference counts. If
 Paging improves allocation and sharing. It does not reduce the mathematical cost of dense attention or compress each stored element. FlashAttention addresses attention IO; quantization addresses representation size. These techniques can complement one another.
 
 Primary reading: [Efficient memory management for large language model serving with PagedAttention](https://arxiv.org/abs/2309.06180).
+
+## Hands-on: simulate block allocation and reclamation
+
+Extend the address-translation example into a CPU allocator with variable request lengths. Compare reserved bytes, tail waste, and peak live blocks against contiguous maximum-length reservations. Add branching and reference counts before demonstrating copy-on-write.

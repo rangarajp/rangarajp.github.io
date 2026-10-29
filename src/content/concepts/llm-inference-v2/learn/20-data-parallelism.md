@@ -8,6 +8,8 @@ chapter: 20
 order: 20
 ---
 
+After optimizing one worker, scale independent request streams with replicas. This is the request-distribution case; the following chapters split computation or state within a model replica.
+
 Data parallel inference runs independent request streams against complete model replicas. Each replica can itself be a group of tensor-parallel GPUs. A router decides which replica receives each request; a replica's local scheduler then batches its assigned sequences.
 
 ## 1. Same model, different requests
@@ -36,3 +38,7 @@ Both policies see the same number of requests, but request costs differ. Product
 Two workers do not guarantee twice the useful throughput: shared CPU, storage, network, and cold model loading can limit the fleet. Test one-replica loss at peak traffic. Decide whether to reject excess work, degrade output budgets, or preserve latency for a smaller admitted load.
 
 Compare [tensor parallelism](./tensor-parallelism), [pipeline parallelism](./pipeline-parallelism), and [multi-model routing](./gateway-registry-routing). The original working notes' distinction remains useful: replicas split requests; tensor parallelism splits operations inside a layer; pipeline parallelism splits layer depth.
+
+## Hands-on: compare routing policies before adding replicas
+
+Extend the CPU queue simulation with measured service-time samples and uneven request lengths. Publish per-replica work and tail latency. A real two-replica GPU throughput/failure experiment is a later step that needs two devices or two independent worker allocations.

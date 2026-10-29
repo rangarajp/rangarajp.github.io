@@ -4,10 +4,12 @@ description: "Derive matrix FLOPs, arithmetic intensity, roofline, communication
 section: learn
 pubDate: 2026-10-29
 part: 2
-chapter: 8
-order: 8
+chapter: 10
+order: 10
 tags: ["llm-inference", "systems", "hands-on"]
 ---
+
+Once the workload fits, arithmetic and data movement set ideal resource bounds. This is the derivation chapter: use its formulas to explain a result, then measure real execution rather than treating a peak-rate calculation as a benchmark.
 
 This chapter is the *math reference* for the rest of the book. Each section starts from definitions and symbols, then grows into worked examples you can reuse when sizing GPUs, reading dashboards, or arguing about trade-offs.
 
@@ -459,3 +461,7 @@ for batch in (1, 32, 256, 512):
 ```
 
 This counts output writes, unlike the reads-only spreadsheet column. Do not compare those intensities without reconciling the denominator. The tiny ideal times exclude kernel overhead and do not represent a measured benchmark.
+
+## Hands-on: overlay estimates and measurements
+
+Run the projection calculator on V100-sized FP16 GEMMs, replacing the H100 reference peaks with stated V100 assumptions or measured bandwidth. Plot ideal resource time and measured time against batch size; explain where launch overhead or poor efficiency dominates.

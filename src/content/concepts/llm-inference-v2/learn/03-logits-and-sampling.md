@@ -4,14 +4,12 @@ description: "The LM head, softmax, temperature, top-k, and top-p: how a hidden 
 section: learn
 pubDate: 2026-10-29
 part: 1
-chapter: 3
-order: 3
+chapter: 4
+order: 4
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-**Difficulty:** Beginner  
-**Big question:** How does a vector become a token?  
-**You will build:** A logits-to-token experiment with temperature, top-k, and top-p.
+The forward pass ends with vocabulary scores. Here the focus is the decision made from those scores; the generation loop then repeats that decision over a growing prefix.
 
 ## 1. The language model head
 
@@ -129,8 +127,6 @@ def stable_softmax(z):
 
 For `logits = [2.0, 1.0]`, `stable_softmax(logits)` and `stable_softmax(logits - 100)` match. The next chapter's `argmax` path never builds this distribution. Sampling does.
 
+## Hands-on: plot a controlled sampler
 
-
----
-
-**Continue learning:** [← Previous chapter](./transformer-forward-pass) · [Next chapter →](./autoregressive-generation)
+Use the same four logits with several temperatures, top-k values, and top-p thresholds. Draw repeated samples with a fixed seed and publish probability bars plus empirical frequencies; this isolates sampling from model quality.

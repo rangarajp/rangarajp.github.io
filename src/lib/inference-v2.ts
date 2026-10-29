@@ -475,9 +475,46 @@ export function getNavPage(slug: string): NavPage | undefined {
 	return NAV_PAGES.find((page) => page.slug === slug);
 }
 
-/** One reading order: published chapter files only, numbered without gaps. */
+/** One sequence for the chapter list, sidebar, and previous/next links. */
+const READING_ORDER = [
+  "learn/inference-problem",
+  "learn/from-text-to-tokens",
+  "learn/transformer-forward-pass",
+  "learn/logits-and-sampling",
+  "learn/autoregressive-generation",
+  "learn/prefill-decode-kv-cache",
+  "learn/attention-variants",
+  "learn/gpu-fundamentals",
+  "learn/memory-footprint",
+  "learn/inference-mathematics",
+  "learn/latency-throughput-goodput",
+  "learn/pytorch-baseline",
+  "learn/kv-cache",
+  "learn/paged-attention",
+  "learn/flashattention",
+  "learn/continuous-batching",
+  "learn/quantization",
+  "learn/speculative-decoding",
+  "learn/kernel-fusion-cuda-graphs",
+  "learn/data-parallelism",
+  "learn/tensor-parallelism",
+  "learn/pipeline-parallelism",
+  "learn/expert-parallelism",
+  "learn/context-parallelism",
+  "learn/vllm-internals",
+  "learn/caching-batching-scheduling",
+  "learn/gateway-registry-routing",
+  "learn/observability-slos",
+  "learn/capacity-and-cost",
+  "learn/edge-inference",
+  "learn/inference-time-scaling",
+  "learn/future-of-inference"
+];
+
 export function learnChapters(): NavPage[] {
- return NAV_PAGES.filter((page) => page.section === 'learn' && page.part != null && page.status !== 'planned')
+ const written = NAV_PAGES.filter(page => page.section === 'learn' && page.part != null && page.status !== 'planned');
+ const rank = new Map(READING_ORDER.map((slug, index) => [slug, index]));
+ return written.sort((a, b) => (rank.get(a.slug) ?? 999) - (rank.get(b.slug) ?? 999))
   .map((page, index) => ({ ...page, chapter: index + 1 }));
 }
 

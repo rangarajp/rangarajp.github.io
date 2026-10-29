@@ -9,6 +9,8 @@ order: 13
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
+The baseline exposes the cost of recomputing a prefix. This chapter focuses on retaining, sharing, and compressing that state; the next chapter handles where the retained blocks live.
+
 The [foundation cache example](./prefill-decode-kv-cache) appends tensors with `torch.cat`. That is easy to inspect, but repeated concatenation reallocates and copies state. A serving engine reserves or pages storage and writes new keys and values into available slots.
 
 ## 1. The memory budget
@@ -39,3 +41,19 @@ StreamingLLM retains a few initial positions and a recent window. Some models as
 Lower-precision keys and values can reduce capacity and bandwidth requirements. Scales, outliers, and attention sensitivity make this a separate decision from weight quantization. Cache compression may introduce dequantization work and quality loss. Test at the intended context length, including retrieval of information far from the end.
 
 Primary reading: [PagedAttention](https://arxiv.org/abs/2309.06180) and [StreamingLLM](https://arxiv.org/abs/2309.17453).
+
+## V100 lab: reuse a 481-token system prefix
+
+The [7B cache notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/observability/experiments/3.1_kv_cache.ipynb) compares full-prompt processing with reuse of an already prepared 481-token system prefix for three different questions.
+
+| Question | Full prompt (ms) | Reused prefix (ms) |
+|---|---:|---:|
+| What is a KV cache? | 106.5 | 34.3 |
+| What is PagedAttention? | 106.7 | 33.6 |
+| What is prefill vs decode? | 106.9 | 33.5 |
+
+The recorded medians were 106.7 ms and 33.6 ms, approximately 3.18× for this prompt-processing comparison. Preparing and retaining the prefix has a cost that the reused-prefix timing excludes. This is explicit Hugging Face cache reuse; the notebook's separate vLLM sample has prefix caching disabled. It therefore does not measure vLLM's automatic prefix-cache hit rate or end-to-end server latency.
+
+## Hands-on: measure prefix reuse with cold and warm cases
+
+Extend the 481-token system-prefix experiment with fully shared, partially shared, and changed prefixes. Record the exact common token count, cache-reset policy, and prompt-processing latency. Include a negative-control prefix that must not reuse state.

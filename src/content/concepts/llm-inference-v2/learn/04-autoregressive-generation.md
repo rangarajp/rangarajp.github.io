@@ -4,14 +4,12 @@ description: "Why inference freezes the weights and still runs the model once pe
 section: learn
 pubDate: 2026-10-29
 part: 1
-chapter: 4
-order: 4
+chapter: 5
+order: 5
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-**Difficulty:** Beginner → Intermediate  
-**Big question:** Why does a finished model still run once per output token?  
-**You will build:** A greedy generation loop on a small instruct model, with the cache turned off so the growing sequence stays visible.
+Sampling chooses one token. This chapter places that choice inside a complete loop, deliberately recomputing the prefix first so the later benefit of KV reuse is visible.
 
 ## 1. Training and inference want different things
 
@@ -110,7 +108,6 @@ The example makes two independent choices:
 
 Changing either choice does not remove the dependency. Token $t+1$ is a function of the prefix through token $t$.
 
+## Hands-on: expose the growing prefix
 
----
-
-**Continue learning:** [← Previous chapter](./logits-and-sampling) · [Next chapter →](./prefill-decode-kv-cache)
+Use the existing uncached loop to print input length and selected token at every step. Publish a short trace with actual token IDs, and compare it with the later cached baseline under the same stopping rule.

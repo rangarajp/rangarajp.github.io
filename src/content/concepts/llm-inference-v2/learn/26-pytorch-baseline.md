@@ -4,9 +4,11 @@ description: "Compare cached and uncached generation with matched prompts, warmu
 section: learn
 pubDate: 2026-10-29
 part: 5
-chapter: 26
-order: 26
+chapter: 12
+order: 12
 ---
+
+The model mechanics, memory budget, and metrics are in place. Establish a controlled reference here before introducing paging, batching, lower precision, or a serving engine.
 
 Before tuning a serving engine, establish a small baseline that you can inspect. The original guide and working notes recommend building intuition in PyTorch first: measure, identify the resource limit, change one mechanism, and measure again.
 
@@ -77,3 +79,13 @@ To investigate context scaling, repeat with controlled longer prompts and record
 Use [prefill and decode](./prefill-decode-kv-cache) to interpret state growth, [kernel timing](./kernel-fusion-cuda-graphs) to isolate device work, and [vLLM](./vllm-internals) to study scheduling and paged allocation. Keep the model, revision, precision, prompt distribution, and stopping rules fixed when comparing them.
 
 API details: [Hugging Face generation documentation](https://huggingface.co/docs/transformers/main_classes/text_generation).
+
+## V100 lab: establish what each comparison timed
+
+The [basic notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/basic_vLLM_v1.ipynb) already exposes uncached generation and a short cached trace. The [7B cache notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/observability/experiments/3.1_kv_cache.ipynb) then isolates full-prefix forwards and cached single-token forwards across context lengths. These are useful separate baselines: one shows a generation loop, the other isolates a mechanism.
+
+The complete script above measures whole generation calls and can extend that work. Its results have not been recorded in this revision. In particular, the 7B notebook's interpolated generation-cost estimate is not a replacement for running this end-to-end comparison.
+
+## Hands-on: save a reproducible baseline report
+
+Run cached and uncached paths with the same prompt set and actual output lengths. Save model revision, device, library versions, dtype, warmup, medians, peak memory, and output equality. Keep CPU and GPU timing results in separate reports.

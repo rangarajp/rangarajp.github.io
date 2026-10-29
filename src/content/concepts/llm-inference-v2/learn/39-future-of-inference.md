@@ -4,10 +4,12 @@ description: "Diffusion, multi-token prediction, alternative hardware, and infer
 section: learn
 pubDate: 2026-10-29
 part: 6
-chapter: 39
-order: 39
+chapter: 32
+order: 32
 tags: ["llm-inference", "systems", "hands-on"]
 ---
+
+The earlier chapters provide a comparison framework for new methods. Evaluate alternative generation mechanisms and hardware with the same latency, memory, energy, and quality definitions.
 
 Future inference methods should be evaluated against the same contract as today's engines: useful outputs, resource use, latency, and quality under a defined workload. A new generation mechanism changes the work rather than making it disappear.
 
@@ -40,3 +42,7 @@ Alternative hardware explores different energy and data-movement tradeoffs. Opti
 GQA, MLA, recurrent-state layers, conditional experts, and adaptive depth make serving constraints part of architecture design. Each has quality, training, and kernel implications. Byte-level tokenization changes sequence length and vocabulary costs rather than eliminating computation. Choose designs by useful work per byte and joule for the intended workload.
 
 Primary reading: [LLaDA](https://arxiv.org/abs/2502.09992), [multi-token prediction](https://arxiv.org/abs/2404.19737), and [Mixture-of-Depths](https://arxiv.org/abs/2404.02258).
+
+## Hands-on: compare one alternative at matched quality
+
+Choose one compatible multi-token or masked-generation model and define a small common task set. Publish latency, generated work, memory, and task success under equal budgets. Keep theoretical position-evaluation counts separate from a measured model comparison.

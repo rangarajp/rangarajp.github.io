@@ -9,6 +9,8 @@ order: 23
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
+Dense-model parallelism splits work chosen in advance. MoE routing chooses experts per token, so placement must account for both communication and uneven expert demand.
+
 A mixture-of-experts (MoE) layer routes each token to a subset of expert feed-forward networks. Attention and shared components still run. Fewer active parameters per token can reduce arithmetic relative to activating every expert, but all potentially selected experts must remain accessible somewhere.
 
 ## 1. Total versus active parameters
@@ -33,3 +35,7 @@ A busy expert can delay the iteration while another device waits. In production,
 Tensor parallelism can split work inside experts while expert parallelism distributes expert groups. The best layout depends on batch size, routing balance, and topology. Report total weight footprint and active computation separately when comparing MoE with dense models.
 
 Primary reading: [DeepSeek-V2](https://arxiv.org/abs/2405.04434).
+
+## Hands-on: stress uneven routing
+
+Extend the top-2 routing example with balanced and skewed token assignments. Publish expert loads, maximum-to-mean load, and estimated dispatch bytes. This CPU simulation demonstrates imbalance; distributed all-to-all timing requires multiple devices.

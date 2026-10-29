@@ -4,10 +4,12 @@ description: "Exact tiled attention, online softmax, and a CPU numerical demonst
 section: learn
 pubDate: 2026-10-29
 part: 3
-chapter: 14
-order: 14
+chapter: 15
+order: 15
 tags: ["llm-inference", "systems", "hands-on"]
 ---
+
+Paging addresses allocation. FlashAttention addresses intermediate attention IO while preserving dense attention semantics. Keeping those roles separate makes memory and timing comparisons easier to interpret.
 
 Naive attention writes a score matrix and probability matrix proportional to $T^2$ into device memory. FlashAttention tiles the computation so those full intermediates need not live in HBM. It preserves dense attention semantics up to floating-point differences; it does not make dense attention linear in arithmetic work.
 
@@ -49,3 +51,11 @@ PyTorch's scaled dot-product attention API can select an optimized backend when 
 Triton expresses tiled GPU computation in Python-like code. Choosing tile sizes, warp counts, and layouts still requires understanding registers, memory coalescing, and occupancy. Start from a correct reference and profile actual inputs before replacing a library kernel.
 
 Primary reading: [FlashAttention](https://arxiv.org/abs/2205.14135) and [FlashAttention-2](https://arxiv.org/abs/2307.08691).
+
+## V100 lab: keep the backend claim precise
+
+The cache and engine notebooks establish V100 runs, not a FlashAttention-2 or FlashAttention-3 benchmark. The [FlashAttention repository](https://github.com/Dao-AILab/flash-attention) lists newer architectures for its modern CUDA implementations; Volta is not a target for those FA2/FA3 comparisons. On V100, record the actual supported attention backend and validate numerical agreement with the reference. An SDPA API call alone does not prove that a FlashAttention kernel ran.
+
+## Hands-on: validate IO savings on supported backends
+
+On the V100, first compare the explicit attention reference with an available SDPA backend and record which backend actually ran. Publish numerical error and peak memory as context grows. A FlashAttention-2/3 performance comparison requires compatible newer hardware; do not label a fallback measurement as FlashAttention.

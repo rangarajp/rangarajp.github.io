@@ -4,14 +4,12 @@ description: "SMs, tensor cores, memory hierarchy, mixed precision, and CPU cons
 section: learn
 pubDate: 2026-10-29
 part: 2
-chapter: 10
-order: 10
+chapter: 8
+order: 8
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-Latency and arithmetic intensity explain why this hardware detail matters. Before you read TFLOPS on a datasheet or size a KV cache, it helps to know what a GPU actually *is*: thousands of small math lanes scheduled in warps, a deep register file that hides memory latency, a stack of fast on-chip memory, and a large pool of VRAM at the bottom.
-
-This chapter is that foundation — the concepts most GPU architecture walkthroughs cover at a high level. [Memory footprint](./memory-footprint) turns the same hardware into serving decisions: how much fits, what limits speed, and how cards compare.
+The model computation is now clear; the next step is understanding where it runs. This chapter explains execution and data movement inside a GPU. The following chapter turns that hardware model into a memory budget.
 
 Concrete numbers below use the *H100 SXM5* (Hopper) unless noted. Full GH100 silicon has 144 SMs; the shipping SXM5 product exposes 132.
 
@@ -203,3 +201,15 @@ More HBM capacity, faster interconnects, and new low-precision instructions help
 Continue with [the prefill/decode byte estimates](./prefill-decode-kv-cache) and [kernel engineering](./kernel-fusion-cuda-graphs).
 
 Hardware details: [NVIDIA Hopper tuning guide](https://docs.nvidia.com/cuda/hopper-tuning-guide/).
+
+## V100 lab: the hardware and software actually used
+
+The saved [single-model server notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/single_model_llm_serving/main.ipynb) records a Tesla V100-SXM2-32GB with PyTorch `2.4.0+cu118` and vLLM `0.6.1.post1`. The [basic generation notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/basic_vLLM_v1.ipynb) records the same GPU family and PyTorch build. These are the environments attached to the historical results in this guide; they should not be silently relabeled as results from a later CUDA or PyTorch installation.
+
+V100 is Volta (compute capability 7.0). Its tensor cores support FP16 matrix inputs; Hopper-specific BF16/FP8 throughput and kernel features from the hardware examples do not transfer to it. Use FP16 as the starting point for this lab, record the selected backend, and preserve a compatible environment when reproducing old engine runs. See the [Volta tuning guide](https://docs.nvidia.com/cuda/volta-tuning-guide/).
+
+The H100 tables earlier in this chapter describe the hardware hierarchy through a newer example. They are not V100 specifications or measurements.
+
+## Hands-on: profile matrix shapes on the V100
+
+Time FP16 matrix multiplication with batch/token rows 1, 8, 32, 128, and 512. Publish shapes, synchronized device timings, and achieved FLOP/s. Use a profiler to establish the execution path rather than inferring tensor-core use from dtype alone.

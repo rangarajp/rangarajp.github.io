@@ -4,10 +4,12 @@ description: "A model registry, LRU worker cache, API examples, cold starts, evi
 section: learn
 pubDate: 2026-10-29
 part: 6
-chapter: 31
-order: 31
+chapter: 27
+order: 27
 tags: ["llm-inference", "systems", "hands-on"]
 ---
+
+The single-model server keeps one checkpoint warm. This chapter adds model identity, cold loading, worker caching, and placement while preserving the same request-lifecycle responsibilities.
 
 The companion [multi-model teaching server](https://github.com/rangarajp/rangarajp.github.io/tree/main/notebooks/llm-inference/multi_model_serving) provides the custom endpoints below. Code labeled with an app filename is an excerpt from that project, not a standalone script. Recorded timings illustrate the original run only; GPU and version differences affect reproduction.
 
@@ -414,3 +416,7 @@ So routing is not only load balancing — it is *cache-aware placement*: send th
 An LRU dictionary alone does not make model eviction safe. Track active users of each worker, serialize loads for a model, and evict only idle workers. Weight unload, request cancellation, and asynchronous GPU completion must agree before memory is reused. Bound concurrent cold loads so they cannot each reserve the same apparent free memory.
 
 Route by model revision and adapter as well as model name. Cache-aware routing can reduce cold starts, but must still respect queue depth and per-tenant limits. Report cold and warm latency separately.
+
+## Hands-on: expose cold starts and safe eviction
+
+Alternate two checkpoints with one- and two-worker cache limits. Publish cold/warm latency, resident memory, and an eviction timeline. Add concurrent requests to prove that an in-use worker is protected and that two simultaneous misses do not trigger duplicate loads.

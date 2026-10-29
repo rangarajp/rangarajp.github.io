@@ -4,10 +4,12 @@ description: "Memory budgeting, runtimes, thermal limits, and architecture choic
 section: learn
 pubDate: 2026-10-29
 part: 6
-chapter: 37
-order: 37
+chapter: 30
+order: 30
 tags: ["llm-inference", "systems", "hands-on"]
 ---
+
+Server capacity planning assumes a shared fleet. On-device inference changes the constraints to local memory, power, thermals, and offline behavior while keeping the same need for task-quality measurement.
 
 On-device inference trades server dependence for local memory, battery, and thermal constraints. The relevant target is sustained useful response quality on the actual device.
 
@@ -35,3 +37,7 @@ Track load time, first-token delay, sustained decode speed, peak memory, and ene
 ## 4. Architecture search for efficiency
 
 Choosing fewer layers, narrower hidden states, GQA, or a smaller vocabulary changes quality and deployment cost. Architecture search evaluates such alternatives against device constraints, but it requires trained candidates or an appropriate proxy. An existing checkpoint cannot be arbitrarily reshaped without additional training.
+
+## Hands-on: measure a real edge device
+
+Use a small supported local model on the intended CPU or edge device and repeat prompts long enough to reveal thermal behavior. Publish load time, sustained output rate, process memory, and task quality. A V100 run is the server reference, not evidence of on-device energy or battery life.

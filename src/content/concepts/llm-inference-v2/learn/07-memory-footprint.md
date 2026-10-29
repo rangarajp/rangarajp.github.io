@@ -4,14 +4,14 @@ description: "Size weights, cache state, workspace, and concurrency using comple
 section: learn
 pubDate: 2026-10-29
 part: 2
-chapter: 7
-order: 7
+chapter: 9
+order: 9
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-LLM inference lives or dies on the GPU. Before you tune batching, KV cache, or a serving engine, you need a clear mental model of what the hardware is doing — and which number on the datasheet actually matters for *your* traffic.
+GPU fundamentals explain the storage hierarchy. Here the question is capacity: what must fit while requests are active? The next chapter treats speed separately through arithmetic intensity and roofline estimates.
 
-Start with [GPU fundamentals](./gpu-fundamentals) for SMs, tensor cores, and the cache hierarchy. This chapter is the inference lens on top: where the model must live, how to size memory, what limits speed (and why prefill and decode disagree), how GPUs talk to each other, and how to pick a card when specs pull in opposite directions.
+This chapter budgets weights, retained KV state, and temporary workspace. Use actual checkpoint head counts and consistent byte units; nominal device capacity alone does not determine the number of safe concurrent requests.
 
 ## 1. Sizing the pantry — weights, KV cache, misc
 
@@ -225,3 +225,23 @@ for capacity, reserve in ((24e9, 3e9), (48e9, 4e9)):
 ```
 
 The earlier tables use rounded k-token and KB estimates. This calculation yields about 38,146 and 213,623 cached tokens, or 9 and 52 complete 4096-token requests. It still omits block padding and worst-case prefill workspace; reserve output growth before admitting those requests.
+
+## V100 lab: predicted cache size matched the stored tensors
+
+The [7B cache notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/observability/experiments/3.1_kv_cache.ipynb) records 28 layers, 28 query heads, 4 KV heads, head width 128, and FP16 state. Applying the formula gives $2 \times 28 \times 4 \times 128 \times 2 = 57{,}344$ bytes, or 56 KiB per token across all layers.
+
+| Retained tokens | Logical KV bytes per sequence |
+|---:|---:|
+| 512 | 28 MiB |
+| 1024 | 56 MiB |
+| 2048 | 112 MiB |
+| 4096 | 224 MiB |
+| 8192 | 448 MiB |
+
+At a 10-token prompt, the recorded layer-zero key and value shapes were `[1, 4, 10, 128]`; total cache tensor storage was 573,440 bytes, matching the formula exactly. At 17 retained positions it was 974,848 bytes. Tensor storage is only the logical cache: allocator reserves, model weights, workspace, and engine block pools still contribute to process memory.
+
+The table is for Qwen2.5-7B's configuration. The earlier Llama examples use different layer and KV-head counts, so their bytes per token differ even on the same GPU.
+
+## Hands-on: compare predicted and allocated cache bytes
+
+Use the 7B checkpoint configuration from the cache notebook. At several context lengths, compare the closed-form KV size with tensor storage and process peak allocation. Publish all three columns, since allocator/workspace memory is larger than logical KV storage.

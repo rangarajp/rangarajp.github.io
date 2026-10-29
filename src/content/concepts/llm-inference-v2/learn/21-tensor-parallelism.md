@@ -9,6 +9,8 @@ order: 21
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
+Replicas split independent requests. Tensor parallelism splits operations inside a layer, making communication part of that layer’s critical path.
+
 A model may need multiple devices because its weights and request state exceed one GPU's memory, or because a particular workload benefits from extra compute. Parallelism adds communication, so capacity gain and latency gain are separate claims.
 
 ## 1. Tensor parallelism
@@ -42,3 +44,11 @@ The second case illustrates why a collective reduction is needed. Actual latency
 | Context parallelism | Sequence positions | Attention-state communication |
 
 Replicas improve aggregate capacity but do not make an oversized model fit per replica. Tensor parallelism is most attractive with a fast interconnect. Continue with [pipeline](./pipeline-parallelism), [MoE](./expert-parallelism), and [long context](./context-parallelism).
+
+## Existing sharding notebook: separate algebra from distributed execution
+
+The [sharding notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/gpu_fundamentals/sharding.ipynb) provides the companion path from matrix partitioning to real multi-GPU work. Its distributed section explicitly requires at least two CUDA devices and a `torchrun` launch. A one-V100 algebra demonstration can verify reconstruction, but it cannot measure cross-device collectives or tensor-parallel scaling.
+
+## Hands-on: verify sharding algebra, then communication
+
+Use the existing sharding notebook to reconstruct a matrix result from row and column shards. Publish numerical error on one device first. With at least two GPUs, separately measure compute, collective communication, and complete step time; report the interconnect.

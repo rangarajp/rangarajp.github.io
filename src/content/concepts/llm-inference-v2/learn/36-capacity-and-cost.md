@@ -4,10 +4,12 @@ description: "Goodput-based economics, headroom, and a worked cost calculator."
 section: learn
 pubDate: 2026-10-29
 part: 6
-chapter: 36
-order: 36
+chapter: 29
+order: 29
 tags: ["llm-inference", "systems", "hands-on"]
 ---
+
+Observability provides the measured workload and goodput. Convert those measurements into replica counts and cost here; avoid sizing a service from unconstrained peak throughput.
 
 Plan capacity from a measured workload that satisfies latency and quality objectives. Maximum unconstrained tokens per second can overstate the amount of useful service you can sell or deliver.
 
@@ -40,3 +42,7 @@ This simple model reserves headroom, but assumes workers scale independently. Sh
 ## 3. Improve efficiency systematically
 
 Measure queueing and cache occupancy first. Then test prompt reduction, prefix reuse, batching, quantization, and replica placement one change at a time. Recheck quality and tail latency after each change. Buying more hardware is useful when a validated bottleneck remains and its cost is justified.
+
+## Hands-on: turn measured goodput into a sensitivity table
+
+Use the measured load knee to compare required workers under several arrival rates, output lengths, operating headroom levels, and explicit hourly prices. Publish assumptions and cost per million useful output tokens; do not present the V100 lab’s throughput as a production guarantee.

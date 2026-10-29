@@ -4,12 +4,14 @@ description: "Load once, batch prompts, control sampling, and stream through an 
 section: learn
 pubDate: 2026-10-29
 part: 5
-chapter: 28
-order: 28
+chapter: 25
+order: 25
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-Start with a supported GPU installation of vLLM. This chapter adapts the original [vLLM notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/basic_vLLM_v1.ipynb). Its recorded run used vLLM 0.6.x; the basic `LLM`/`SamplingParams` interface remains the entry point, while internal async APIs differ by release.
+The individual mechanisms are now familiar. Use vLLM as the integrated engine example: load a model, submit prompts, and stream results before tracing a teaching server’s internal request path.
+
+Start with a supported GPU installation of vLLM. This chapter adapts the original [vLLM notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/basic_vLLM_v1.ipynb). Its recorded environment used vLLM 0.6.1.post1; the basic `LLM`/`SamplingParams` interface remains the entry point, while internal async APIs differ by release.
 
 ## 1. vLLM: all of this managed for you
 
@@ -140,3 +142,15 @@ Model download, GPU memory, dtype, and attention kernels must be compatible with
 The scheduler selects request work; the allocator assigns KV blocks; the executor runs model operations; sampling updates sequence state; delivery streams results to the caller. Prefix caching reuses identical prompt state, while paging manages its placement. A request ending early must release its reservation.
 
 Engine configuration names and defaults vary by version. Record model revision, runtime version, token budgets, KV dtype, and warmup in every benchmark. See [the official quickstart](https://docs.vllm.ai/en/latest/getting_started/quickstart/) and [OpenAI-compatible serving](https://docs.vllm.ai/en/latest/serving/openai_compatible_server/).
+
+## V100 lab: label the model, engine version, and timing boundary
+
+The original [generation notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/basic_vLLM_v1.ipynb) uses Qwen2.5-0.5B-Instruct on Tesla V100-SXM2-32GB. The saved [server environment](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/single_model_llm_serving/main.ipynb) records vLLM `0.6.1.post1` with PyTorch `2.4.0+cu118`. The batch timings reproduced above belong to that historical setup; the command-line/API example describes the engine interface and is not evidence that the newest release supports Volta.
+
+The basic notebook’s introductory Markdown names a 7B checkpoint, but its saved setup output prints `Qwen2.5-0.5B-Instruct`. The batch figures are therefore presented as historical outputs associated with the printed setup, not as a fresh 7B benchmark. Re-running the notebook requires recording the resolved model path/configuration and actual completion lengths.
+
+For the separate Qwen2.5-7B experiment, the [cache notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/observability/experiments/3.1_kv_cache.ipynb) records a vLLM sample with prefix caching off: TTFT 42.7 ms, end-to-end 1583.5 ms, and 64 output tokens. Its displayed 40.4 tok/s is $64/1.5835$, an end-to-end output rate including startup delay. It is not the reciprocal of steady inter-token latency.
+
+## Hands-on: compare batch and sequential engine calls
+
+Reproduce the original four-prompt comparison using a compatible pinned engine. Report actual generated tokens, wall time, model revision, batch settings, and warmup. Add a streamed-client trace and compare server processing time with client delivery time.

@@ -9,6 +9,8 @@ order: 17
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
+Batching reuses weights across requests. Quantization changes how those weights and activations are represented, reducing storage or traffic when a suitable kernel can exploit the format.
+
 LLMs are “large” mostly because they store billions of numbers. Quantization asks a simple question: can we store each number with fewer bits and still get almost the same answers?
 
 This chapter builds that intuition from bits upward — memory math, float layouts, the staircase picture, weight histograms, quantization error — then walks one technique in detail: *symmetric absmax*.
@@ -199,7 +201,7 @@ $$
 \text{quantization error} = w - \hat{w}
 $$
 
-If two different floats land on the same $q$, dequantization cannot tell them apart — they become the same $\hat{w}$. That is the precision loss in Figure 3 (e.g. nearby values both mapping to INT8 code 36 in classic absmax demos).
+If two different floats land on the same $q$, dequantization cannot tell them apart — they become the same $\hat{w}$. That many-to-one mapping is the precision loss illustrated by the round-trip example.
 
 <figure>
 
@@ -303,3 +305,7 @@ An unusually large channel can force a broad scale and waste integer levels on o
 Hold model, prompt set, concurrency, and output budget fixed. Compare memory, TTFT, decode latency, and task success against a higher-precision baseline. A checkpoint that fits but silently loses numerical accuracy is not a successful optimization.
 
 Primary reading: [GPTQ](https://arxiv.org/abs/2210.17323) and [AWQ](https://arxiv.org/abs/2306.00978).
+
+## Hands-on: connect weight error to task behavior
+
+Start with the CPU absmax experiment, then compare an FP16 baseline with one supported quantized model on the V100. Publish weight/total memory, decode timing, and results on a small fixed task set. Record scales, packing format, and kernel support; smaller files alone do not prove faster execution.

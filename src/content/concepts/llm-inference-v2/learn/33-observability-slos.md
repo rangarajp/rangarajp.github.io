@@ -4,10 +4,12 @@ description: "Request metrics, traces, failure diagnosis, and goodput."
 section: learn
 pubDate: 2026-10-29
 part: 6
-chapter: 33
-order: 33
+chapter: 28
+order: 28
 tags: ["llm-inference", "systems", "hands-on"]
 ---
+
+The serving components are in place. Instrument their boundaries here to distinguish model execution, queueing, and delivery, then use SLO-qualified results for capacity planning.
 
 An engine benchmark cannot tell you whether users receive timely answers through the full application. Instrument arrival, queue admission, prefill, first delivered token, subsequent tokens, completion, and cancellation. A correlation ID connects those events without logging private prompts by default.
 
@@ -43,3 +45,20 @@ Cancellation must release request state and stop unnecessary GPU work. Readiness
 Use realistic prompt/output distributions and arrival rates, plus a concurrency sweep. Warm the engine, separate cold-cache from warm-prefix results, and include failures and rejected requests. Record software, model revision, quantization, hardware, and scheduler settings. Pair performance changes with quality checks.
 
 Production layers include authentication, quotas, bounded queues, routing, healthy model replicas, and telemetry. Containers or orchestration do not remove these requirements. Continue with [capacity and cost](./capacity-and-cost).
+
+## Related server experiment: observe the knee before choosing concurrency
+
+The repository's [single-model performance summary](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/observability/experiments/1.1_single_model_performance.md) reports the following client-load sweep for its Qwen2.5-7B teaching-server setup. This is a separate recorded server report, not the 0.5B offline batch comparison.
+
+| Concurrent clients | TTFT p50 (s) | TPOT p50 (s) | System output tok/s |
+|---:|---:|---:|---:|
+| 1 | 0.056 | 0.031 | 31 |
+| 2 | 0.061 | 0.032 | 60 |
+| 4 | 0.167 | 0.038 | 91 |
+| 8 | 0.580 | 0.038 | 96 |
+
+Increasing concurrency from four to eight added little throughput while median TTFT rose substantially. That suggests an operating knee for this workload, not a production capacity guarantee. The table does not provide p99, arrival-process details, or a quality-qualified goodput measurement, so those remain useful additions to the report.
+
+## Hands-on: build a small load-to-SLO report
+
+Reuse the serving experiment with a fixed prompt/output distribution and a request ID in every trace. Publish latency percentiles, rejected/cancelled counts, and goodput at increasing arrival rates. Keep client delivery timestamps distinct from engine execution timers.

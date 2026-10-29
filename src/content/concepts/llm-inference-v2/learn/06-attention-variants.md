@@ -4,14 +4,12 @@ description: "How MHA, MQA, GQA, and MLA change the key/value tensors you store,
 section: learn
 pubDate: 2026-10-29
 part: 1
-chapter: 6
-order: 6
+chapter: 7
+order: 7
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-**Difficulty:** Intermediate  
-**Big question:** Why do some models store fewer key/value heads than query heads?  
-**You will build:** A grouped-query shape check and a KV-byte comparison. Not a full latent-attention implementation.
+The cache formula depends on KV heads, not just hidden width. Compare the attention layouts before using a checkpoint configuration to estimate memory.
 
 The previous chapter's cache formula depends on $n_{\text{kv}}$, the number of key/value heads. This chapter is why that number is a design choice.
 
@@ -130,8 +128,17 @@ You should see a clean 8 : 2 : 1 ratio, because that is what `kv_heads` you pass
 
 ---
 
-**Continue learning:** [← Previous chapter](./prefill-decode-kv-cache)
 
 Continue with [the inference problem](./inference-problem) for the full reading map, then [hardware foundations](./gpu-fundamentals), [quantization](./quantization), and [KV cache optimization](./kv-cache).
 
 **Papers worth the original wording:** Vaswani et al., *Attention Is All You Need* (the MHA formula). Shazeer, *Fast Transformer Decoding* (MQA). Ainslie et al., *GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints*. DeepSeek-AI, *DeepSeek-V2* (MLA). Su et al., *RoFormer* (the rotation introduced in [text to tokens](./from-text-to-tokens)).
+
+## V100 lab: verify the checkpoint's head counts
+
+The [Qwen2.5-7B cache inspection](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/observability/experiments/3.1_kv_cache.ipynb) prints `heads=28`, `kv_heads=4`, and `head_dim=128`. That is seven query heads per KV head. Its observed key shape `[1, 4, 10, 128]` stores four KV heads, not 28. Substituting query heads into the cache formula would overestimate this configuration's logical KV storage by seven times.
+
+This is an observed configuration and tensor-shape check. It is not an experiment comparing independently trained MHA and GQA models at equal quality.
+
+## Hands-on: measure KV storage rather than expanded tensors
+
+Instantiate toy MHA, GQA, and MQA caches with matched batch, context, layers, and head width. Publish tensor-storage bytes and the predicted ratio. If benchmarking repeated heads, identify any materialized copies so the implementation does not erase the intended saving.

@@ -9,7 +9,9 @@ order: 11
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
-This book starts with the job of inference engineering, then moves into GPUs and serving stacks. *Training* learns model weights from data. *Inference* is serving that model in production — turning prompts into tokens under latency, cost, and reliability constraints.
+Resource estimates describe model work; users experience an entire request. This chapter defines the service metrics and percentiles used by the baseline and serving experiments that follow.
+
+The model and hardware chapters establish what runs; service metrics establish what the user experiences. *Training* learns model weights from data. *Inference* is serving that model in production — turning prompts into tokens under latency, cost, and reliability constraints.
 
 Inference for generative models is not a single forward pass. It needs three layers working together:
 
@@ -138,3 +140,7 @@ for percentile in (50, 90, 99):
 ```
 
 Goodput counts requests or tokens meeting a stated latency and quality objective per wall-clock second. It can fall under overload even while raw throughput rises. TTFT measured at the client includes queueing; a separate prefill timer must not be mislabeled TTFT. See [observability](./observability-slos) for a synthetic token-delivery trace.
+
+## Hands-on: show the throughput knee
+
+Reuse the concurrency sweep at 1, 2, 4, and 8 clients. Publish system output tok/s and TTFT/TPOT percentiles on separate axes, plus request counts and output lengths. Mark the chosen SLO so readers see why highest throughput may not be the best operating point.

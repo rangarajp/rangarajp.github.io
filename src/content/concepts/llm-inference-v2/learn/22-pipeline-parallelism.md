@@ -9,6 +9,8 @@ order: 22
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
+Tensor parallelism divides layer operations. Pipeline parallelism instead assigns different layer ranges to stages; its central tradeoff is stage balance and idle pipeline time.
+
 Pipeline parallelism assigns groups of layers to different devices. Activations move between stages while weights stay on their assigned device. It reduces per-device weight storage without requiring every layer to run across every GPU.
 
 ## 1. Why bubbles appear
@@ -27,3 +29,7 @@ One microbatch uses only a quarter of the pipeline's stage-time capacity. More i
 ## 2. Balance the stages
 
 Equal layer counts do not guarantee equal work: embeddings, output projections, attention lengths, and MoE routing can differ. The slowest stage sets the steady-state pace. Account for activation transfer and runtime workspace as well as weights. The formula above ignores imbalance, communication, and scheduler interference.
+
+## Hands-on: draw a stage utilization timeline
+
+Simulate two stages with unequal service times and several microbatch counts. Publish occupied and idle stage intervals and compare utilization with the ideal formula. Claim a measured multi-GPU benefit only after running an actual distributed pipeline.

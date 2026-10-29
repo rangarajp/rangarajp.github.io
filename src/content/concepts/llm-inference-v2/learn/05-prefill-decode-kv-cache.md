@@ -4,14 +4,12 @@ description: "Prefill versus decode, what the KV cache stores, and why a single-
 section: learn
 pubDate: 2026-10-29
 part: 1
-chapter: 5
-order: 5
+chapter: 6
+order: 6
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-**Difficulty:** Intermediate  
-**Big question:** Why does the first output token behave differently from the tokens after it?  
-**You will build:** A tiny append-only KV cache, a byte calculator, and a back-of-the-envelope bandwidth bound.
+The uncached loop repeats work over old positions. This chapter separates the first prompt pass from later decode steps and derives what can be reused. Allocation and prefix sharing come later in the cache-optimization chapter.
 
 ## 1. Two phases of one request
 
@@ -166,7 +164,6 @@ The KV cache does not remove attention. The new query still scores against every
 
 ---
 
-**Continue learning:** [← Previous chapter](./autoregressive-generation) · [Next chapter →](./attention-variants)
 
 ## 7. Compare cached and uncached generation in the original lab
 
@@ -189,3 +186,23 @@ Without cache reuse, full causal attention recomputation over a prefix has quadr
 </figure>
 
 Use warmup and CUDA synchronization when comparing GPU timings. Hold the input, requested output length, model, and precision fixed, and record each step's prefix length. Report prefill separately from later decode steps; the first output token is selected by prefill.
+
+## V100 lab: extending the cache comparison to a 7B model
+
+The [KV cache notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/observability/experiments/3.1_kv_cache.ipynb) records Qwen2.5-7B on a Tesla V100-SXM2-32GB. It times a complete prefix forward without caching separately from a one-token forward with a prepared cache. Each context uses two warmup iterations and five timed repetitions with CUDA synchronization.
+
+| Retained context tokens | Full-prefix forward (ms) | One-token cached forward (ms) | Per-step ratio |
+|---:|---:|---:|---:|
+| 128 | 58.6 | 30.8 | 1.90× |
+| 256 | 67.5 | 30.9 | 2.18× |
+| 512 | 108.1 | 30.3 | 3.56× |
+| 1024 | 210.9 | 32.0 | 6.59× |
+| 1536 | 313.0 | 33.9 | 9.22× |
+
+The table shows the work avoided by reusing a prefix. It compares different amounts of work and excludes cache-building time from the cached column, so 9.22× is not a whole-request generation speedup. The notebook also reconstructs an approximate 128-token generation cost by interpolating this table; that reconstruction is an estimate, not an independently timed generation run.
+
+These 7B results are separate from the earlier 0.5B short-prompt traces. Both model size and context length changed. The cached step is comparatively flat over this range, but still reads a growing cache.
+
+## Hands-on: publish the context-length sweep
+
+Turn the existing 7B cache notebook results into two plots: full-prefix forward time versus context length and one-token cached-decode time versus context length. Show prefill separately and include repeat counts; avoid calling their per-step ratio an end-to-end speedup.

@@ -9,6 +9,8 @@ order: 24
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
+Expert placement distributes conditional computation; context parallelism distributes sequence state and attention work. This chapter also distinguishes that distribution from methods that discard or compress context.
+
 Long context increases more than the input token bill. It grows KV state, prefill attention arithmetic, and the cache each decode query must read. Context capacity and reliable use of distant information are separate properties.
 
 ## 1. The quadratic attention problem
@@ -36,3 +38,7 @@ Retrieval selects relevant material; summarization rewrites it; sliding windows 
 SSMs such as Mamba maintain recurrent state whose decode storage does not grow in the same way as a full attention KV cache. They are a different model architecture, not an attention backend you can install under any transformer. SSMs should not be treated as synonymous with linear attention; hybrids combine these mechanisms differently.
 
 Primary reading: [Ring Attention](https://arxiv.org/abs/2310.01889) and [Mamba](https://arxiv.org/abs/2312.00752).
+
+## Hands-on: compare memory scaling and retained information
+
+Plot predicted score/KV bytes and measured peak memory across context lengths on one V100. Add a retrieval task before and after windowing or summarization. A ring-attention communication experiment is separate and requires multiple devices.

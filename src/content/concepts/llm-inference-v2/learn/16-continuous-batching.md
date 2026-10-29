@@ -9,6 +9,8 @@ order: 16
 tags: ["llm-inference", "systems", "hands-on"]
 ---
 
+A fast kernel still needs useful work to execute. This chapter moves from individual requests to the scheduler: admitting sequences, mixing prompt and decode work, and keeping active streams responsive.
+
 Serving one prompt at a time wastes a GPU. Serving many at once without a plan wastes latency. Batching is the optimization that sits between those two failures.
 
 This chapter is the boat story: why you fill seats, what goes wrong with static and dynamic closed batches, and how continuous batching plus chunked prefill keep the ferry moving — including when a long boarding (prefill) would otherwise block everyone else.
@@ -260,3 +262,13 @@ Separate worker pools allow different hardware or batch policies for the two pha
 A latency objective should specify a percentile and workload. Token budgets, aging of queued requests, admission limits, and reserved decode capacity help manage it. An unbounded queue converts overload into extreme tail latency. Explicit rejection or backpressure is often more predictable.
 
 Primary reading: [Sarathi-Serve](https://arxiv.org/abs/2403.02310) and [PagedAttention](https://arxiv.org/abs/2309.06180).
+
+## V100 lab: distinguish a batch observation from a scheduler experiment
+
+The [0.5B generation notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/basic_vLLM_v1.ipynb) records four prompts completing in 0.379 s as one batch versus 1.145 s when submitted sequentially on the V100, a 3.02× wall-time ratio. This establishes a batch-versus-sequential observation for that workload. Both paths used a 64-token cap with stochastic sampling, so actual completion lengths can differ. It does not isolate continuous batching from static batching or establish a universal speedup.
+
+The later [mixed chat/long-document notebook](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/llm-inference/observability/experiments/1.1_single_model_performance.ipynb) explicitly notes that its live unchunked run did not show the expected large stall. Some explanatory timelines in that notebook are reconstructed from measured smooth-stream and document-wave durations. Those timelines are simulations; they must not be presented as measured chunked-prefill improvements.
+
+## Hands-on: separate live stalls from reconstructed timelines
+
+Use the mixed chat/long-document experiment to record actual arrival and token-delivery timestamps. Publish live unchunked and chunked traces with the same load. Keep any reconstructed timeline in a separate figure labeled simulation, especially if the live workload shows little interference.

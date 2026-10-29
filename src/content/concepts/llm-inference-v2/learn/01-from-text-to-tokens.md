@@ -4,14 +4,12 @@ description: "How a prompt becomes token IDs, embedding rows, and position-aware
 section: learn
 pubDate: 2026-10-29
 part: 1
-chapter: 1
-order: 1
+chapter: 2
+order: 2
 tags: ["llm-inference", "fundamentals", "pytorch"]
 ---
 
-**Difficulty:** Beginner  
-**Big question:** How does a model see a sentence?  
-**You will build:** A GPT-2 BPE inspection script, an embedding lookup, and a small rotary-position check.
+A prompt first becomes integers and then vectors. Follow those shapes here; the next chapter uses the vectors to compute attention and transform features.
 
 The worked token IDs below come from the GPT-2 tokenizer in [`transformers_101.ipynb`](/build-from-scratch/gpt) and [`transformers_202.ipynb`](/build-from-scratch/gpt). A survey of tokenizer families is in [Tokenization](/concepts/transformers/tokenization).
 
@@ -189,8 +187,9 @@ You should see `[40, 716, 1804, 6275]` and four pieces. Change `excellent` to `e
 If `B=2`, `T=12`, and `D=768`, the token-ID tensor is `[2, 12]` and the token-embedding output is `[2, 12, 768]`. Batch size does not change embedding width. Sequence length does not change `V`.
 
 
----
-
-**Continue learning:** [Next chapter →](./transformer-forward-pass)
 
 **Notebooks:** [`notebooks/LLM_Scratch/transformers_101.ipynb`](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/LLM_Scratch/transformers_101.ipynb) · [`transformers_202.ipynb`](https://github.com/rangarajp/rangarajp.github.io/blob/main/notebooks/LLM_Scratch/transformers_202.ipynb) · companion walkthrough: [GPT from scratch](/build-from-scratch/gpt)
+
+## Hands-on: inspect tokenization and position
+
+Extend the existing tokenizer script with normal text, misspellings, code, and a repeated system prompt. Publish token counts and embedding shapes; use the RoPE script to verify equal dot products at equal relative offsets.
