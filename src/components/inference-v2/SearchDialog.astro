@@ -1,0 +1,245 @@
+---
+import type { SearchDoc } from '../../lib/inference-v2';
+
+type Props = {
+	docs: SearchDoc[];
+};
+
+const { docs } = Astro.props;
+const docsJson = JSON.stringify(docs).replace(/</g, '\\u003c');
+---
+
+<div class="infv2-search" data-infv2-search hidden>
+	<div class="infv2-search-backdrop" data-infv2-search-close></div>
+	<div
+		class="infv2-search-panel"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="infv2-search-title"
+	>
+		<div class="infv2-search-bar">
+			<h2 id="infv2-search-title" class="infv2-search-title">Search the handbook</h2>
+			<button type="button" class="infv2-search-x" data-infv2-search-close aria-label="Close search">
+				Esc
+			</button>
+		</div>
+		<label class="infv2-sr" for="infv2-search-input">Search chapters</label>
+		<input
+			id="infv2-search-input"
+			class="infv2-search-input"
+			type="search"
+			placeholder="Search titles and body text…"
+			autocomplete="off"
+			spellcheck="false"
+		/>
+		<ul class="infv2-search-results" data-infv2-search-results role="listbox"></ul>
+		<p class="infv2-search-hint">Handbook-only. Ctrl/Cmd+K. Planned chapters are listed but empty.</p>
+	</div>
+</div>
+
+<script is:inline set:html={`window.__INFV2_SEARCH_DOCS = ${docsJson};`} />
+
+<script>
+	function openSearch(root, input) {
+		root.hidden = false;
+		document.body.classList.add('infv2-search-open');
+		input.focus();
+		input.select();
+	}
+
+	function closeSearch(root) {
+		root.hidden = true;
+		document.body.classList.remove('infv2-search-open');
+	}
+
+	function render(resultsEl, matches) {
+		resultsEl.innerHTML = '';
+		if (!matches.length) {
+			const li = document.createElement('li');
+			li.className = 'empty';
+			li.textContent = 'No matching handbook pages';
+			resultsEl.appendChild(li);
+			return;
+		}
+		matches.forEach((doc, index) => {
+			const li = document.createElement('li');
+			const a = document.createElement('a');
+			a.href = doc.href;
+			a.innerHTML = `<span class="t">${doc.title}</span><span class="d">${doc.description}</span>`;
+			if (index === 0) a.classList.add('is-active');
+			li.appendChild(a);
+			resultsEl.appendChild(li);
+		});
+	}
+
+	function search(query, all) {
+		const q = query.trim().toLowerCase();
+		if (!q) return all.slice(0, 12);
+		return all
+			.filter((doc) => (doc.title + ' ' + doc.description + ' ' + doc.text).toLowerCase().includes(q))
+			.slice(0, 12);
+	}
+
+	const root = document.querySelector('[data-infv2-search]');
+	const input = root?.querySelector('#infv2-search-input');
+	const resultsEl = root?.querySelector('[data-infv2-search-results]');
+	const openers = document.querySelectorAll('[data-infv2-search-open]');
+	const closers = root?.querySelectorAll('[data-infv2-search-close]');
+	const docs = window.__INFV2_SEARCH_DOCS || [];
+
+	if (root && input && resultsEl) {
+		openers.forEach((btn) => {
+			btn.addEventListener('click', () => {
+				render(resultsEl, search('', docs));
+				openSearch(root, input);
+			});
+		});
+		closers?.forEach((btn) => btn.addEventListener('click', () => closeSearch(root)));
+
+		input.addEventListener('input', () => {
+			render(resultsEl, search(input.value, docs));
+		});
+
+		document.addEventListener('keydown', (event) => {
+			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+				event.preventDefault();
+				if (root.hidden) {
+					render(resultsEl, search(input.value, docs));
+					openSearch(root, input);
+				} else {
+					closeSearch(root);
+				}
+			} else if (event.key === 'Escape' && !root.hidden) {
+				closeSearch(root);
+			} else if (event.key === 'Enter' && !root.hidden) {
+				const first = resultsEl.querySelector('a');
+				if (first) first.click();
+			}
+		});
+	}
+</script>
+
+<style is:global>
+	body.infv2-search-open {
+		overflow: hidden;
+	}
+</style>
+
+<style>
+	.infv2-sr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+	}
+
+	.infv2-search {
+		position: fixed;
+		inset: 0;
+		z-index: 80;
+	}
+
+	.infv2-search[hidden] {
+		display: none !important;
+	}
+
+	.infv2-search-backdrop {
+		position: absolute;
+		inset: 0;
+		background: rgba(15, 18, 25, 0.35);
+	}
+
+	.infv2-search-panel {
+		position: relative;
+		z-index: 1;
+		width: min(36rem, calc(100% - 2rem));
+		margin: 12vh auto 0;
+		background: #fff;
+		border-radius: 8px;
+		border: 1px solid rgb(var(--gray-light));
+		box-shadow: 0 16px 40px rgba(var(--gray), 18%);
+		padding: 1rem 1rem 0.75rem;
+	}
+
+	.infv2-search-bar {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 0.65rem;
+	}
+
+	.infv2-search-title {
+		margin: 0;
+		font-size: 0.95rem;
+	}
+
+	.infv2-search-x {
+		font: inherit;
+		font-size: 0.75rem;
+		font-weight: 700;
+		padding: 0.2rem 0.4rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 4px;
+		background: #fff;
+		cursor: pointer;
+	}
+
+	.infv2-search-input {
+		width: 100%;
+		font: inherit;
+		font-size: 0.95rem;
+		padding: 0.55rem 0.7rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 6px;
+	}
+
+	.infv2-search-input:focus {
+		outline: none;
+		border-color: var(--accent);
+		box-shadow: 0 0 0 3px rgba(35, 55, 255, 0.12);
+	}
+
+	.infv2-search-results {
+		list-style: none;
+		margin: 0.5rem 0 0;
+		padding: 0;
+		max-height: min(22rem, 45vh);
+		overflow-y: auto;
+	}
+
+	.infv2-search-results a {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		padding: 0.55rem 0.45rem;
+		text-decoration: none;
+		color: inherit;
+		border-radius: 4px;
+	}
+
+	.infv2-search-results a:hover,
+	.infv2-search-results a.is-active {
+		background: rgba(35, 55, 255, 0.06);
+	}
+
+	.infv2-search-results .t {
+		font-weight: 600;
+	}
+
+	.infv2-search-results .d {
+		font-size: 0.82rem;
+		color: rgb(var(--gray));
+	}
+
+	.infv2-search-results .empty {
+		padding: 0.65rem 0.45rem;
+		color: rgb(var(--gray));
+	}
+
+	.infv2-search-hint {
+		margin: 0.5rem 0 0;
+		font-size: 0.75rem;
+		color: rgb(var(--gray));
+	}
+</style>

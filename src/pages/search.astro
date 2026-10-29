@@ -1,0 +1,171 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE_TITLE } from '../consts';
+---
+<!doctype html>
+<html lang="en">
+ <head><BaseHead title={`Search - ${SITE_TITLE}`} description="Search explanations, code examples, and chapters across the blog." /></head>
+ <body>
+  <Header />
+  <main class="search-page">
+   <p class="eyebrow">Find your next idea</p>
+   <h1>Search the blog</h1>
+   <p class="intro">Find explanations and code across Concepts, Build from Scratch, and both inference guides.</p>
+   <form role="search" id="search-form">
+    <div class="search-fields">
+     <div class="query-field">
+      <label for="blog-search">What would you like to understand?</label>
+      <input id="blog-search" name="q" type="search" placeholder="Try KV cache, quantization, or attention" autocomplete="off" aria-describedby="search-help" />
+     </div>
+     <div class="filter-field">
+      <label for="search-section">Search in</label>
+      <select id="search-section" name="section"><option value="">All sections</option></select>
+     </div>
+     <button type="submit">Search</button>
+    </div>
+    <p id="search-help">Search article titles and content. Use several words to narrow results, or quotes for an exact phrase. <kbd>Ctrl/Cmd K</kbd> focuses search.</p>
+   </form>
+   <div class="suggestions" aria-label="Suggested searches">
+    <span>Explore:</span>
+    {['KV cache', 'quantization', 'attention', 'GPU', 'from scratch'].map(q => <a href={`/search/?q=${encodeURIComponent(q)}`}>{q}</a>)}
+   </div>
+   <p id="search-status" role="status" aria-live="polite">Enter a topic to search the blog.</p>
+   <ol id="search-results" aria-label="Search results"></ol>
+   <button id="search-more" type="button" hidden>Show more results</button>
+   <noscript><p>Enable JavaScript to search. You can also browse <a href="/concepts/">Concepts</a> or <a href="/build-from-scratch/">Build from Scratch</a>.</p></noscript>
+  </main>
+  <Footer />
+ </body>
+</html>
+<script>
+ type Hit = { data: () => Promise<{ url: string; meta: { title?: string }; excerpt: string; filters?: Record<string,string[]> }> };
+ type SearchIndex = { search: (query: string, options: object) => Promise<{results: Hit[]}>; filters: () => Promise<Record<string,Record<string,number>>> };
+ const input = document.querySelector<HTMLInputElement>('#blog-search')!;
+ const select = document.querySelector<HTMLSelectElement>('#search-section')!;
+ const list = document.querySelector<HTMLOListElement>('#search-results')!;
+ const status = document.querySelector<HTMLElement>('#search-status')!;
+ const more = document.querySelector<HTMLButtonElement>('#search-more')!;
+ let indexPromise: Promise<SearchIndex> | undefined;
+ let generation = 0;
+ let hits: Hit[] = [];
+ let shown = 0;
+ let query = '';
+ const batchSize = 10;
+ async function getIndex() {
+  if (!indexPromise) {
+   const bundle = '/pagefind/pagefind.js';
+   indexPromise = import(/* @vite-ignore */ bundle).catch(error => { indexPromise = undefined; throw error; });
+  }
+  return indexPromise;
+ }
+ function excerpt(text: string) {
+  // Parse Pagefind's excerpt as inert text, then create only safe text/mark nodes.
+  const plain = new DOMParser().parseFromString(text, 'text/html').body.textContent || '';
+  const fragment = document.createDocumentFragment();
+  const terms = query.match(/[\p{L}\p{N}_-]+/gu) || [];
+  if (!terms.length) { fragment.append(plain); return fragment; }
+  const escaped = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const pattern = new RegExp(`(${escaped.join('|')})`, 'giu');
+  let position = 0;
+  for (const match of plain.matchAll(pattern)) {
+   fragment.append(plain.slice(position, match.index));
+   const mark = document.createElement('mark'); mark.textContent = match[0]; fragment.append(mark);
+   position = match.index! + match[0].length;
+  }
+  fragment.append(plain.slice(position)); return fragment;
+ }
+ async function showBatch(version: number) {
+  more.disabled = true;
+  try {
+   const rows = await Promise.all(hits.slice(shown, shown + batchSize).map(hit => hit.data()));
+   if (version !== generation) return;
+   for (const row of rows) {
+    const li = document.createElement('li');
+    const h2 = document.createElement('h2');
+    const link = document.createElement('a'); link.href = row.url; link.textContent = row.meta.title || row.url; h2.append(link);
+    const section = document.createElement('p'); section.className = 'result-section'; section.textContent = row.filters?.Section?.join(' · ') || 'Blog';
+    const description = document.createElement('p'); description.append(excerpt(row.excerpt));
+    li.append(section, h2, description); list.append(li);
+   }
+   shown += rows.length;
+   more.hidden = shown >= hits.length;
+   status.textContent = `${hits.length} ${hits.length === 1 ? 'result' : 'results'} for “${query}”${select.value ? ` in ${select.value}` : ''}. Showing ${shown}.`;
+   if (!hits.length) status.textContent += ' Try fewer words or choose All sections.';
+  } catch {
+   if (version === generation) status.textContent = 'Results could not load. Please try searching again.';
+  } finally { if (version === generation) more.disabled = false; }
+ }
+ async function search() {
+  const version = ++generation;
+  query = input.value.trim();
+  const url = new URL(window.location.href);
+  query ? url.searchParams.set('q', query) : url.searchParams.delete('q');
+  select.value ? url.searchParams.set('section', select.value) : url.searchParams.delete('section');
+  history.replaceState(null, '', url);
+  list.replaceChildren(); more.hidden = true; hits = []; shown = 0;
+  if (!query) { status.textContent = 'Enter a topic to search the blog.'; return; }
+  status.textContent = 'Searching…';
+  try {
+   const index = await getIndex();
+   const response = await index!.search(query, { filters: select.value ? { Section: select.value } : {} });
+   if (version !== generation) return;
+   hits = response.results;
+   await showBatch(version);
+  } catch {
+   if (version === generation) status.textContent = 'Search is temporarily unavailable. Reload to try again, or browse Concepts.';
+  }
+ }
+ let timer: ReturnType<typeof setTimeout>;
+ input.addEventListener('input', () => {
+  // Invalidate pending work immediately, before the debounce delay.
+  generation++; more.hidden = true;
+  clearTimeout(timer); timer = setTimeout(search, 180);
+ });
+ select.addEventListener('change', () => { clearTimeout(timer); search(); });
+ document.querySelector('#search-form')!.addEventListener('submit', event => { event.preventDefault(); clearTimeout(timer); search(); });
+ more.addEventListener('click', () => showBatch(generation));
+ async function init() {
+  const params = new URLSearchParams(location.search);
+  input.value = params.get('q') || '';
+  try {
+   const index = await getIndex();
+   const filters = await index!.filters();
+   Object.keys(filters.Section || {}).sort().forEach(name => select.add(new Option(name, name)));
+   const section = params.get('section');
+   if (section && Array.from(select.options).some(option => option.value === section)) select.value = section;
+  } catch { /* A search attempt shows a useful error and permits retry. */ }
+  await search();
+  input.focus();
+ }
+ init();
+</script>
+<style>
+ .search-page { width: min(960px, calc(100% - 2rem)); margin: 3.5rem auto 5rem; min-height: 65vh; }
+ .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .12em; font-size: .78rem; font-weight: 700; }
+ h1 { font-size: clamp(2rem, 5vw, 3rem); margin: .4rem 0; }
+ .intro { color: #526174; max-width: 44rem; margin-bottom: 2rem; }
+ form { background: #f5f7fa; border: 1px solid #dce3eb; border-radius: 12px; padding: 1.25rem; }
+ .search-fields { display: flex; align-items: end; gap: .75rem; }
+ .query-field { flex: 1; min-width: 0; } .filter-field { width: 12rem; }
+ label { display: block; font-size: .82rem; font-weight: 700; margin-bottom: .4rem; }
+ input, select, button { font: inherit; border-radius: 7px; }
+ input, select { box-sizing: border-box; width: 100%; min-height: 48px; background: white; border: 1px solid #9caabd; padding: .6rem .7rem; }
+ button { min-height: 48px; padding: .6rem 1.1rem; background: #244bd7; color: white; border: 0; cursor: pointer; }
+ button:disabled { opacity: .5; } :focus-visible { outline: 3px solid #557eea; outline-offset: 3px; }
+ #search-help { font-size: .8rem; color: #526174; margin: .8rem 0 0; } kbd { white-space: nowrap; }
+ .suggestions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: 1.1rem 0 2rem; font-size: .82rem; }
+ .suggestions a { color: #244bd7; border: 1px solid #dce3eb; border-radius: 20px; padding: .25rem .75rem; text-decoration: none; }
+ #search-status { color: #526174; font-size: .9rem; }
+ #search-results { list-style: none; padding: 0; }
+ #search-results :global(li) { border-top: 1px solid #e0e5ec; padding: 1.3rem 0; }
+ #search-results :global(h2) { font-size: 1.25rem; margin: .25rem 0 .5rem; }
+ #search-results :global(h2 a) { color: #193c91; text-decoration: none; }
+ #search-results :global(h2 a:hover) { text-decoration: underline; }
+ #search-results :global(p) { font-size: .95rem; line-height: 1.65; margin: .25rem 0; }
+ #search-results :global(.result-section) { font-size: .75rem; color: #65758b; text-transform: uppercase; letter-spacing: .05em; }
+ #search-results :global(mark) { background: #fff0ad; color: inherit; border-radius: 2px; }
+ #search-more { display: block; margin: 1.5rem auto; } #search-more[hidden] { display: none; }
+ @media(max-width: 650px) { .search-page { margin-top: 2rem; } .search-fields { flex-wrap: wrap; } .query-field { flex-basis: 100%; } .filter-field { flex: 1; } }
+</style>

@@ -12,6 +12,7 @@ import HeaderLink from './HeaderLink.astro';
 			<HeaderLink href="/build-from-scratch">Build from Scratch</HeaderLink>
 			<HeaderLink href="/projects">Projects</HeaderLink>
 			<HeaderLink href="/explore">Explore</HeaderLink>
+			<HeaderLink href="/search/">Search</HeaderLink>
 		</div>
 	</nav>
 </header>
@@ -56,3 +57,14 @@ import HeaderLink from './HeaderLink.astro';
 		}
 	}
 </style>
+
+<script>
+ document.addEventListener('keydown', (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+   event.preventDefault();
+   const input = document.querySelector<HTMLInputElement>('#blog-search');
+   if (input) { input.focus(); input.select(); }
+   else window.location.assign('/search/');
+  }
+ });
+</script>

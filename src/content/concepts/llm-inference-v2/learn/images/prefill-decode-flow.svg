@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" role="img" aria-labelledby="title desc">
+  <title id="title">Prefill versus decode</title>
+  <desc id="desc">Prompt tokens processed together during prefill, then output tokens emitted one by one during decode.</desc>
+  <rect width="720" height="220" fill="#f7f8fb"/>
+  <text x="24" y="36" font-family="system-ui, sans-serif" font-size="14" fill="#222937" font-weight="700">Prefill (prompt)</text>
+  <g font-family="system-ui, sans-serif" font-size="13">
+    <rect x="24" y="52" width="64" height="36" rx="4" fill="#fff" stroke="#2337ff"/>
+    <text x="36" y="75" fill="#222937">t1</text>
+    <rect x="96" y="52" width="64" height="36" rx="4" fill="#fff" stroke="#2337ff"/>
+    <text x="108" y="75" fill="#222937">t2</text>
+    <rect x="168" y="52" width="64" height="36" rx="4" fill="#fff" stroke="#2337ff"/>
+    <text x="180" y="75" fill="#222937">t3</text>
+    <rect x="240" y="52" width="64" height="36" rx="4" fill="#fff" stroke="#2337ff"/>
+    <text x="248" y="75" fill="#222937">& tp</text>
+  </g>
+  <text x="24" y="112" font-family="system-ui, sans-serif" font-size="12" fill="#60739f">One forward pass · write KV for every prompt token · first output token</text>
+  <text x="24" y="148" font-family="system-ui, sans-serif" font-size="14" fill="#222937" font-weight="700">Decode (completion)</text>
+  <g font-family="system-ui, sans-serif" font-size="13">
+    <rect x="24" y="164" width="72" height="36" rx="4" fill="#eef0ff" stroke="#2337ff"/>
+    <text x="36" y="187" fill="#222937">t p+1</text>
+    <rect x="108" y="164" width="72" height="36" rx="4" fill="#eef0ff" stroke="#2337ff"/>
+    <text x="120" y="187" fill="#222937">t p+2</text>
+    <rect x="192" y="164" width="72" height="36" rx="4" fill="#eef0ff" stroke="#2337ff"/>
+    <text x="204" y="187" fill="#222937">t p+3</text>
+    <text x="280" y="187" fill="#60739f">one token per step</text>
+  </g>
+</svg>

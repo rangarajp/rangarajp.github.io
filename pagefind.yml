@@ -1,0 +1,6 @@
+exclude_selectors:
+  - '[data-section-search]'
+  - '.infv2-jumps'
+  - '.infv2-meta'
+  - '.infv2-search'
+  - '.katex-mathml'

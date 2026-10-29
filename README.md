@@ -77,3 +77,9 @@ Check out [our documentation](https://docs.astro.build) or jump into our [Discor
 ## Credit
 
 This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+
+## Site-wide search
+
+The Search link and Ctrl/Cmd+K open `/search/`. Pagefind indexes rendered article content from both inference guides and the rest of the blog, with section filters and highlighted excerpts. Planned chapter placeholders and navigation are excluded.
+
+`npm run build` builds Astro and generates the index in `dist/pagefind`. Use `npm run preview` to check search locally; the development server does not generate this index. After building, run `npm run test:search` for index smoke checks. GitHub Pages runs the same build command, so the index updates on deployment.

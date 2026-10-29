@@ -1,0 +1,77 @@
+---
+import Layout from '../../../components/inference-v2/Layout.astro';
+import {
+	chaptersByPart,
+	inferenceV2Path,
+	LEARNING_TRACKS,
+} from '../../../lib/inference-v2';
+
+const parts = chaptersByPart();
+---
+
+<Layout
+	title="Inference Engineering Handbook"
+	description="Understand, derive, implement, measure, optimize, and operate LLM inference."
+	slug=""
+	showToc={false}
+>
+	<p>
+		This handbook lives under <a href="/concepts">Concepts</a> at
+		<code>/concepts/llm-inference-v2/</code>. The original notes remain at
+		<a href="/concepts/llm-inference/">/concepts/llm-inference/</a> and are not redirected.
+	</p>
+
+	<p>
+		<em>Understand → Derive → Implement → Measure → Optimize → Operate.</em>
+	</p>
+
+	<h2>Learning tracks</h2>
+	<p>Tracks reuse the same chapters. Planned items open as empty states until they are written. Start with <a href={inferenceV2Path('learn/inference-problem')}>the inference problem</a> for the full reading map. Foundation chapters and selected systems chapters are drafted.</p>
+	<ul class="infv2-map">
+		{
+			LEARNING_TRACKS.map((track) => (
+				<li>
+					<a href={inferenceV2Path('learn')}>
+						<span class="part">Track</span>
+						<h3>{track.title}</h3>
+						<p>{track.description}</p>
+					</a>
+				</li>
+			))
+		}
+	</ul>
+
+	<h2>Six-part map</h2>
+	<ul class="infv2-map">
+		{
+			parts.map((group) => {
+				const ready = group.chapters.find((ch) => ch.status !== 'planned');
+				const href = ready ? inferenceV2Path(ready.slug) : inferenceV2Path(group.chapters[0].slug);
+				return (
+					<li>
+						<a href={href}>
+							<span class="part">Part {group.part}</span>
+							<h3>{group.title}</h3>
+							<p>
+								{group.chapters.length} topics ·{' '}
+								{group.chapters.filter((ch) => ch.status !== 'planned').length} drafted
+							</p>
+						</a>
+					</li>
+				);
+			})
+		}
+	</ul>
+
+	<h2>Start here</h2>
+	<p>
+		Start at
+		<a href={inferenceV2Path('learn/from-text-to-tokens')}>From text to tokens</a>
+		and read Part 1 in order through
+		<a href={inferenceV2Path('learn/attention-variants')}>MHA, MQA, GQA, and MLA</a>.
+	</p>
+	<p>
+		Use <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>K</kbd> to search titles and article text across the blog
+		only.
+	</p>
+</Layout>

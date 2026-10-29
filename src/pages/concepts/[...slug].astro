@@ -72,7 +72,7 @@ const isLastChapter = currentIndex >= 0 && currentIndex === articles.length - 1;
 				)
 			}
 
-			<main class="handbook-main">
+			<main data-pagefind-body class="handbook-main">
 				<article class:list={['prose', 'concepts-article', { 'hub-article': isHub }]}>
 					{!isHub && <SectionSearch />}
 					<header class="article-header">
