@@ -8,6 +8,8 @@ heroImage: '../../../assets/blog-placeholder-3.jpg'
 
 Read the chapters in order. Each one builds on the last.
 
+A rewritten handbook (same topic, new structure) is at [Inference Engineering v2](/concepts/llm-inference-v2/). This book stays as-is.
+
 ## Coming later
 
 - *Speculative decoding* — drafting with a small model and verifying with a large one

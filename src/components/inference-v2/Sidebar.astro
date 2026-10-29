@@ -1,0 +1,318 @@
+---
+import {
+	chaptersByPart,
+	inferenceV2Path,
+	type NavPage,
+} from '../../lib/inference-v2';
+
+type Props = {
+	currentSlug: string;
+};
+
+const { currentSlug } = Astro.props;
+const parts = chaptersByPart();
+
+function isActive(slug: string) {
+	return currentSlug === slug;
+}
+
+const topLinks: { slug: string; label: string }[] = [
+	{ slug: '', label: 'Home' },
+	{ slug: 'learn', label: 'Learn' },
+	{ slug: 'reference', label: 'Reference' },
+	{ slug: 'journal', label: 'Build journal' },
+];
+---
+
+<aside class="infv2-nav" data-infv2-sidebar>
+	<div class="infv2-nav-backdrop" data-infv2-close hidden></div>
+	<div id="infv2-sidebar-panel" class="infv2-nav-panel">
+		<div class="infv2-nav-toolbar">
+			<a class="infv2-nav-home" href={inferenceV2Path('')}>Handbook</a>
+			<button type="button" class="infv2-nav-close" data-infv2-close aria-label="Close contents">
+				Close
+			</button>
+		</div>
+		<nav aria-label="Handbook contents">
+			<ul class="infv2-top">
+				{
+					topLinks.map((link) => (
+						<li>
+							<a
+								href={inferenceV2Path(link.slug)}
+								class:list={[{ active: isActive(link.slug) }]}
+							>
+								{link.label}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+			{
+				parts.map((group) => {
+					const open = group.chapters.some((ch) => ch.slug === currentSlug);
+					return (
+						<details class="infv2-part" open={open || undefined}>
+							<summary>
+								<span class="infv2-part-label">Part {group.part}</span>
+								<span class="infv2-part-title">{group.title}</span>
+							</summary>
+							<ul class="infv2-chapters">
+								{group.chapters.map((ch: NavPage) => {
+									const active = isActive(ch.slug);
+									const planned = ch.status === 'planned';
+									return (
+										<li class:list={[{ active, planned }]}>
+											<a href={inferenceV2Path(ch.slug)}>
+												<span class="num">{ch.chapter}</span>
+												<span class="ttl">{ch.title}</span>
+												<span class={`st is-${ch.status}`}>{ch.status}</span>
+											</a>
+										</li>
+									);
+								})}
+							</ul>
+						</details>
+					);
+				})
+			}
+		</nav>
+	</div>
+</aside>
+
+<script>
+	const root = document.querySelector('[data-infv2-sidebar]');
+	const backdrop = root?.querySelector('.infv2-nav-backdrop');
+	const closeBtns = root?.querySelectorAll('[data-infv2-close]');
+	const toggles = document.querySelectorAll('[data-infv2-toggle]');
+
+	function setOpen(open) {
+		if (!root) return;
+		root.classList.toggle('is-open', open);
+		toggles.forEach((toggle) => {
+			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+			toggle.textContent = open ? 'Hide contents' : 'Contents';
+		});
+		if (backdrop) {
+			if (open) backdrop.removeAttribute('hidden');
+			else backdrop.setAttribute('hidden', '');
+		}
+		document.body.classList.toggle('infv2-nav-open', open);
+	}
+
+	toggles.forEach((toggle) => {
+		toggle.addEventListener('click', () => {
+			setOpen(!root?.classList.contains('is-open'));
+		});
+	});
+
+	closeBtns?.forEach((btn) => {
+		btn.addEventListener('click', () => setOpen(false));
+	});
+
+	document.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape') setOpen(false);
+	});
+
+	const mq = window.matchMedia('(max-width: 1099px)');
+	root?.querySelectorAll('a').forEach((link) => {
+		link.addEventListener('click', () => {
+			if (mq.matches) setOpen(false);
+		});
+	});
+</script>
+
+<style is:global>
+	body.infv2-nav-open {
+		overflow: hidden;
+	}
+	@media (min-width: 1100px) {
+		body.infv2-nav-open {
+			overflow: auto;
+		}
+	}
+</style>
+
+<style>
+	.infv2-nav {
+		font-size: 0.86rem;
+		line-height: 1.4;
+		align-self: start;
+	}
+
+	.infv2-nav-backdrop {
+		display: none;
+	}
+
+	.infv2-nav-panel {
+		position: sticky;
+		top: 1.25rem;
+		max-height: calc(100vh - 2.5rem);
+		overflow-y: auto;
+		padding: 0.15rem 0.75rem 1.5rem 0;
+		border-right: 1px solid rgb(var(--gray-light));
+	}
+
+	.infv2-nav-toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 0.75rem;
+	}
+
+	.infv2-nav-home {
+		font-size: 0.8rem;
+		font-weight: 700;
+		text-decoration: none;
+		color: rgb(var(--gray-dark));
+	}
+
+	.infv2-nav-close {
+		display: none;
+		font: inherit;
+		font-size: 0.8rem;
+		font-weight: 600;
+		padding: 0.3rem 0.55rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 4px;
+		background: #fff;
+		cursor: pointer;
+	}
+
+	.infv2-top {
+		list-style: none;
+		margin: 0 0 0.85rem;
+		padding: 0;
+	}
+
+	.infv2-top a {
+		display: block;
+		padding: 0.28rem 0.35rem;
+		text-decoration: none;
+		color: rgb(var(--gray-dark));
+		border-radius: 4px;
+		font-weight: 600;
+	}
+
+	.infv2-top a.active,
+	.infv2-top a:hover {
+		color: var(--accent);
+	}
+
+	.infv2-part {
+		margin-bottom: 0.35rem;
+	}
+
+	.infv2-part summary {
+		cursor: pointer;
+		list-style: none;
+		padding: 0.4rem 0.2rem;
+		user-select: none;
+	}
+
+	.infv2-part summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.infv2-part-label {
+		display: block;
+		font-size: 0.68rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: rgb(var(--gray));
+	}
+
+	.infv2-part-title {
+		font-weight: 600;
+		font-size: 0.86rem;
+	}
+
+	.infv2-chapters {
+		list-style: none;
+		margin: 0 0 0.5rem;
+		padding: 0 0 0.2rem 0.1rem;
+	}
+
+	.infv2-chapters a {
+		display: grid;
+		grid-template-columns: 1.4rem 1fr;
+		column-gap: 0.35rem;
+		padding: 0.28rem 0.35rem;
+		border-radius: 4px;
+		text-decoration: none;
+		color: rgb(var(--gray-dark));
+	}
+
+	.infv2-chapters a:hover {
+		background: rgba(var(--gray-light), 0.55);
+		color: var(--accent);
+	}
+
+	.infv2-chapters li.active a {
+		background: rgba(35, 55, 255, 0.08);
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	.infv2-chapters li.planned a {
+		color: rgb(var(--gray));
+	}
+
+	.num {
+		font-size: 0.72rem;
+		font-weight: 600;
+		color: rgb(var(--gray));
+		padding-top: 0.12rem;
+	}
+
+	.ttl {
+		grid-column: 2;
+	}
+
+	.st {
+		grid-column: 2;
+		font-size: 0.65rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: rgb(var(--gray));
+	}
+
+	@media (max-width: 1099px) {
+		.infv2-nav-backdrop {
+			display: block;
+			position: fixed;
+			inset: 0;
+			z-index: 49;
+			background: rgba(15, 18, 25, 0.28);
+		}
+
+		.infv2-nav-backdrop[hidden] {
+			display: none !important;
+		}
+
+		.infv2-nav-panel {
+			position: fixed;
+			top: 0;
+			left: 0;
+			bottom: 0;
+			z-index: 50;
+			width: min(21rem, calc(100% - 2rem));
+			max-height: none;
+			padding: 1rem 0.85rem 1.5rem;
+			background: #fff;
+			transform: translateX(-105%);
+			transition: transform 0.2s ease;
+			border-right: 1px solid rgb(var(--gray-light));
+		}
+
+		.infv2-nav.is-open .infv2-nav-panel {
+			transform: translateX(0);
+		}
+
+		.infv2-nav-close {
+			display: inline-block;
+		}
+	}
+</style>

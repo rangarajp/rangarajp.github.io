@@ -5,9 +5,11 @@ import Header from '../../components/Header.astro';
 import { SITE_TITLE } from '../../consts';
 import { getCollection } from 'astro:content';
 import { getConceptPath, groupConceptsBySeries } from '../../lib/concepts';
+import { INFERENCE_V2_BASE, learnChapters } from '../../lib/inference-v2';
 
 const concepts = await getCollection('concepts');
 const { series, standalone } = groupConceptsBySeries(concepts);
+const v2Drafted = learnChapters().filter((ch) => ch.status !== 'planned').length;
 
 function noteLabel(count: number): string {
 	return count === 1 ? '1 chapter' : `${count} chapters`;
@@ -28,6 +30,15 @@ function noteLabel(count: number): string {
 			</header>
 
 			<nav class="series-grid" aria-label="Concept books">
+				<a href={INFERENCE_V2_BASE} class="series-card">
+					<span class="card-kind">Book</span>
+					<h2>Inference Engineering</h2>
+					<p class="series-description">
+						Handbook v2 — six-part curriculum from decoder internals to serving. Original notes stay as LLM
+						Inference.
+					</p>
+					<p class="series-meta">{noteLabel(v2Drafted)} →</p>
+				</a>
 				{series.map((item) => (
 					<a href={item.hubPath} class="series-card">
 						<span class="card-kind">Book</span>

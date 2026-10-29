@@ -47,3 +47,4 @@ __pycache__/
 
 # notebook scratch exports
 notebooks/**/_export_preview.txt
+notebooks/LLM_Scratch/data/

@@ -1,0 +1,119 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../../components/inference-v2/Layout.astro';
+import {
+	collectionIdToSlug,
+	getNavPage,
+	inferenceV2Path,
+	learnChapters,
+	NAV_PAGES,
+	PART_TITLES,
+} from '../../../lib/inference-v2';
+
+export async function getStaticPaths() {
+	const entries = await getCollection('inferenceV2');
+	const byId = new Map(entries.map((entry) => [collectionIdToSlug(entry.id), entry]));
+
+	return NAV_PAGES.filter((page) => page.slug !== '').map((page) => ({
+		params: { slug: page.slug },
+		props: { page, entry: byId.get(page.slug) ?? null },
+	}));
+}
+
+const { page, entry } = Astro.props;
+const Content = entry ? (await render(entry)).Content : null;
+const isLearnIndex = page.slug === 'learn';
+const isReference = page.slug === 'reference';
+const isJournal = page.slug === 'journal';
+const isPlannedChapter = page.section === 'learn' && page.part != null && !entry;
+const jumps = Boolean(entry);
+const parts = [1, 2, 3, 4, 5, 6].map((part) => ({
+	part,
+	title: PART_TITLES[part],
+	chapters: learnChapters().filter((ch) => ch.part === part),
+}));
+---
+
+<Layout
+	title={page.title}
+	description={page.description}
+	slug={page.slug}
+	showToc={!isLearnIndex && !isReference && !isJournal}
+	jumps={jumps}
+>
+	{
+		isLearnIndex && (
+			<>
+				<p>
+					Each topic has one Learn page. Statuses are honest: most chapters are still planned. Labs
+					belong in the chapter, not in a separate silo.
+				</p>
+				{parts.map((group) => (
+					<section>
+						<h2>
+							Part {group.part} — {group.title}
+						</h2>
+						<ol class="infv2-chapter-list">
+							{group.chapters.map((ch) => (
+								<li>
+									<a href={inferenceV2Path(ch.slug)}>
+										<span class="infv2-ch-num">{ch.chapter}.</span>
+										<span>{ch.title}</span>
+										<span class={`infv2-status is-${ch.status}`}>{ch.status}</span>
+									</a>
+								</li>
+							))}
+						</ol>
+					</section>
+				))}
+			</>
+		)
+	}
+
+	{
+		isReference && (
+			<div class="infv2-planned">
+				<h2>Reference is not filled yet</h2>
+				<p>
+					This space will hold a glossary, formula sheets, and later calculators (memory, KV,
+					roofline). Nothing here is a completed article.
+				</p>
+			</div>
+		)
+	}
+
+	{
+		isJournal && (
+			<div class="infv2-planned">
+				<h2>No journal entries yet</h2>
+				<p>
+					The build journal is for dated experiments, design decisions, failed measurements, and
+					what we changed next. Entries will appear here as they are written — not as backfilled
+					fiction.
+				</p>
+			</div>
+		)
+	}
+
+	{
+		isPlannedChapter && (
+			<div class="infv2-planned">
+				<h2>This chapter is planned</h2>
+				<p>{page.description}</p>
+				<p>
+					The URL is stable so later links do not break. There is no padded draft. When the chapter
+					is written it will follow the handbook template: problem, intuition, mechanics, math,
+					build, optimize, measure, trade-offs, exercises, sources.
+				</p>
+				{page.difficulty && <p>Intended difficulty: {page.difficulty}.</p>}
+				<p>
+					<a href={inferenceV2Path('learn')}>Back to the curriculum</a>
+					{' · '}
+					<a href={inferenceV2Path('learn/prefill-decode-kv-cache')}>Read prefill versus decode</a>
+				</p>
+			</div>
+		)
+	}
+
+	{Content && <Content />}
+</Layout>

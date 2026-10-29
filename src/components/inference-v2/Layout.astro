@@ -1,0 +1,183 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../BaseHead.astro';
+import Footer from '../Footer.astro';
+import Header from '../Header.astro';
+import { SITE_TITLE } from '../../consts';
+import {
+	buildSearchDocs,
+	getNavPage,
+	INFERENCE_V2_BASE,
+	inferenceV2Path,
+	neighbors,
+	PART_TITLES,
+	type NavPage,
+} from '../../lib/inference-v2';
+import '../../styles/inference-v2.css';
+import PageToc from './PageToc.astro';
+import SearchDialog from './SearchDialog.astro';
+import Sidebar from './Sidebar.astro';
+
+type Props = {
+	title: string;
+	description: string;
+	slug: string;
+	showToc?: boolean;
+	jumps?: boolean;
+};
+
+const { title, description, slug, showToc = true, jumps = false } = Astro.props;
+const page: NavPage | undefined = getNavPage(slug);
+const { prev, next } = neighbors(slug);
+
+const entries = await getCollection('inferenceV2');
+const searchDocs = buildSearchDocs(entries);
+
+const crumbs: { href?: string; label: string }[] = [
+	{ href: '/concepts', label: 'Concepts' },
+	{ href: INFERENCE_V2_BASE, label: 'Inference v2' },
+];
+if (slug.startsWith('learn')) {
+	crumbs.push({ href: inferenceV2Path('learn'), label: 'Learn' });
+}
+if (slug === 'reference') crumbs.push({ label: 'Reference' });
+else if (slug === 'journal') crumbs.push({ label: 'Build journal' });
+else if (slug && slug !== 'learn') crumbs.push({ label: title });
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`${title} - ${SITE_TITLE}`} description={description} />
+	</head>
+	<body>
+		<a class="infv2-skip" href="#infv2-content">Skip to content</a>
+		<Header />
+		<div class="infv2">
+			<div class:list={['infv2-shell', showToc ? 'has-toc' : 'no-toc']}>
+				<Sidebar currentSlug={slug} />
+				<main class="infv2-main" id="infv2-content">
+					<article class="prose infv2-article">
+						<header class="infv2-header">
+							<div class="infv2-header-top">
+								<nav class="infv2-breadcrumbs" aria-label="Breadcrumb">
+									{
+										crumbs.map((crumb, index) => (
+											<>
+												{index > 0 && <span class="infv2-sep">/</span>}
+												{crumb.href ? (
+													<a href={crumb.href}>{crumb.label}</a>
+												) : (
+													<span aria-current="page">{crumb.label}</span>
+												)}
+											</>
+										))
+									}
+								</nav>
+								<div class="infv2-tools">
+									<button type="button" class="infv2-icon-btn" data-infv2-search-open>
+										Search
+										<kbd>⌘K</kbd>
+									</button>
+									<button
+										type="button"
+										class="infv2-icon-btn infv2-contents-btn"
+										data-infv2-toggle
+										aria-expanded="false"
+										aria-controls="infv2-sidebar-panel"
+									>
+										Contents
+									</button>
+								</div>
+							</div>
+							{
+								page?.part && (
+									<p class="infv2-eyebrow">
+										Part {page.part} — {PART_TITLES[page.part]}
+										{page.chapter ? ` · Chapter ${page.chapter}` : ''}
+									</p>
+								)
+							}
+							<h1>{title}</h1>
+							<p class="infv2-lede">{description}</p>
+							{
+								page && (
+									<ul class="infv2-meta">
+										<li>
+											<span class={`infv2-status is-${page.status}`}>{page.status}</span>
+										</li>
+										{page.difficulty && <li>{page.difficulty}</li>}
+										{page.tags?.map((tag) => <li>#{tag}</li>)}
+									</ul>
+								)
+							}
+						</header>
+
+						{
+							jumps && (
+								<nav class="infv2-jumps" aria-label="Jump to section type">
+									<a href="#concept">Concept</a>
+									<a href="#mathematics">Math</a>
+									<a href="#build-it">Code</a>
+									<a href="#measure-it">Measure</a>
+								</nav>
+							)
+						}
+
+						<slot />
+
+						{
+							(prev || next) && (
+								<nav class="infv2-page-nav" aria-label="Chapter navigation">
+									{prev ? (
+										<a class="prev" href={inferenceV2Path(prev.slug)}>
+											<span class="dir">&larr; Previous</span>
+											<span class="title">{prev.title}</span>
+										</a>
+									) : (
+										<span />
+									)}
+									{next ? (
+										<a class="next" href={inferenceV2Path(next.slug)}>
+											<span class="dir">Next →</span>
+											<span class="title">{next.title}</span>
+										</a>
+									) : (
+										<span />
+									)}
+								</nav>
+							)
+						}
+					</article>
+				</main>
+				{showToc && <PageToc />}
+			</div>
+			<SearchDialog docs={searchDocs} />
+		</div>
+		<Footer />
+		<script>
+			document.querySelectorAll('.infv2-article pre').forEach((pre) => {
+				if (pre.querySelector('.infv2-copy')) return;
+				pre.classList.add('infv2-code-wrap');
+				const btn = document.createElement('button');
+				btn.type = 'button';
+				btn.className = 'infv2-copy';
+				btn.textContent = 'Copy';
+				btn.addEventListener('click', async () => {
+					const code = pre.querySelector('code');
+					const text = code?.textContent || pre.textContent || '';
+					try {
+						await navigator.clipboard.writeText(text);
+						btn.textContent = 'Copied';
+						window.setTimeout(() => {
+							btn.textContent = 'Copy';
+						}, 1200);
+					} catch {
+						btn.textContent = 'Copy failed';
+					}
+				});
+				pre.appendChild(btn);
+			});
+		</script>
+	</body>
+</html>
