@@ -1,29 +1,107 @@
 ---
 import BaseHead from '../../components/BaseHead.astro';
-import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
-import { SITE_TITLE } from '../../consts';
+import Footer from '../../components/Footer.astro';
+const projects = [
+{number:'01',title:'A language model, from the ground up',tag:'PYTORCH · TRANSFORMERS',description:'Build a decoder-only GPT, from tokenization and causal attention to transformer blocks and a complete training loop. A hands-on implementation with explicit tensor shapes.',href:'/build-from-scratch/gpt',label:'Read the walkthrough'},
+{number:'02',title:'Translation with an encoder–decoder',tag:'PYTORCH · SEQUENCE MODELING',description:'An English-to-French transformer implementation. Follow embeddings, multi-head attention, masking, and training through a complete sequence-to-sequence model.',href:'/build-from-scratch/transformers',label:'Explore the implementation'},
+{number:'03',title:'Inside an LLM serving engine',tag:'FASTAPI · VLLM · SYSTEMS',description:'A serving demo that separates API handling, workload management, model execution, and worker processes. Includes streaming generation and a vLLM integration.',href:'https://github.com/rangarajp/rangarajp.github.io/tree/main/notebooks/llm-inference/single_model_llm_serving',label:'Inspect the source'},
+{number:'04',title:'Serving multiple models',tag:'MODEL ROUTING · INFERENCE',description:'An experimental multi-model serving implementation with a manager, engine, workers, model configuration, and tests. Explore how the pieces fit together in code.',href:'https://github.com/rangarajp/rangarajp.github.io/tree/main/notebooks/llm-inference/multi_model_serving',label:'Inspect the source'},
+];
 ---
-
 <!doctype html>
 <html lang="en">
-	<head>
-		<BaseHead title={`Projects - ${SITE_TITLE}`} description="End-to-end project walkthroughs" />
-	</head>
-	<body>
-		<Header />
-		<main data-pagefind-body>
-			<h1>Projects</h1>
-			<p>End-to-end project walkthroughs.</p>
-			<p class="empty">Nothing here yet.</p>
-		</main>
-		<Footer />
-	</body>
+<head>
+<BaseHead title="Projects — Rangaraj P" description="Working implementations of transformers, GPT, and LLM serving systems." />
+</head>
+<body>
+<Header/>
+<main id="main-content" data-pagefind-body class="project-index">
+<p class="eyebrow">THE ENGINEERING WORKBENCH</p>
+<h1>Ideas become <em>implementations.</em>
+</h1>
+<p class="lede">A closer look at the code behind the concepts. Models built from fundamentals, systems assembled one layer at a time.</p>
+<div class="project-list">{projects.map(p=>
+<article>
+<div class="number">{p.number}</div>
+<div>
+<p class="tag">{p.tag}</p>
+<h2>{p.title}</h2>
+<p>{p.description}</p>
+<a href={p.href}>{p.label} ↗</a>
+</div>
+</article>)}</div>
+</main>
+<Footer/>
+</body>
 </html>
-
 <style>
-	.empty {
-		color: rgb(var(--gray));
-		font-style: italic;
-	}
+.project-index {
+  width:1050px;
+  padding-block:70px
+}
+.eyebrow,.tag {
+  font:10px ui-monospace,monospace;
+  letter-spacing:1.5px;
+  color:#718166
+}
+h1 {
+  font-size:clamp(36px,5vw,60px);
+  font-weight:400;
+  letter-spacing:-2px;
+  color:#233e30
+}
+em {
+  font-family:Georgia,serif
+}
+.lede {
+  max-width:650px;
+  color:#6e7a67
+}
+.project-list {
+  margin-top:55px;
+  border-top:1px solid #ccd4c3
+}
+article {
+  padding:35px 0;
+  display:grid;
+  grid-template-columns:80px 1fr;
+  gap:20px;
+  border-bottom:1px solid #ccd4c3
+}
+.number {
+  font:36px Georgia,serif;
+  color:#9daa8b
+}
+article h2 {
+  font-weight:400;
+  font-size:26px;
+  color:#233e30
+}
+article p:not(.tag) {
+  font-size:15px;
+  color:#64735c;
+  max-width:750px
+}
+article a {
+  font-size:13px;
+  color:#385739;
+  text-underline-offset:5px
+}
+@media(max-width:600px) {
+  article {
+  grid-template-columns:35px 1fr;
+  gap:12px
+}
+.number {
+  font-size:25px
+}
+.project-index {
+  padding-block:35px
+}
+article h2 {
+  font-size:23px
+}
+
+}
 </style>

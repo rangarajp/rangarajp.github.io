@@ -1,96 +1,768 @@
 ---
 import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-
-const sections = [
-	{
-		title: 'Concepts',
-		href: '/concepts',
-		description: 'Core ideas and mental models',
-	},
-	{
-		title: 'Build from Scratch',
-		href: '/build-from-scratch',
-		description: 'Implementing things from the ground up',
-	},
-	{
-		title: 'Projects',
-		href: '/projects',
-		description: 'End-to-end project walkthroughs',
-	},
-	{
-		title: 'Explore',
-		href: '/explore',
-		description: 'Experiments and open-ended investigations',
-	},
+import Footer from '../components/Footer.astro';
+import { getCollection } from 'astro:content';
+const notes = await getCollection('concepts');
+const readings = [
+ {n:'01',tag:'SYSTEMS & PERFORMANCE',title:'Inference engineering',description:'From the transformer forward pass to GPU memory, KV caches, and production serving. A handbook for understanding what makes LLMs fast.',href:'/concepts/llm-inference-v2',kind:'Read the handbook',visual:'inference'},
+ {n:'02',tag:'MODELS & MATHEMATICS',title:'Inside the transformer',description:'Attention, embeddings, positional encoding, and the architecture behind modern language models. Shapes and equations included.',href:'/concepts/transformers',kind:'Explore the series',visual:'transformer'},
+ {n:'03',tag:'CODE & FIRST PRINCIPLES',title:'Build it. Understand it.',description:'Implement GPT and an encoder–decoder transformer in PyTorch. Follow the tensors from tokenization to training.',href:'/build-from-scratch',kind:'Open the implementations',visual:'code'}
 ];
 ---
-
 <!doctype html>
 <html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main data-pagefind-body>
-			<section class="hero">
-				<h1>{SITE_TITLE}</h1>
-				<p>{SITE_DESCRIPTION}</p>
-			</section>
-			<nav class="sections">
-				{sections.map((section) => (
-					<a href={section.href} class="section-card">
-						<h2>{section.title}</h2>
-						<p>{section.description}</p>
-					</a>
-				))}
-			</nav>
-		</main>
-		<Footer />
-	</body>
+<head>
+<BaseHead title="Rangaraj P — AI Engineering, From First Principles to Real Systems" description="Technical manager and AI engineer at Mercedes-Benz. Exploring LLM inference, building transformers from scratch, and turning research into engineering systems." />
+</head>
+<body class="portfolio">
+<Header />
+<main id="main-content" data-pagefind-body>
+<section class="hero">
+<div class="hero-inner">
+<div class="hero-copy">
+<p class="eyebrow">
+<span class="status-dot">
+</span> AI ENGINEERING · SYSTEMS · RESEARCH</p>
+<h1>From first principles<br/>to <em>real-world</em>
+<br/>intelligence<span class="lime">.</span>
+</h1>
+<p class="intro">I’m Rangaraj. I build AI systems, lead engineering teams, and go deep into how things actually work.</p>
+<p class="role">Technical Manager · Mercedes-Benz · Bengaluru, India</p>
+<div class="hero-actions">
+<a class="button primary" href="#selected-work">Explore my work <span>↘</span>
+</a>
+<a class="text-link" href="https://github.com/rangarajp">View GitHub ↗</a>
+</div>
+</div>
+<div class="system-art" aria-hidden="true">
+<div class="art-top">
+<span>ENGINEERING INTELLIGENCE</span>
+<span>FIG. 001</span>
+</div>
+<svg viewBox="0 0 500 430" fill="none">
+<defs>
+<linearGradient id="lines" x1="80" y1="60" x2="420" y2="400" gradientUnits="userSpaceOnUse">
+<stop stop-color="#dcf5aa"/>
+<stop offset="1" stop-color="#507c67"/>
+</linearGradient>
+<radialGradient id="halo">
+<stop stop-color="#a7c784" stop-opacity=".13"/>
+<stop offset="1" stop-color="#a7c784" stop-opacity="0"/>
+</radialGradient>
+</defs>
+<circle cx="250" cy="210" r="205" fill="url(#halo)"/>
+<g stroke="#365448" stroke-width=".6">
+<ellipse cx="250" cy="215" rx="212" ry="72" transform="rotate(-30 250 215)"/>
+<ellipse cx="250" cy="215" rx="212" ry="72" transform="rotate(30 250 215)"/>
+<ellipse cx="250" cy="215" rx="212" ry="72" transform="rotate(90 250 215)"/>
+</g>
+<g class="network" stroke="url(#lines)" stroke-width="1.1">{Array.from({length:9},(_,i)=>{const a=i*Math.PI*2/9;const x=250+155*Math.cos(a);const y=215+155*Math.sin(a);return <g>
+<line x1={x} y1={y} x2="250" y2="215"/>{Array.from({length:4},(_,j)=>{const b=(i+j+2)*Math.PI*2/9;return <line x1={x} y1={y} x2={250+155*Math.cos(b)} y2={215+155*Math.sin(b)} opacity=".4"/>})}<circle cx={x} cy={y} r="5" fill="#112e25"/>
+<circle cx={x} cy={y} r="2" fill="#c6e79c"/>
+</g>})}<path d="M250 151l56 32v64l-56 32-56-32v-64z" fill="#193e30" stroke="#d6f2ad"/>
+<path d="M194 183l56 32 56-32M250 215v64M250 151v64" stroke="#d6f2ad"/>
+<circle cx="250" cy="215" r="5" fill="#e0f4b7"/>
+</g>
+<g fill="#a7bbab" font-family="monospace" font-size="9" letter-spacing="2">
+<text x="24" y="100">RESEARCH</text>
+<text x="355" y="90">SYSTEMS</text>
+<text x="341" y="376">IMPLEMENTATION</text>
+</g>
+</svg>
+<div class="art-bottom">
+<span>
+<i>
+</i> CONNECTING IDEAS TO IMPACT</span>
+<span>01 / ∞</span>
+</div>
+</div>
+</div>
+<div class="hero-bottom">
+<span>THEORY INFORMED. IMPLEMENTATION DRIVEN.</span>
+<a href="#selected-work">SCROLL TO EXPLORE ↓</a>
+</div>
+</section>
+<section class="expertise-strip" aria-label="Areas of focus">
+<span>MY INTERSECTION</span>
+<p>LLM inference</p>
+<b>✳</b>
+<p>Agentic systems</p>
+<b>✳</b>
+<p>Applied AI</p>
+<b>✳</b>
+<p>Engineering leadership</p>
+</section>
+<section id="selected-work" class="work-section">
+<div class="section-top">
+<div>
+<p class="eyebrow">01 / SELECTED TECHNICAL WORK</p>
+<h2>Depth you can <em>explore.</em>
+</h2>
+</div>
+<p>Ideas, derivations, and working code.<br/>The details are the point.</p>
+</div>
+<div class="work-grid">{readings.map(item=>
+<a class={'work-card '+item.visual} href={item.href}>
+<div class="card-top">
+<span>{item.tag}</span>
+<span>{item.n} ↗</span>
+</div>
+<div class="card-art" aria-hidden="true">{item.visual==='inference'?<div class="bars">{[35,58,45,78,60,96,72,48,30,20].map(h=>
+<i style={`--h:${h}%`}/>)}<span>PREFILL → DECODE</span>
+</div>:item.visual==='transformer'?<div class="attention">
+<span>Q</span>
+<i>×</i>
+<span>Kᵀ</span>
+<i>→</i>
+<span>V</span>
+<small>Attention is all you need.</small>
+</div>:<div class="code-art">
+<span class="comment"># build understanding</span>
+<br/>
+<span>class</span> Transformer(nn.Module):<br/>&nbsp;&nbsp;def forward(self, x):<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span>return</span> self.attention(x)</div>}</div>
+<h3>{item.title}</h3>
+<p>{item.description}</p>
+<span class="card-cta">{item.kind}<span>↗</span>
+</span>
+</a>)}</div>
+</section>
+<section class="about-section" id="about">
+<div>
+<p class="eyebrow">02 / THE ENGINEER BEHIND THE WORK</p>
+<h2>Research curiosity.<br/>
+<em>Engineering discipline.</em>
+</h2>
+</div>
+<div class="about-copy">
+<p>I work at the intersection of AI research and powertrain engineering at Mercedes-Benz, leading Data Aided & Research Engineering.</p>
+<p>My interests span agentic platforms, learning systems, and efficient AI. This site is my open engineering notebook: a place to derive the math, write the code, and make the reasoning visible.</p>
+<div class="principles">
+<span>01 <b>Understand the fundamentals</b>
+</span>
+<span>02 <b>Build and measure</b>
+</span>
+<span>03 <b>Make knowledge reusable</b>
+</span>
+</div>
+</div>
+</section>
+<section class="notebook-section">
+<div class="section-top">
+<div>
+<p class="eyebrow">03 / THE OPEN NOTEBOOK</p>
+<h2>Always a little <em>deeper.</em>
+</h2>
+</div>
+<a class="inline-link" href="/concepts">All technical writing ↗</a>
+</div>
+<div class="note-list">
+<a href="/concepts/llm-inference-v2">
+<span>01</span>
+<h3>What really happens during LLM inference?</h3>
+<span>INFERENCE ENGINEERING</span>
+<b>↗</b>
+</a>
+<a href="/concepts/reasoning-models">
+<span>02</span>
+<h3>How language models learn to reason</h3>
+<span>REASONING MODELS</span>
+<b>↗</b>
+</a>
+<a href="/concepts/llm-system-design">
+<span>03</span>
+<h3>Designing the system around the model</h3>
+<span>SYSTEM DESIGN</span>
+<b>↗</b>
+</a>
+</div>
+<p class="notebook-foot">{notes.length} technical notes and chapters · Equations, implementations, and lessons along the way.</p>
+</section>
+<section class="contact-section">
+<p class="eyebrow">GOOD SYSTEMS START WITH GOOD CONVERSATIONS.</p>
+<h2>Let’s build something<br/>
+<em>worth understanding.</em>
+</h2>
+<a class="button primary" href="https://github.com/rangarajp">Find me on GitHub <span>↗</span>
+</a>
+<p>AI systems · Applied research · Technical leadership</p>
+</section>
+</main>
+<Footer />
+</body>
 </html>
-
 <style>
-	.hero {
-		text-align: center;
-		margin-bottom: 3rem;
-	}
-	.hero h1 {
-		font-size: 2.5rem;
-		margin-bottom: 0.5rem;
-	}
-	.hero p {
-		color: rgb(var(--gray));
-		font-size: 1.2rem;
-	}
-	.sections {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: 1.5rem;
-	}
-	.section-card {
-		display: block;
-		padding: 1.5rem;
-		border: 1px solid rgb(var(--gray-light));
-		border-radius: 8px;
-		text-decoration: none;
-		color: inherit;
-		transition: box-shadow 0.2s, border-color 0.2s;
-	}
-	.section-card:hover {
-		border-color: var(--accent);
-		box-shadow: var(--box-shadow);
-	}
-	.section-card h2 {
-		font-size: 1.4rem;
-		margin-bottom: 0.4rem;
-	}
-	.section-card p {
-		color: rgb(var(--gray));
-		margin: 0;
-		font-size: 0.95rem;
-	}
+
+.portfolio {
+  background:#f6f5f0;
+  color:#233c31
+}
+.portfolio main {
+  width:100%;
+  max-width:none;
+  padding:0;
+  margin:0
+}
+.eyebrow {
+  font:10px ui-monospace,SFMono-Regular,monospace;
+  letter-spacing:1.8px;
+  margin:0 0 25px
+}
+.hero {
+  background:#102a22;
+  color:#f4f4e8;
+  padding:70px 5% 0;
+  position:relative;
+  overflow:hidden
+}
+.hero-inner {
+  max-width:1320px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:1.15fr 1fr;
+  gap:50px;
+  align-items:center
+}
+.hero .eyebrow {
+  color:#c4d3b6;
+  display:flex;
+  align-items:center;
+  gap:10px
+}
+.status-dot,.art-bottom i {
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#cae89b;
+  display:inline-block
+}
+.hero h1 {
+  font-size:clamp(48px,5.3vw,82px);
+  font-weight:400;
+  letter-spacing:-3.5px;
+  line-height:1.05;
+  color:#f4f4e8;
+  margin:0 0 28px
+}
+em {
+  font-family:Georgia,'Times New Roman',serif;
+  font-weight:400
+}
+h1 em {
+  color:#cbe2b3
+}
+.lime {
+  color:#d4ed9f
+}
+.intro {
+  font-size:18px;
+  line-height:1.65;
+  max-width:470px;
+  color:#cbd5ca;
+  margin-bottom:13px
+}
+.role {
+  font-size:11px;
+  color:#91aa99;
+  letter-spacing:.3px
+}
+.hero-actions {
+  display:flex;
+  align-items:center;
+  gap:30px;
+  margin-top:34px
+}
+.button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:35px;
+  padding:14px 23px;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:700
+}
+.primary {
+  background:#d9efaf;
+  color:#17382b
+}
+.primary:hover {
+  background:#ecfacf;
+  color:#17382b
+}
+.text-link {
+  font-size:12px;
+  color:#e0e8d9;
+  text-decoration:none
+}
+.text-link:hover {
+  text-decoration:underline
+}
+.system-art {
+  min-width:0
+}
+.art-top,.art-bottom {
+  display:flex;
+  justify-content:space-between;
+  font:8px ui-monospace,monospace;
+  letter-spacing:1.5px;
+  color:#8ba491;
+  border-top:1px solid #355045;
+  padding-top:14px
+}
+.system-art svg {
+  width:100%;
+  display:block
+}
+.art-bottom {
+  padding:14px 0;
+  align-items:center
+}
+.art-bottom i {
+  margin-right:6px;
+  width:4px;
+  height:4px
+}
+.hero-bottom {
+  max-width:1320px;
+  margin:65px auto 0;
+  border-top:1px solid #355045;
+  padding:22px 0;
+  display:flex;
+  justify-content:space-between;
+  font:9px ui-monospace,monospace;
+  letter-spacing:1.3px;
+  color:#97ad9c
+}
+.hero-bottom a {
+  color:inherit;
+  text-decoration:none
+}
+.expertise-strip {
+  padding:25px 5%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  border-bottom:1px solid #d8ddd1
+}
+.expertise-strip>span {
+  font:9px ui-monospace,monospace;
+  letter-spacing:1px;
+  color:#718074
+}
+.expertise-strip p {
+  margin:0;
+  font-size:13px
+}
+.expertise-strip b {
+  font-size:18px;
+  color:#87956a;
+  font-weight:400
+}
+.work-section,.notebook-section {
+  max-width:1320px;
+  margin:auto;
+  padding:90px 5%
+}
+.section-top {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  margin-bottom:38px;
+  gap:25px
+}
+.section-top .eyebrow,.about-section .eyebrow {
+  color:#71806d;
+  margin-bottom:20px
+}
+h2 {
+  font-size:clamp(32px,3.2vw,47px);
+  letter-spacing:-1.7px;
+  font-weight:400;
+  line-height:1.15;
+  color:#1d382c;
+  margin:0
+}
+.section-top>p {
+  font-size:13px;
+  color:#788172;
+  line-height:1.65;
+  margin:0
+}
+.work-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:20px
+}
+.work-card {
+  padding:24px;
+  background:#eceee5;
+  border:1px solid #d9dfcf;
+  text-decoration:none;
+  color:#263e31;
+  display:flex;
+  flex-direction:column;
+  transition:transform .25s,border-color .25s
+}
+.work-card:hover {
+  transform:translateY(-6px);
+  border-color:#6e8b56;
+  color:#263e31
+}
+.card-top {
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  font:8px ui-monospace,monospace;
+  letter-spacing:1px;
+  color:#65775e
+}
+.card-art {
+  height:175px;
+  display:grid;
+  align-items:center;
+  overflow:hidden
+}
+.work-card h3 {
+  font-size:23px;
+  font-weight:400;
+  letter-spacing:-.7px;
+  color:#263e31
+}
+.work-card>p {
+  font-size:13px;
+  line-height:1.8;
+  color:#687361;
+  margin:5px 0 25px;
+  flex:1
+}
+.card-cta {
+  padding-top:17px;
+  border-top:1px solid #d1d9c5;
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  font-weight:700
+}
+.bars {
+  display:flex;
+  gap:7px;
+  align-items:flex-end;
+  height:85px;
+  position:relative;
+  margin:0 22px 25px
+}
+.bars i {
+  height:var(--h);
+  flex:1;
+  background:#839c5c
+}
+.bars i:nth-child(n+6) {
+  background:#bdcd9c
+}
+.bars>span {
+  position:absolute;
+  bottom:-26px;
+  font:8px ui-monospace,monospace;
+  letter-spacing:2px;
+  color:#83916d
+}
+.transformer {
+  background:#e9eee9
+}
+.attention {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  position:relative;
+  margin-bottom:30px
+}
+.attention>span {
+  border:1px solid #9ab6a2;
+  padding:12px 15px;
+  font:22px Georgia,serif;
+  background:#e0e8df
+}
+.attention i {
+  font-style:normal;
+  color:#789782
+}
+.attention small {
+  position:absolute;
+  top:80px;
+  font:9px ui-monospace,monospace;
+  letter-spacing:.5px;
+  color:#6b8874
+}
+.code {
+  background:#eeeae1
+}
+.code-art {
+  font:10px/1.95 ui-monospace,monospace;
+  white-space:nowrap;
+  color:#4b5946
+}
+.code-art span {
+  color:#77744d
+}
+.code-art .comment {
+  color:#8b9580
+}
+.about-section {
+  padding:75px max(5%,calc((100vw - 1320px)/2 + 5%));
+  background:#e9ecdf;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:70px;
+  border-block:1px solid #dce1d2
+}
+.about-copy p {
+  font-size:15px;
+  line-height:1.85;
+  color:#586950;
+  margin:0 0 20px
+}
+.about-copy p:first-child {
+  color:#263e31;
+  font-size:18px
+}
+.principles {
+  border-top:1px solid #ccd4bf;
+  margin-top:30px;
+  padding-top:22px;
+  display:grid;
+  gap:12px
+}
+.principles span {
+  font:10px ui-monospace,monospace;
+  color:#849170
+}
+.principles b {
+  font:12px var(--font-sans);
+  margin-left:18px;
+  color:#42563c
+}
+.inline-link {
+  color:#344c36;
+  font-size:12px;
+  text-decoration:none
+}
+.inline-link:hover {
+  text-decoration:underline
+}
+.note-list {
+  border-top:1px solid #cdd5c4
+}
+.note-list a {
+  display:grid;
+  grid-template-columns:30px 1fr 190px 18px;
+  gap:20px;
+  align-items:center;
+  padding:27px 5px;
+  border-bottom:1px solid #d9dfd0;
+  color:#283f31;
+  text-decoration:none;
+  transition:background .2s
+}
+.note-list a:hover {
+  background:#e9eddf
+}
+.note-list h3 {
+  font-size:19px;
+  font-weight:400;
+  letter-spacing:-.4px;
+  margin:0
+}
+.note-list span {
+  font:9px ui-monospace,monospace;
+  color:#859173;
+  letter-spacing:1px
+}
+.note-list b {
+  font-weight:400
+}
+.notebook-foot {
+  font-size:11px;
+  color:#7c8874;
+  margin-top:24px
+}
+.contact-section {
+  margin:0 5% 80px;
+  background:#17372b;
+  text-align:center;
+  padding:60px 20px;
+  color:#b9c9ac
+}
+.contact-section h2 {
+  color:#f3f4e5;
+  font-size:clamp(35px,4vw,56px);
+  margin-bottom:30px
+}
+.contact-section h2 em {
+  color:#cce2b0
+}
+.contact-section .eyebrow {
+  font-size:8px
+}
+.contact-section>p:last-child {
+  font-size:10px;
+  margin:22px 0 0;
+  letter-spacing:.6px
+}
+html {
+  scroll-behavior:smooth
+}
+section[id] {
+  scroll-margin-top:30px
+}
+a:focus-visible {
+  outline:3px solid #829d4b;
+  outline-offset:5px
+}
+@media(min-width:1600px) {
+  .contact-section {
+  max-width:1320px;
+  margin-inline:auto
+}
+
+}
+@media(max-width:1000px) {
+  .hero-inner {
+  gap:15px
+}
+.hero h1 {
+  letter-spacing:-2px
+}
+.system-art {
+  padding-left:0
+}
+.hero {
+  padding-top:55px
+}
+.work-card {
+  padding:18px
+}
+.card-top {
+  font-size:7px
+}
+.code-art {
+  font-size:8px
+}
+.about-section {
+  gap:35px
+}
+.expertise-strip {
+  gap:12px
+}
+.expertise-strip p {
+  font-size:11px
+}
+
+}
+@media(max-width:700px) {
+  .hero-inner {
+  grid-template-columns:1fr
+}
+.hero h1 {
+  font-size:55px
+}
+.hero .intro {
+  font-size:16px
+}
+.system-art {
+  max-width:380px;
+  width:100%;
+  margin:30px auto 0
+}
+.hero-bottom {
+  margin-top:25px;
+  font-size:7px;
+  gap:25px
+}
+.expertise-strip {
+  flex-wrap:wrap;
+  justify-content:center;
+  padding:20px
+}
+.expertise-strip>span {
+  width:100%;
+  text-align:center
+}
+.expertise-strip b:last-of-type {
+  display:none
+}
+.expertise-strip p:last-child {
+  width:100%;
+  text-align:center
+}
+.work-section,.notebook-section {
+  padding:55px 5%
+}
+.section-top {
+  align-items:flex-start;
+  flex-direction:column
+}
+.work-grid {
+  grid-template-columns:1fr;
+  gap:18px
+}
+.work-card {
+  padding:25px
+}
+.card-art {
+  height:160px
+}
+.bars {
+  max-width:250px;
+  width:85%;
+  margin-inline:auto
+}
+.card-top {
+  font-size:9px
+}
+.code-art {
+  font-size:12px
+}
+.about-section {
+  grid-template-columns:1fr;
+  padding:50px 5%;
+  gap:30px
+}
+.note-list a {
+  grid-template-columns:20px 1fr 15px;
+  gap:12px
+}
+.note-list a>span:nth-of-type(2) {
+  display:none
+}
+.note-list h3 {
+  font-size:16px
+}
+.contact-section {
+  margin-bottom:45px;
+  padding:45px 20px
+}
+.contact-section .eyebrow {
+  line-height:1.8
+}
+.role {
+  font-size:10px
+}
+
+}
+@media(prefers-reduced-motion:reduce) {
+  html {
+  scroll-behavior:auto
+}
+.work-card {
+  transition:none
+}
+.work-card:hover {
+  transform:none
+}
+
+}
+
 </style>

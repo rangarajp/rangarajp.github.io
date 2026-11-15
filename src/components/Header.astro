@@ -1,70 +1,140 @@
 ---
-import { SITE_TITLE } from '../consts';
-import HeaderLink from './HeaderLink.astro';
+const path = Astro.url.pathname;
+const links = [{href:'/concepts',label:'Writing'}, {href:'/build-from-scratch',label:'From scratch'}, {href:'/projects',label:'Projects'}];
 ---
-
-<header>
-	<nav>
-		<h2><a href="/">{SITE_TITLE}</a></h2>
-		<div class="internal-links">
-			<HeaderLink href="/">Home</HeaderLink>
-			<HeaderLink href="/concepts">Concepts</HeaderLink>
-			<HeaderLink href="/build-from-scratch">Build from Scratch</HeaderLink>
-			<HeaderLink href="/projects">Projects</HeaderLink>
-			<HeaderLink href="/explore">Explore</HeaderLink>
-			<HeaderLink href="/search/">Search</HeaderLink>
-		</div>
-	</nav>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<header class="site-header">
+ <nav aria-label="Main navigation">
+  <a class="identity" href="/" aria-label="Rangaraj P home">
+<span class="monogram">r<span>.</span>
+</span>
+<span>Rangaraj P<span class="identity-sub">AI ENGINEER & TECHNICAL LEADER</span>
+</span>
+</a>
+  <div class="nav-links">{links.map(link => <a href={link.href} aria-current={path.startsWith(link.href) ? 'page' : undefined}>{link.label}</a>)}<a class="search-link" href="/search/" aria-label="Search the site">Search <kbd>⌘ K</kbd>
+</a>
+<a class="github-link" href="https://github.com/rangarajp">GitHub ↗</a>
+</div>
+ </nav>
 </header>
 <style>
-	header {
-		margin: 0;
-		padding: 0 1em;
-		background: white;
-		box-shadow: 0 2px 8px rgba(var(--black), 5%);
-	}
-	h2 {
-		margin: 0;
-		font-size: 1em;
-	}
 
-	h2 a,
-	h2 a.active {
-		text-decoration: none;
-	}
-	nav {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-	}
-	nav a {
-		padding: 1em 0.5em;
-		color: var(--black);
-		border-bottom: 4px solid transparent;
-		text-decoration: none;
-	}
-	nav a.active {
-		text-decoration: none;
-		border-bottom-color: var(--accent);
-	}
-	@media (max-width: 720px) {
-		nav {
-			flex-wrap: wrap;
-		}
-		.internal-links {
-			width: 100%;
-			justify-content: center;
-		}
-	}
+.site-header {
+  background:#f6f5f0;
+  border-bottom:1px solid #dedfd9;
+  padding:0 5%;
+  position:relative;
+  z-index:10
+}
+.site-header nav {
+  max-width:1320px;
+  margin:auto;
+  min-height:96px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px
+}
+.identity {
+  display:flex;
+  align-items:center;
+  gap:13px;
+  text-decoration:none;
+  color:#192c28;
+  font-size:17px;
+  font-weight:700;
+  line-height:1.2
+}
+.monogram {
+  font:700 40px Georgia,serif;
+  letter-spacing:-5px;
+  border:1px solid #b8c3b9;
+  width:47px;
+  height:47px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding-right:5px;
+  box-sizing:border-box
+}
+.monogram span {
+  color:#798a47
+}
+.identity-sub {
+  display:block;
+  font:9px ui-monospace,monospace;
+  letter-spacing:1.3px;
+  margin-top:7px
+}
+.nav-links {
+  display:flex;
+  align-items:center;
+  gap:27px
+}
+.nav-links a {
+  font-size:13px;
+  text-decoration:none;
+  color:#43504b;
+  white-space:nowrap
+}
+.nav-links a:hover,.nav-links a[aria-current] {
+  color:#1d503e;
+  text-decoration:underline;
+  text-underline-offset:7px
+}
+.nav-links .github-link {
+  border:1px solid #c7cdc5;
+  padding:9px 16px;
+  color:#203f32
+}
+kbd {
+  font:10px ui-monospace,monospace;
+  border:1px solid #d7dbd2;
+  padding:3px;
+  margin-left:6px
+}
+.skip-link {
+  position:absolute;
+  top:-60px;
+  left:16px;
+  background:white;
+  padding:10px;
+  z-index:100
+}
+.skip-link:focus {
+  top:10px
+}
+@media(max-width:800px) {
+  .site-header nav {
+  min-height:80px;
+  flex-wrap:wrap;
+  padding:16px 0;
+  gap:18px
+}
+.nav-links {
+  gap:20px;
+  width:100%;
+  overflow:auto;
+  padding-bottom:5px
+}
+.identity-sub {
+  font-size:8px
+}
+.nav-links a {
+  font-size:12px
+}
+.nav-links .github-link {
+  margin-left:auto
+}
+kbd {
+  display:none
+}
+
+}
+
 </style>
-
 <script>
- document.addEventListener('keydown', (event) => {
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-   event.preventDefault();
-   const input = document.querySelector<HTMLInputElement>('#blog-search');
-   if (input) { input.focus(); input.select(); }
-   else window.location.assign('/search/');
-  }
- });
+document.addEventListener('keydown', (event) => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {event.preventDefault(); const input = document.querySelector<HTMLInputElement>('#blog-search');if(input){input.focus();input.select();}else window.location.assign('/search/');}});
+// Existing article layouts do not all carry a content anchor.
+const main = document.querySelector('main'); if(main && !main.id) main.id = 'main-content';
 </script>
