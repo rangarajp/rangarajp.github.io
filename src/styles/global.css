@@ -192,3 +192,8 @@ hr {
 	clip-path: inset(50%);
 	white-space: nowrap;
 }
+
+/* Shared portfolio identity; article typography and math retain their own rules. */
+:root { --accent: #39613f; --accent-dark: #24452c; --box-shadow: 0 8px 24px rgba(39, 63, 42, .08); }
+body { background: #f6f5f0; }
+:focus-visible { outline: 3px solid #7c9652; outline-offset: 4px; }

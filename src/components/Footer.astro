@@ -1,15 +1,60 @@
----
-const today = new Date();
----
-
-<footer>
-	&copy; {today.getFullYear()} Rangaraj P.
+<footer class="site-footer">
+<div>
+<a href="/">Rangaraj P<span>.</span>
+</a>
+<p>Understand deeply. Build deliberately. Share openly.</p>
+</div>
+<div class="footer-links">
+<a href="/concepts">Writing</a>
+<a href="/explore">Explore</a>
+<a href="https://github.com/rangarajp">GitHub ↗</a>
+<span>© {new Date().getFullYear()}</span>
+</div>
 </footer>
 <style>
-	footer {
-		padding: 2em 1em 6em 1em;
-		background: linear-gradient(var(--gray-gradient)) no-repeat;
-		color: rgb(var(--gray));
-		text-align: center;
-	}
+.site-footer {
+  padding:38px 5%;
+  background:#f6f5f0;
+  border-top:1px solid #dedfd9;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:25px;
+  color:#59645d;
+  font-size:12px
+}
+.site-footer>div>a {
+  font-size:20px;
+  font-weight:700;
+  color:#203f32;
+  text-decoration:none
+}
+.site-footer>div>a span {
+  color:#7b8a42
+}
+.site-footer p {
+  margin:8px 0 0
+}
+.footer-links {
+  display:flex;
+  gap:24px;
+  align-items:center
+}
+.footer-links a {
+  color:inherit;
+  text-decoration:none
+}
+.footer-links a:hover {
+  text-decoration:underline
+}
+@media(max-width:600px) {
+  .site-footer {
+  align-items:flex-start;
+  flex-direction:column
+}
+.footer-links {
+  flex-wrap:wrap
+}
+
+}
 </style>

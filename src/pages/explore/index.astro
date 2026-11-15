@@ -1,29 +1,83 @@
 ---
 import BaseHead from '../../components/BaseHead.astro';
-import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
-import { SITE_TITLE } from '../../consts';
+import Footer from '../../components/Footer.astro';
+const paths = [{title:'How do we make LLMs faster?',text:'Explore GPU fundamentals, memory bandwidth, batching, quantization, and the tradeoffs behind inference performance.',href:'/concepts/llm-inference-v2'},{title:'What makes a model reason?',text:'Study reasoning models, reinforcement learning, GRPO, and inference-time scaling.',href:'/concepts/reasoning-models'},{title:'What happens outside the model?',text:'Explore latency, reliability, and the systems needed to turn model inference into an application.',href:'/concepts/llm-system-design'},{title:'Can I build it myself?',text:'Move from diagrams to executable PyTorch with GPT and encoder–decoder transformer implementations.',href:'/build-from-scratch'}];
 ---
-
 <!doctype html>
 <html lang="en">
-	<head>
-		<BaseHead title={`Explore - ${SITE_TITLE}`} description="Experiments and open-ended investigations" />
-	</head>
-	<body>
-		<Header />
-		<main data-pagefind-body>
-			<h1>Explore</h1>
-			<p>Experiments and open-ended investigations.</p>
-			<p class="empty">Nothing here yet.</p>
-		</main>
-		<Footer />
-	</body>
+<head>
+<BaseHead title="Explore — Rangaraj P" description="Questions worth exploring in AI engineering: inference, reasoning, systems, and implementation."/>
+</head>
+<body>
+<Header/>
+<main id="main-content" data-pagefind-body>
+<p class="eyebrow">FOLLOW YOUR CURIOSITY</p>
+<h1>Start with a better question.</h1>
+<p class="intro">Four paths into the open engineering notebook.</p>
+<nav aria-label="Exploration paths">{paths.map((p,i)=>
+<a class="path" href={p.href}>
+<span>0{i+1} / EXPLORE ↗</span>
+<h2>{p.title}</h2>
+<p>{p.text}</p>
+</a>)}</nav>
+</main>
+<Footer/>
+</body>
 </html>
-
 <style>
-	.empty {
-		color: rgb(var(--gray));
-		font-style: italic;
-	}
+main {
+  width:1000px;
+  padding-block:65px
+}
+.eyebrow,.path>span {
+  font:10px ui-monospace,monospace;
+  letter-spacing:1.5px;
+  color:#7a886a
+}
+h1 {
+  font-size:clamp(35px,5vw,55px);
+  font-weight:400;
+  letter-spacing:-1.7px;
+  color:#25412f
+}
+.intro {
+  color:#6a7961
+}
+nav {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+  margin-top:40px
+}
+.path {
+  padding:30px;
+  border:1px solid #d7decc;
+  text-decoration:none;
+  background:#edf0e5;
+  color:#294532
+}
+.path:hover {
+  border-color:#7f965c
+}
+.path h2 {
+  font-size:24px;
+  font-weight:400;
+  margin-top:20px;
+  color:inherit
+}
+.path p {
+  font-size:14px;
+  color:#697b5e;
+  margin-bottom:0
+}
+@media(max-width:650px) {
+  nav {
+  grid-template-columns:1fr
+}
+main {
+  padding-block:35px
+}
+
+}
 </style>
