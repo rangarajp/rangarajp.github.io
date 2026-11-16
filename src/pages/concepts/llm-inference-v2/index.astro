@@ -1,25 +1,61 @@
 ---
-import Layout from '../../../components/inference-v2/Layout.astro';
+import BaseHead from '../../../components/BaseHead.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import InferenceBook from '../../../components/book/InferenceBook.astro';
 import { learnChapters, inferenceV2Path } from '../../../lib/inference-v2';
+import '../../../styles/inference-book.css';
 const chapters = learnChapters();
 ---
-<Layout title="LLM inference engineering" description="From the first token to efficient production serving, with theory and code in every chapter." slug="" showToc={false}>
- <p>Fourteen chapters follow the progression from inference foundations to production systems. Within each chapter, numbered sections develop the theory, equations, and code before the notebook observations and practical extensions. Hands-on ideas are proposed extensions unless explicitly labeled as recorded lab results.</p>
- <h2>Chapters</h2>
- <ol class="reading-list">
-  {chapters.map(ch => (
-   <li>
-    <a href={inferenceV2Path(ch.slug)}>{ch.title}</a>
-    <p>{ch.description}</p>
-   </li>
-  ))}
- </ol>
-</Layout>
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title="Inference Engineering, Illustrated — Rangaraj P" description="An interactive book about LLM inference. Explore token generation, KV caching, GPU rooflines, precision, and batching, then dive into the complete handbook." />
+  </head>
+  <body>
+    <Header />
+    <main id="main-content" data-pagefind-body class="book-main">
+      <header class="book-introduction">
+        <a href="/concepts/">← The open notebook</a>
+        <h1>A little intuition.<br/><em>A lot less mystery.</em></h1>
+        <p>Open the book. Follow the tokens. Build a mental model of what makes inference work.</p>
+      </header>
+      <InferenceBook />
+      <section class="full-handbook" id="chapters" aria-labelledby="chapters-title">
+        <div class="chapter-intro">
+          <div><p class="section-label">THE COMPLETE HANDBOOK</p><h2 id="chapters-title">Intuition is the beginning.<br/><em>The details are here.</em></h2></div>
+          <p>{chapters.length} chapters of theory, equations, implementations, and engineering observations. Follow them in order, or choose a topic.</p>
+        </div>
+        <ol class="chapter-list">
+          {chapters.map((ch, i) => (
+            <li><a href={inferenceV2Path(ch.slug)}><span class="chapter-number">{String(i + 1).padStart(2, '0')}</span><div><h3>{ch.title}</h3><p>{ch.description}</p></div><span aria-hidden="true">→</span></a></li>
+          ))}
+        </ol>
+        <p class="handbook-note">The visual experiments above are explanatory models, not GPU benchmark results. The chapters distinguish recorded observations from proposed extensions.</p>
+      </section>
+    </main>
+    <Footer />
+  </body>
+</html>
 <style>
- .reading-list { padding-left: 1.7rem; }
- .reading-list li { padding: .65rem 0 .8rem .35rem; border-bottom: 1px solid #e3e8ee; }
- .reading-list li::marker { color: #6b7789; font-size: .9rem; }
- .reading-list a { font-weight: 600; text-decoration: none; }
- .reading-list a:hover { text-decoration: underline; }
- .reading-list p { font-size: .92rem; color: #5d6b7b; margin: .3rem 0 0; line-height: 1.6; }
+  .book-main { width: auto; max-width: none; padding: 0 5% 75px; background: radial-gradient(ellipse at 50% 30%, #e8eddc, #f0f2e8 60%, #f6f5f0); }
+  .book-introduction { text-align: center; padding: 40px 0 38px; }
+  .book-introduction>a { font: 10px ui-monospace, monospace; color: #74836c; text-decoration: none; }
+  .book-introduction h1 { font-size: clamp(35px, 4vw, 51px); font-weight: 400; line-height: 1.13; letter-spacing: -1.9px; color: #23432e; margin: 20px 0 16px; }
+  .book-introduction em, .chapter-intro em { font-family: Georgia, serif; color: #67814e; }
+  .book-introduction>p { font-size: 13px; color: #78876c; margin: 0; }
+  .full-handbook { max-width: 1120px; margin: 85px auto 0; scroll-margin-top: 30px; }
+  .chapter-intro { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; margin-bottom: 35px; }
+  .section-label { font: 9px ui-monospace, monospace; letter-spacing: 1.5px; color: #7c8d6b; }
+  .chapter-intro h2 { font-size: 35px; font-weight: 400; color: #294630; letter-spacing: -1px; }
+  .chapter-intro>p { max-width: 360px; font-size: 12px; color: #77876a; line-height: 1.9; margin: 0; }
+  .chapter-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 35px; }
+  .chapter-list li { border-top: 1px solid #d6ddc9; }
+  .chapter-list a { display: grid; grid-template-columns: 25px 1fr 15px; gap: 17px; text-decoration: none; padding: 24px 0; color: #43603b; }
+  .chapter-list a:hover h3 { text-decoration: underline; text-underline-offset: 4px; }
+  .chapter-number { font: 10px ui-monospace, monospace; color: #8d9b7c; padding-top: 4px; }
+  .chapter-list h3 { font-size: 17px; font-weight: 400; color: #294630; margin-bottom: 9px; }
+  .chapter-list p { font-size: 11px; color: #7b886f; line-height: 1.8; margin: 0; }
+  .handbook-note { color: #869078; font: 10px/1.9 ui-monospace, monospace; margin-top: 25px; }
+  @media(max-width: 760px) { .book-main { padding-inline: 5%; } .book-introduction { padding: 30px 0; } .book-introduction h1 { font-size: 36px; } .book-introduction>p { font-size: 12px; max-width: 320px; margin: auto; } .chapter-intro { flex-direction: column; align-items: flex-start; gap: 18px; } .chapter-intro h2 { font-size: 30px; } .chapter-list { grid-template-columns: 1fr; } .full-handbook { margin-top: 55px; } }
 </style>

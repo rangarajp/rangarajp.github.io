@@ -1,0 +1,166 @@
+---
+const sections = [
+  { id: 'start', label: 'The field guide' },
+  { id: 'tokens', label: 'One token at a time' },
+  { id: 'cache', label: 'Remember the work' },
+  { id: 'roofline', label: 'Find the bottleneck' },
+  { id: 'precision', label: 'Make room for more' },
+  { id: 'batching', label: 'Keep the GPU busy' },
+];
+const base = '/concepts/llm-inference-v2/learn';
+---
+<div class="inference-book" data-book>
+  <div class="book-toolbar">
+    <span class="book-edition">A VISUAL FIELD GUIDE <span>BY RANGARAJ P</span></span>
+    <a href="#chapters">Full handbook →</a>
+  </div>
+  <nav class="book-tabs" aria-label="Visual book contents">
+    {sections.map((s, i) => <a href={`#${s.id}`} data-book-tab={i} aria-controls={`spread-${s.id}`}><span>0{i}</span> {s.label}</a>)}
+  </nav>
+  <div class="book-stage">
+    <div class="book-binding" aria-hidden="true"></div>
+    <div class="book-spreads">
+      <section class="book-spread cover-spread" id="spread-start" data-spread="start" aria-labelledby="title-start">
+        <div class="book-page book-cover">
+          <p class="book-kicker">THE OPEN ENGINEERING NOTEBOOK / VOL. 01</p>
+          <h2 id="title-start">Inference<br/>engineering<span>Illustrated.</span></h2>
+          <p class="cover-subtitle">Less mystery.<br/>More mental models.</p>
+          <div class="cover-orbits" aria-hidden="true"><i></i><i></i><i></i><span>t → t + 1</span></div>
+          <div class="cover-byline"><span>RANGARAJ P</span><span>IDEAS → IMPLEMENTATIONS</span></div>
+        </div>
+        <div class="book-page opening-page">
+          <p class="book-kicker">BEFORE THE EQUATIONS</p>
+          <h3>See it move.<br/><em>Then make it click.</em></h3>
+          <p>A language model answers one token at a time. Making that process fast is a story about remembering work, moving bytes, and keeping hardware busy.</p>
+          <p>This little book makes that story tangible. Turn a page, change a control, and watch one idea at a time.</p>
+          <div class="learning-route"><span>01 <b>Watch a request unfold</b></span><span>02 <b>Try a small experiment</b></span><span>03 <b>Follow the deeper chapter</b></span></div>
+          <button class="book-button" data-book-go="1">Open the first lesson <span>→</span></button>
+          <p class="book-note">Five interactive explanations. No 3D graphics required.<br/>Use the buttons or your left and right arrow keys.</p>
+        </div>
+      </section>
+
+      <section class="book-spread" id="spread-tokens" data-spread="tokens" aria-labelledby="title-tokens">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">01 / THE GENERATION LOOP</p>
+          <h3 id="title-tokens">A reply is built<br/><em>one token at a time.</em></h3>
+          <p>First, the model processes the prompt. That is <strong>prefill</strong>. Then it generates a token, appends it to the context, and runs again. That is <strong>decode</strong>.</p>
+          <div class="analogy"><span>THINK OF IT THIS WAY</span><p>Read the question once. Write the answer a small piece at a time, checking what came before.</p></div>
+          <p>Prompt tokens can be processed in parallel with a causal mask. Generated tokens depend on earlier choices, so their steps happen in sequence.</p>
+          <a class="chapter-link" href={`${base}/transformer-forward-pass/`}>Go deeper: transformer inference mechanics →</a>
+          <span class="page-number">02</span>
+        </div>
+        <div class="book-page experiment" data-token-demo>
+          <div class="experiment-heading"><span>TRY IT / FOLLOW THE TOKENS</span><span class="live-tag">STEP BY STEP</span></div>
+          <p class="demo-caption">Illustrative tokens, not a tokenizer trace.</p>
+          <div class="token-question"><span>THE PROMPT</span><div><b class="prompt-token">The</b><b class="prompt-token">sky</b><b class="prompt-token">is</b></div></div>
+          <div class="model-box"><span>TRANSFORMER</span><div class="model-layers"><i></i><i></i><i></i><i></i></div><small data-token-phase>Ready to read the prompt</small></div>
+          <div class="token-answer"><span>THE CONTINUATION</span><div>{['blue', 'on', 'a', 'clear', 'day', '.'].map((t, i) => <b class="output-token" data-token={i} aria-hidden="true">{t}</b>)}</div></div>
+          <div class="demo-controls"><button class="book-button" data-token-next>Run prefill →</button><button class="quiet-button" data-token-reset>Reset</button></div>
+          <p class="demo-explanation" data-token-explanation aria-live="polite">Start with prefill. The three prompt tokens pass through the model together.</p>
+          <span class="page-number">03</span>
+        </div>
+      </section>
+
+      <section class="book-spread" id="spread-cache" data-spread="cache" aria-labelledby="title-cache">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">02 / THE KV CACHE</p>
+          <h3 id="title-cache">Keep the past.<br/><em>Compute the new.</em></h3>
+          <p>Without a cache, a basic implementation recomputes old tokens’ keys and values at every generation step.</p>
+          <p>A <strong>KV cache</strong> stores those keys and values. Each new token adds its own entry and attends to the stored context.</p>
+          <div class="analogy"><span>THE TRADEOFF</span><p>Less repeated computation. More memory held for every active request.</p></div>
+          <p>The cache does <em>not</em> remove attention to earlier tokens. Decode still reads the growing cache, which is why long contexts cost memory and bandwidth.</p>
+          <a class="chapter-link" href={`${base}/kv-cache/`}>Go deeper: KV cache optimization →</a>
+          <span class="page-number">04</span>
+        </div>
+        <div class="book-page experiment">
+          <div class="experiment-heading"><span>TRY IT / REUSE THE PAST</span><span class="live-tag">SIMPLIFIED MODEL</span></div>
+          <label class="range-label" for="cache-length">Prompt length <output id="cache-length-value">8 tokens</output></label>
+          <input id="cache-length" type="range" min="4" max="24" step="4" value="8" />
+          <div class="cache-legend"><span><i class="new-dot"></i> Recomputed / new</span><span><i class="saved-dot"></i> Reused from cache</span></div>
+          <div class="cache-compare"><div><h4>Without cache</h4><div class="cache-grid" data-cache-uncached aria-hidden="true"></div><p><strong data-cache-uncached-count>30</strong> token positions projected</p></div><div><h4>With cache</h4><div class="cache-grid" data-cache-cached aria-hidden="true"></div><p><strong>3</strong> new token positions projected</p></div></div>
+          <p class="demo-explanation" data-cache-explanation aria-live="polite"></p>
+          <p class="book-note">Three decode steps after prefill. Each square represents a token position’s K/V projection. This comparison excludes prefill and does not estimate total FLOPs or speedup.</p>
+          <span class="page-number">05</span>
+        </div>
+      </section>
+
+      <section class="book-spread" id="spread-roofline" data-spread="roofline" aria-labelledby="title-roofline">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">03 / THE ROOFLINE MODEL</p>
+          <h3 id="title-roofline">Is the GPU waiting<br/><em>for the next byte?</em></h3>
+          <p>A GPU can only calculate as fast as it can get its data. Two ceilings matter: <strong>memory bandwidth</strong> and <strong>compute throughput</strong>.</p>
+          <p><strong>Arithmetic intensity</strong> means FLOPs performed per byte transferred. More reuse means more computation for each byte moved.</p>
+          <div class="formula-card">Attainable TFLOP/s = min(<br/><span>peak TFLOP/s, FLOPs/byte × GB/s ÷ 1000</span>)</div>
+          <p>Move the slider. Before the knee, bandwidth limits the ceiling. After it, compute does. Real kernels usually operate below this ideal roof.</p>
+          <a class="chapter-link" href={`${base}/gpu-fundamentals/`}>Go deeper: GPU performance fundamentals →</a>
+          <span class="page-number">06</span>
+        </div>
+        <div class="book-page experiment">
+          <div class="experiment-heading"><span>TRY IT / FIND THE LIMIT</span><span class="live-tag">ILLUSTRATIVE GPU</span></div>
+          <div class="hardware-spec"><span><b>100</b> TFLOP/s peak</span><span><b>1,000</b> GB/s bandwidth</span></div>
+          <svg class="roofline-chart" viewBox="0 0 450 260" role="img" aria-labelledby="roof-chart-title roof-chart-desc"><title id="roof-chart-title">Interactive roofline ceiling</title><desc id="roof-chart-desc">Linear axes. The bandwidth ceiling rises until 100 FLOPs per byte, where it meets the 100 TFLOP per second compute ceiling. The marker shows the selected ideal limit.</desc><g class="chart-grid"><path d="M55 50H425M55 125H425M55 200H425"/></g><path d="M55 25V205H425" class="chart-axis"/><path d="M55 200L203 50H425" class="roof-path"/><path d="M55 200L203 50" class="memory-path"/><text x="8" y="54">100</text><text x="15" y="129">50</text><text x="22" y="204">0</text><text x="48" y="224">0</text><text x="190" y="224">100</text><text x="337" y="224">200</text><text x="172" y="250">Arithmetic intensity (FLOPs/byte)</text><text x="57" y="17">Ideal ceiling (TFLOP/s)</text><circle data-roof-point cx="85" cy="170" r="7"/><path data-roof-guide d="M85 200V170H55" class="point-guide"/></svg>
+          <label class="range-label" for="roof-intensity">Arithmetic intensity <output id="roof-intensity-value">20 FLOPs/byte</output></label>
+          <input id="roof-intensity" type="range" min="5" max="250" step="5" value="20" />
+          <div class="roof-result"><strong data-roof-bound>Memory-bound</strong><span><b data-roof-ceiling>20</b> TFLOP/s ideal limit</span></div>
+          <p class="demo-explanation" data-roof-explanation aria-live="polite"></p>
+          <span class="page-number">07</span>
+        </div>
+      </section>
+
+      <section class="book-spread" id="spread-precision" data-spread="precision" aria-labelledby="title-precision">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">04 / WEIGHT PRECISION</p>
+          <h3 id="title-precision">Smaller numbers.<br/><em>A lighter backpack.</em></h3>
+          <p>A seven-billion-parameter model has seven billion stored weights. How many bits you use for each weight changes how much memory they occupy.</p>
+          <div class="formula-card">Weight memory = parameters × bits ÷ 8</div>
+          <p>Lower precision can make a model fit and reduce weight traffic. It can also change quality. Actual speed depends on supported kernels and the workload.</p>
+          <div class="analogy"><span>CAPACITY IS NOT THE WHOLE STORY</span><p>You still need room for the KV cache, activations, workspace, and quantization metadata.</p></div>
+          <a class="chapter-link" href={`${base}/quantization/`}>Go deeper: quantization →</a>
+          <span class="page-number">08</span>
+        </div>
+        <div class="book-page experiment">
+          <div class="experiment-heading"><span>TRY IT / PACK THE WEIGHTS</span><span class="live-tag">7B PARAMETER MODEL</span></div>
+          <fieldset class="precision-options"><legend>Choose a weight representation</legend>{[{bits:32,label:'FP32'},{bits:16,label:'FP16'},{bits:8,label:'INT8'},{bits:4,label:'INT4'}].map(p => <label><input type="radio" name="weight-precision" value={p.bits} checked={p.bits===16}/><span>{p.label}<small>{p.bits} bits</small></span></label>)}</fieldset>
+          <div class="memory-tank"><div class="memory-fill" data-weight-fill></div><div><strong data-weight-gb>14</strong><span>GB / weights only</span></div></div>
+          <div class="memory-scale"><span>0 GB</span><span>28 GB (FP32 baseline)</span></div>
+          <p class="demo-explanation" data-weight-explanation aria-live="polite">FP16 uses 14 GB for the raw weights of a 7B model.</p>
+          <p class="book-note">Decimal GB (10⁹ bytes). Raw storage calculation, not a measured footprint or a promise that the model fits in a particular GPU.</p>
+          <span class="page-number">09</span>
+        </div>
+      </section>
+
+      <section class="book-spread" id="spread-batching" data-spread="batching" aria-labelledby="title-batching">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">05 / CONTINUOUS BATCHING</p>
+          <h3 id="title-batching">An empty seat?<br/><em>Let the next request in.</em></h3>
+          <p>Requests finish at different times. With a fixed batch, a short request leaves an empty slot while its longer neighbors keep running.</p>
+          <p><strong>Continuous batching</strong> admits a waiting request at a step boundary as soon as a slot becomes free.</p>
+          <div class="analogy"><span>WHAT THE ANIMATION SHOWS</span><p>Six requests. Three slots. The same amount of token work, with fewer empty slots between requests.</p></div>
+          <p>Real serving systems also balance prefill, KV memory, fairness, and latency. This toy schedule isolates decode-slot reuse.</p>
+          <a class="chapter-link" href={`${base}/continuous-batching/`}>Go deeper: serving systems architecture →</a>
+          <span class="page-number">10</span>
+        </div>
+        <div class="book-page experiment">
+          <div class="experiment-heading"><span>TRY IT / WATCH THE SCHEDULE</span><span class="live-tag">UNIT DECODE STEPS</span></div>
+          <div class="batch-requests" aria-label="Requests and required decode steps">{[2,5,3,2,4,1].map((n,i)=><span class={`request-${i}`}>{String.fromCharCode(65+i)} <small>{n} {n === 1 ? 'step' : 'steps'}</small></span>)}</div>
+          <div class="schedule-compare"><div><h4>Fixed batches <span data-fixed-count></span></h4><div class="schedule" data-fixed-schedule></div></div><div><h4>Continuous <span data-continuous-count></span></h4><div class="schedule" data-continuous-schedule></div></div></div>
+          <label class="range-label" for="batch-step">Decode step <output id="batch-step-value">0 / 9</output></label>
+          <input id="batch-step" type="range" min="0" max="9" step="1" value="0"/>
+          <div class="demo-controls"><button class="book-button" data-batch-play>Play schedule →</button><button class="quiet-button" data-batch-reset>Reset</button></div>
+          <p class="demo-explanation" data-batch-explanation aria-live="polite"></p>
+          <p class="book-note">All requests arrive at time zero; each generated token costs one equal step; prefill and scheduling overhead are excluded. Colors identify requests, not measured GPU utilization.</p>
+          <span class="page-number">11</span>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div class="book-navigation" data-book-navigation hidden>
+    <button class="quiet-button" data-book-prev aria-label="Previous lesson">← Previous</button>
+    <div><span data-book-position aria-live="polite">Cover · 1 / 6</span><div class="book-progress" aria-hidden="true"><i data-book-progress></i></div></div>
+    <button class="quiet-button" data-book-next aria-label="Next lesson">Next lesson →</button>
+  </div>
+  <noscript><p class="no-script-note">All lessons are shown below each other. Interactive controls require JavaScript; the full written handbook is available below.</p></noscript>
+</div>
+<script>
+  import '../../scripts/inference-book';
+</script>

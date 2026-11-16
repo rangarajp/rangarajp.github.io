@@ -5,7 +5,7 @@ import Footer from '../components/Footer.astro';
 import { getCollection } from 'astro:content';
 const notes = await getCollection('concepts');
 const readings = [
- {n:'01',tag:'SYSTEMS & PERFORMANCE',title:'Inference engineering',description:'From the transformer forward pass to GPU memory, KV caches, and production serving. A handbook for understanding what makes LLMs fast.',href:'/concepts/llm-inference-v2',kind:'Read the handbook',visual:'inference'},
+ {n:'01',tag:'SYSTEMS & PERFORMANCE',title:'Inference engineering',description:'From the transformer forward pass to GPU memory, KV caches, and production serving. An illustrated, interactive book for understanding what makes LLMs fast.',href:'/concepts/llm-inference-v2',kind:'Open the interactive book',visual:'inference'},
  {n:'02',tag:'MODELS & MATHEMATICS',title:'Inside the transformer',description:'Attention, embeddings, positional encoding, and the architecture behind modern language models. Shapes and equations included.',href:'/concepts/transformers',kind:'Explore the series',visual:'transformer'},
  {n:'03',tag:'CODE & FIRST PRINCIPLES',title:'Build it. Understand it.',description:'Implement GPT and an encoder–decoder transformer in PyTorch. Follow the tensors from tokenization to training.',href:'/build-from-scratch',kind:'Open the implementations',visual:'code'}
 ];
