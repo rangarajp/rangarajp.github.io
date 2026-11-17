@@ -298,17 +298,25 @@ const base = '/concepts/llm-inference-v2/learn';
         <div class="book-page lesson-page">
           <p class="book-kicker">CHAPTER 02 / LESSON 01</p>
           <h3 id="title-qwen">Text<br/><em>becomes tokens</em></h3>
-          <p>A request begins as text. The tokenizer breaks it into pieces from the model’s vocabulary and turns each piece into an integer ID. The embedding table gives the model a vector for each ID. Those vectors pass through the transformer, which returns a score, or logit, for each possible next token. With greedy decoding, the highest score determines which token comes next.</p>
-          <p>Before that first prediction, the GPU needs the model weights. We loaded Qwen2.5-1.5B-Instruct in FP16 on an NVIDIA RTX A3000 Laptop GPU. The model has 1,543,714,304 parameters. At two bytes each, the weights occupy 2.88 GiB. PyTorch’s allocation after loading was only about 0.88 MiB above the calculated weight size, so the weights account for almost all of the initial tensor allocation.</p>
-          <p>Then we ran a 33-token prompt. Its first forward pass took 371.07 ms, while the median after warm-up was 47.82 ms. A first pass can include one-time CUDA and library setup. The warm median describes the model after that setup.</p>
+          <p>Qwen2.5-1.5B-Instruct starts with text. Its tokenizer maps pieces of text to integer IDs. An embedding table turns each ID into a vector, and the transformer uses those vectors to score the vocabulary. Greedy decoding picks the token with the highest score.</p>
+          <p>We loaded the FP16 model on an NVIDIA RTX A3000 Laptop GPU. Each of its 1.54 billion parameters takes two bytes. PyTorch allocated only about 0.88 MiB more than the calculated weight size just after loading, so the weights account for nearly all of that initial allocation.</p>
+          <dl class="q2-tiles">
+            <div><dt>FP16 weights</dt><dd>2.88 GiB</dd></div>
+            <div><dt>Benchmark prompt</dt><dd>33 tokens</dd></div>
+          </dl>
+          <p class="q2-after-tiles">The parameter count is a quick way to budget memory before running a prompt. Once the request starts, the GPU also needs room for intermediate activations and the attention state that grows with the conversation.</p>
           <span class="page-number">20</span>
         </div>
         <div class="book-page experiment q2-experiment" data-q2-demo="qwen">
-          <div class="q2-hero"><strong>THE TOKEN PIPELINE</strong><div class="q2-tokens" data-q2-tokens></div><div class="q2-flow">TEXT → TOKEN IDs → EMBEDDINGS → MODEL → LOGITS</div></div>
-          <label class="range-label" for="q2-token-input">Example prompt</label>
-          <select id="q2-token-input" class="q2-select"><option value="0">The GPU reads tokens</option><option value="1">One token at a time</option><option value="2">Cache keys and values</option></select>
-          <p class="q2-figure-copy">Choose an example prompt to follow the path from text to logits. The blocks use words to illustrate the stages. A real tokenizer can split a word into several pieces and add tokens for the chat format.</p>
-          <p class="q2-figure-copy">The model scores the vocabulary at the end of the pipeline. In the measured prompt run, the highest score at the last prompt position selected token ID 24430. The tokenizer converts output IDs back into text as the reply is generated.</p>
+          <div class="q2-stage">
+            <strong>FIRST FORWARD AND WARM FORWARDS</strong>
+            <div class="q2-compare">
+              <div><span>First pass</span><i style="width: 100%"></i><b>371.07 ms</b></div>
+              <div><span>Warm median</span><i style="width: 12.9%"></i><b>47.82 ms</b></div>
+            </div>
+            <div class="q2-flow">Same model and 33-token prompt</div>
+          </div>
+          <p class="q2-figure-copy">The first forward took nearly eight times as long. It can include one-time CUDA and library setup. After warm-up, repeat passes give a steadier baseline.</p>
           <span class="page-number">21</span>
         </div>
       </section>
@@ -316,18 +324,32 @@ const base = '/concepts/llm-inference-v2/learn';
         <div class="book-page lesson-page">
           <p class="book-kicker">CHAPTER 02 / LESSON 02</p>
           <h3 id="title-prefill">Prefill<br/><em>reads the prompt</em></h3>
-          <p>When the whole prompt is available, the transformer can process its token positions together in a single forward pass. The causal mask still limits each position to itself and earlier positions. The model therefore respects the order of the text while the GPU computes many rows at once.</p>
-          <p>Each linear layer applies the same weight matrix to all those rows. A GPU kernel can load a tile of that matrix and use it across several positions before moving on. The forward pass also prepares the keys and values that later tokens will attend to. The logits at the last prompt position supply the scores for the first output token.</p>
-          <p>We timed this pass with 128 prompt tokens per request. A single request took a median of 151.12 ms. With four requests in the same batch, Qwen processed 512 prompt positions in 334.79 ms.</p>
+          <p>Prefill runs once the whole prompt is available. The transformer processes its positions together, while a causal mask limits each position to itself and earlier positions in the same request.</p>
+          <p>Each linear layer applies the same weights to many token rows. The GPU can reuse a tile of weights across those rows. The pass also builds the key-value cache, and the last prompt position supplies the scores for the first output token.</p>
+          <dl class="q2-tiles">
+            <div><dt>Prompt per request</dt><dd>128 tokens</dd></div>
+            <div><dt>Batch 4 vs. batch 1</dt><dd>1.81× prompt throughput</dd></div>
+          </dl>
+          <p class="q2-after-tiles">For example, position 20 can attend to positions 1 through 20. The attention kernel still has the vectors for all positions available at once. That combination is what lets the GPU process the prompt in parallel while preserving token order.</p>
           <span class="page-number">22</span>
         </div>
         <div class="book-page experiment q2-experiment" data-q2-demo="prefill">
-          <div class="q2-stage"><strong>PARALLEL PROMPT PASS</strong><div class="q2-token-grid" data-q2-prefill-grid></div><div class="q2-flow">ALL PROMPT POSITIONS → TRANSFORMER → FIRST-TOKEN LOGITS</div></div>
-          <label class="range-label" for="q2-prefill-size">Prompt positions <output id="q2-prefill-value">64</output></label>
-          <input id="q2-prefill-size" type="range" min="1" max="4" value="2"/>
-          <button class="book-button" data-q2-prefill-play>Run prefill →</button>
-          <p class="q2-figure-copy">Set the prompt length and run the animation. Each square represents four positions, and the filled grid represents one forward pass. At the 128-position setting, the grid represents one request from the timed prefill benchmark.</p>
-          <p class="q2-figure-copy">A four-request batch places four of those grids in the same forward pass. It processed four times as many positions in about 2.2 times the elapsed time. Those extra rows give the GPU more opportunities to reuse weights and run work in parallel.</p>
+          <div class="q2-stage">
+            <strong>MEASURED PREFILL · 128 TOKENS PER REQUEST</strong>
+            <fieldset class="q2-metric-switch" data-q2-prefill-switch hidden>
+              <legend class="sr-only">Prefill metric</legend>
+              <label><input type="radio" name="prefill-metric" value="latency" checked /> Batch time</label>
+              <label><input type="radio" name="prefill-metric" value="throughput" /> Prompt throughput</label>
+            </fieldset>
+            <div aria-live="polite">
+              <div class="q2-compare">
+                <div><span>1 request<br />128 tokens</span><i style="width: 45.14%" data-q2-prefill-bar></i><b data-q2-prefill-result>151.12 ms</b></div>
+                <div><span>4 requests<br />512 tokens</span><i style="width: 100%" data-q2-prefill-bar></i><b data-q2-prefill-result>334.79 ms</b></div>
+              </div>
+              <div class="q2-flow" data-q2-prefill-caption>Both bars show the median time to finish the batch.</div>
+            </div>
+          </div>
+          <p class="q2-figure-copy">Four requests put four times as many prompt rows through the model in 2.22× the time. Each request waits for the batch’s prefill, while the GPU processes more prompt tokens per second.</p>
           <span class="page-number">23</span>
         </div>
       </section>
@@ -335,17 +357,20 @@ const base = '/concepts/llm-inference-v2/learn';
         <div class="book-page lesson-page">
           <p class="book-kicker">CHAPTER 02 / LESSON 03</p>
           <h3 id="title-decode">Decode<br/><em>follows a rhythm</em></h3>
-          <p>The first output token comes from the scores produced by prefill. To get the second, the model takes the first token as input and runs another forward pass. It repeats the same process for each subsequent token. Operations within each pass can run in parallel, but the next pass has to wait for the token selected by the current one.</p>
-          <p>We measured two points on the same timeline for a 33-token prompt. The median wall time was 44.28 ms at the end of prefill and 44.47 ms when the first token ID was ready. The second reading is our local proxy for time to first token (TTFT). Across the paired trials, the median added time for token selection was 0.21 ms. Both readings start from the same prefill, so the first-token time includes the forward pass plus the work to select the token.</p>
-          <p>A separate, already warmed run timed a single cached decode forward after a 128-token prompt. That forward took a median of 117.26 ms.</p>
+          <p>Prefill gives us the first output token. The model feeds that token into another forward pass to get the second. Every later pass needs the previous prediction, even though work inside each pass can run in parallel.</p>
+          <p>We timed the end of prefill and the first token ID on the same clock for a 33-token prompt. Selecting the token added a median of 0.21 ms across paired trials.</p>
+          <dl class="q2-tiles">
+            <div><dt>Prefill median</dt><dd>44.28 ms</dd></div>
+            <div><dt>Local time to first token</dt><dd>44.47 ms</dd></div>
+          </dl>
+          <p class="q2-after-tiles">The first-token clock stops as soon as the model chooses the first ID. From then on, the gap between output tokens depends on the repeated decode steps. A long reply can therefore start promptly and still take several seconds to finish.</p>
           <span class="page-number">24</span>
         </div>
         <div class="book-page experiment q2-experiment" data-q2-demo="decode">
           <div class="q2-stage"><strong>AUTOREGRESSIVE GENERATION</strong><div class="q2-token-grid q2-decode-grid" data-q2-decode-grid><span class="q2-cell is-on">Prompt</span></div><div class="q2-flow">PREDICT → APPEND → REPEAT</div></div>
           <div class="demo-controls"><button class="book-button" data-q2-decode-next>Generate next token →</button><button class="quiet-button" data-q2-decode-reset>Reset</button></div>
           <div class="q2-stat"><span>Generated tokens</span><strong data-q2-decode-count>0 / 4</strong></div>
-          <p class="q2-figure-copy">Each click reveals one token in the example reply. The first comes from the prompt’s logits.</p>
-          <p class="q2-figure-copy">Every later click represents a forward pass for one new position with the earlier keys and values already in memory. The single-step measurement on the left times one such pass.</p>
+          <p class="q2-figure-copy">The first click uses the prompt scores. Each later click represents one new forward with earlier keys and values already in memory. In a separate run with a 128-token prompt cache, one such forward took a median of 117.26 ms.</p>
           <span class="page-number">25</span>
         </div>
       </section>
@@ -353,9 +378,13 @@ const base = '/concepts/llm-inference-v2/learn';
         <div class="book-page lesson-page">
           <p class="book-kicker">CHAPTER 02 / LESSON 04</p>
           <h3 id="title-qcache">Keep<br/><em>keys and values</em></h3>
-          <p>During prefill, each attention layer computes keys and values for the prompt positions. With the KV cache enabled, the model keeps these tensors. At the next decode step, it works on the newest input position, appends its keys and values, and uses its query to attend to the stored sequence. With caching disabled, every decode pass processes the growing sequence again.</p>
-          <p>Building the cache adds work to the first pass. In a short-prompt benchmark, median prefill rose from 42.68 ms with the cache off to 46.14 ms with it on. The cache-enabled path has to retain the projected tensors and set up the state used by later forwards. In Qwen’s FP16 run, that state grew by 28 KiB for each additional token stored in a single sequence.</p>
-          <p>Later passes are where that upfront work pays off. For 32 generated tokens after a 512-token prompt, the median time fell from 12.39 s to 4.07 s with caching, and both paths produced the same token IDs.</p>
+          <p>Each attention layer computes keys and values during prefill. The KV cache keeps them so decode can append the newest position and attend to the stored sequence. With caching disabled, each step processes the growing prefix again.</p>
+          <p>Keeping that state adds work up front. Median prefill was 42.68 ms with the cache off and 46.14 ms with it on in the 33-token run. The generation comparison uses longer prompts too and verifies that both paths produce the same output IDs.</p>
+          <dl class="q2-tiles">
+            <div><dt>FP16 KV growth per token</dt><dd>28 KiB</dd></div>
+            <div><dt>Speedup at 512 prompt tokens</dt><dd>3.05×</dd></div>
+          </dl>
+          <p class="q2-after-tiles">The cache grows with the number of stored positions in each live request. For a 512-token Qwen prompt, 28 KiB per position gives 14 MiB of key and value tensors before decode adds any new positions.</p>
           <span class="page-number">26</span>
         </div>
         <div class="book-page experiment q2-experiment" data-q2-demo="qcache">
@@ -363,8 +392,7 @@ const base = '/concepts/llm-inference-v2/learn';
           <label class="range-label" for="q2-cache-context">Prompt tokens <output id="q2-cache-context-value">512</output></label>
           <input id="q2-cache-context" type="range" min="0" max="2" value="2"/>
           <div class="q2-stat"><span>Cache speedup</span><strong data-q2-cache-speed>3.05×</strong></div>
-          <p class="q2-figure-copy">The bars compare median generation time for one request producing 32 tokens. Move from a 32-token prompt to a 512-token prompt to compare the gap.</p>
-          <p class="q2-figure-copy">At 32 prompt tokens, caching made generation 1.16 times as fast. At 512, it made generation 3.05 times as fast. Every cached step still reads the earlier keys and values for attention, and a longer prefix makes reusing those values more valuable.</p>
+          <p class="q2-figure-copy">Each run generated 32 tokens. Caching sped up the 32-token prompt by 1.16× and the 512-token prompt by 3.05×. Each decode step still reads the stored keys and values. Reusing them avoids more work as the prefix grows.</p>
           <span class="page-number">27</span>
         </div>
       </section>
@@ -372,9 +400,13 @@ const base = '/concepts/llm-inference-v2/learn';
         <div class="book-page lesson-page">
           <p class="book-kicker">CHAPTER 02 / LESSON 05</p>
           <h3 id="title-qbatch">Batch<br/><em>requests together</em></h3>
-          <p>A decode step for one request supplies one new token row to each linear layer. If four requests are ready to advance, the runtime can stack their four rows and send them through a single forward pass. A matrix-multiply kernel can reuse weight tiles across those rows. Each request keeps its own attention history, so its new token still depends on its own sequence.</p>
-          <p>We used 128-token prompts and generated 32 tokens per request with the KV cache enabled. A batch of one finished in 3.87 s. A batch of four finished in 4.16 s and produced 128 tokens in total. Dividing the total output by the elapsed time gives 8.27 tokens/s at batch one and 30.79 tokens/s at batch four.</p>
-          <p>Throughput counts tokens across the whole GPU. A user waiting for a complete reply experiences the time their request takes. Both numbers matter when deciding how many requests to run together.</p>
+          <p>A cached decode step supplies one new row per request. With four ready requests, one matrix multiply can apply the same weight tiles to four rows. Each request keeps its own attention history.</p>
+          <p>We ran 128-token prompts and generated 32 tokens per request. At batch one, Qwen generated 32 tokens in 3.87 s. At batch four, it generated 128 tokens in 4.16 s. Throughput divides those totals by elapsed time.</p>
+          <dl class="q2-tiles">
+            <div><dt>Batch 4 vs. batch 1</dt><dd>3.72× throughput</dd></div>
+            <div><dt>Time to finish the batch</dt><dd>+7.5%</dd></div>
+          </dl>
+          <p class="q2-after-tiles">A serving system has to get those requests ready at the same time. These requests started together, with equal prompt and output lengths. Requests arriving between decode steps add a scheduling decision before they can benefit from the shared pass.</p>
           <span class="page-number">28</span>
         </div>
         <div class="book-page experiment q2-experiment" data-q2-demo="qbatch">
@@ -383,8 +415,7 @@ const base = '/concepts/llm-inference-v2/learn';
           <input id="q2-batch-size" type="range" min="0" max="2" value="0"/>
           <div class="q2-stat"><span>Aggregate throughput</span><strong data-q2-batch-throughput>8.27 tok/s</strong></div>
           <div class="q2-stat"><span>Total batch latency</span><strong data-q2-batch-latency>3.87 s</strong></div>
-          <p class="q2-figure-copy">Each row is one request generating in parallel with the others. Change the batch size and compare the total token rate with the time to finish the batch. Each request still produces 32 tokens.</p>
-          <p class="q2-figure-copy">Each request still produces 32 tokens. Moving from one request to four raised aggregate throughput about 3.7 times, while the time each member of the batch waited for its full reply rose about 7.5%.</p>
+          <p class="q2-figure-copy">Move from one request to four. The GPU completes nearly four times as many output tokens in a little more time. Each request in the batch still waits for its own full reply.</p>
           <span class="page-number">29</span>
         </div>
       </section>
@@ -392,16 +423,19 @@ const base = '/concepts/llm-inference-v2/learn';
         <div class="book-page lesson-page">
           <p class="book-kicker">CHAPTER 02 / LESSON 06</p>
           <h3 id="title-gemm">The shape<br/><em>of a multiply</em></h3>
-          <p>A transformer’s linear layers multiply an activation matrix by a weight matrix. Each activation row is one token position. At batch one, a 128-token prefill gives the layer 128 rows. A cached decode step gives it a single row. The weight matrix has the same shape in both cases.</p>
-          <p>For a single linear layer, 128 rows require 128 times the arithmetic of one row. They also give a GPU kernel room to use larger tiles and reuse each loaded weight across those rows. A one-row multiply offers much less reuse. Fetching weight tiles and getting enough work onto the GPU can then take a larger share of the time.</p>
-          <p>In a PyTorch profiler capture, matrix multiplications accounted for 117.24 ms across one prefill pass. Three cached decode passes accounted for 293.13 ms together, an average of 97.71 ms per pass. The raw decode total is larger because it covers three forwards.</p>
+          <p>A linear layer multiplies token rows by a weight matrix. With batch one, prefill for a 128-token prompt supplies 128 rows, while cached decode supplies one. The weight matrix stays the same.</p>
+          <p>For the same layer, 128 rows require 128 times the arithmetic of one row. The wider workload also lets a kernel reuse each loaded weight tile across rows. In a one-row pass, each tile supports less arithmetic before the next load.</p>
+          <dl class="q2-tiles">
+            <div><dt>Profiled prefill matmuls</dt><dd>117.24 ms / pass</dd></div>
+            <div><dt>Profiled decode matmuls</dt><dd>97.71 ms / pass</dd></div>
+          </dl>
+          <p class="q2-after-tiles">Divide the two times to compare one pass with one pass. The prefill multiplies took about 1.2× as long in the trace, even with 128 times as many rows per linear layer. Reuse helps explain why the time grows much more slowly than the arithmetic.</p>
           <span class="page-number">30</span>
         </div>
         <div class="book-page experiment q2-experiment" data-q2-demo="gemm">
           <div class="q2-stage"><strong>THE WEIGHTS DO NOT SHRINK</strong><div class="q2-matrix-demo"><div class="q2-input-matrix" data-q2-matrix-input></div><span>×</span><div class="q2-weight-matrix"></div><span>=</span><div class="q2-output-matrix" data-q2-matrix-output></div></div><div class="q2-flow" data-q2-matrix-label>PREFILL · MATRIX × MATRIX</div></div>
           <div class="demo-controls"><button class="book-button" data-q2-matrix-toggle>Switch to decode →</button></div>
-          <p class="q2-figure-copy">Switch to decode. The input and output shrink to a single row, while the weight matrix in the center stays the same. The grid illustrates the change in shape.</p>
-          <p class="q2-figure-copy">On a per-pass basis, the captured multiplies took about 1.2 times as long in prefill as in decode. The prompt had 128 positions, but the prefill kernels could use each tile of weights for many positions. The single-row pass gave those same weights far less work to do per load.</p>
+          <p class="q2-figure-copy">Switch to decode. The input and output shrink to one row while the center weight matrix stays the same. The profiler recorded 293.13 ms across three decode passes, so the tile uses their per-pass average.</p>
           <span class="page-number">31</span>
         </div>
       </section>
@@ -409,18 +443,28 @@ const base = '/concepts/llm-inference-v2/learn';
         <div class="book-page lesson-page">
           <p class="book-kicker">CHAPTER 02 / LESSON 07</p>
           <h3 id="title-intensity">FLOPs<br/><em>per byte</em></h3>
-          <p>Arithmetic intensity describes how much computation a workload does for each byte it moves. In a roofline model, multiplying intensity by memory bandwidth gives the rate at which memory can feed arithmetic. Increasing reuse lets each fetched byte support more operations, moving the workload to the right on the roofline.</p>
-          <p>Consider an FP16 dense layer and count only its weight bytes. Each weight takes two bytes, and each token row uses it for one multiply and one add, counted as two floating-point operations. If a tile of weights is fetched once and reused across all rows, one row gives one FLOP per weight byte. Two rows give two, and four rows give four.</p>
-          <p>In the 128-token-context decode benchmark, raising the batch from one to four lifted the estimated dense-layer computation rate from 0.0264 to 0.1020 TFLOP/s. Those rates divide estimated arithmetic by measured decode time.</p>
+          <p>Arithmetic intensity is the number of floating-point operations (FLOPs) per byte moved. On the roofline, intensity × memory bandwidth is the upper limit imposed by data movement. Reuse increases the amount of work each fetched byte can support.</p>
+          <p>In the Qwen decode run at a starting context of 128 tokens, batch four reached an estimated 0.1020 TFLOP/s against 0.0264 at batch one. These rates divide estimated arithmetic by measured step time.</p>
+          <dl class="q2-tiles">
+            <div><dt>One FP16 weight</dt><dd>2 bytes</dd></div>
+            <div><dt>Multiply and add per row</dt><dd>2 FLOPs</dd></div>
+          </dl>
+          <p class="q2-after-tiles">The example on the right uses a matrix with 1,048,576 weights. Each row uses every weight in one multiply and one add. Four rows therefore take 8,388,608 FLOPs regardless of how many times the kernel reads the weights.</p>
           <span class="page-number">32</span>
         </div>
         <div class="book-page experiment q2-experiment" data-q2-demo="intensity">
-          <div class="q2-stage"><strong>WEIGHT-ONLY ARITHMETIC INTENSITY</strong><div class="q2-ai-axis"><div class="q2-ai-marker" data-q2-ai-marker>●</div><div class="q2-ai-ticks"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span></div></div><div class="q2-flow">MORE WEIGHT REUSE → MORE FLOPs / WEIGHT BYTE</div></div>
-          <label class="range-label" for="q2-ai-batch">Batch size <output id="q2-ai-batch-value">1</output></label>
-          <input id="q2-ai-batch" type="range" min="1" max="4" value="1"/>
-          <div class="q2-stat"><span>Approximate intensity</span><strong data-q2-ai>1 FLOP/byte</strong></div>
-          <p class="q2-figure-copy">Each batch member adds one token row. Move the slider and watch the marker shift as those rows share the same weights.</p>
-          <p class="q2-figure-copy">At four rows, each weight can support eight operations for its two bytes. This calculation counts the weight matrix once. The GPU also moves activations and reads keys and values for attention, so a full roofline measurement would use the bytes actually moved.</p>
+          <div class="q2-stage">
+            <strong>FOUR ROWS THROUGH A 1,024 × 1,024 FP16 WEIGHT TILE</strong>
+            <table class="q2-weight-table">
+              <thead><tr><th scope="col">Idealized case</th><th scope="col">Weight traffic</th><th scope="col">FLOPs/byte</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Load for each row</th><td>8 MiB</td><td>1</td></tr>
+                <tr><th scope="row">Load once and reuse</th><td>2 MiB</td><td>4</td></tr>
+              </tbody>
+            </table>
+            <div class="q2-flow">Same arithmetic · 8,388,608 FLOPs per case</div>
+          </div>
+          <p class="q2-figure-copy">A single load serves all four rows in the reuse case. The arithmetic stays fixed and the weight traffic drops by 4×. Actual GPU traffic also includes activations, attention state, and outputs.</p>
           <span class="page-number">33</span>
         </div>
       </section>
@@ -428,9 +472,13 @@ const base = '/concepts/llm-inference-v2/learn';
         <div class="book-page lesson-page">
           <p class="book-kicker">CHAPTER 02 / LESSON 08</p>
           <h3 id="title-profile">Inside<br/><em>the GPU trace</em></h3>
-          <p>PyTorch records operators such as <code>aten::mm</code>, the operation used for matrix multiplication. The CUDA trace also names the kernels that carry out those operators. A kernel and the operator that launched it can account for the same GPU work. Read the operator table to see where time accumulates, then use the kernel names to see how that work was executed.</p>
-          <p>The prefill capture covered one forward and recorded 113 matrix multiplies. The decode capture covered three forwards and recorded 339, also 113 per pass. The call counts explain why the cumulative bars have different scopes. The prefill trace included larger FP16 GEMM kernels, while the decode trace included smaller matrix-multiply kernels and matrix-vector kernels, consistent with the change in the number of token rows.</p>
-          <p>Within the three decode steps, the efficient-attention operator contributed 1.37 ms across 84 calls, while matrix multiplies contributed 293.13 ms. At the starting context of 128 tokens, the cost of reading the attention history was small in this trace alongside the dense layers. A longer history gives each new query more keys and values to read.</p>
+          <p>A PyTorch trace groups CUDA time by operator. The kernel names show how the GPU executed that work. Prefill used larger FP16 matrix multiplies. Decode included smaller matrix-multiply and matrix-vector kernels.</p>
+          <p>The decode capture covers three passes, so its 339 matrix multiplies work out to 113 per pass, the same count as prefill. At a starting context of 128 tokens, dense multiplies took much more time than the traced attention operator. As the context grows, attention has more cached positions to read.</p>
+          <dl class="q2-tiles">
+            <div><dt>Matmuls per forward</dt><dd>113 calls</dd></div>
+            <div><dt>Decode capture</dt><dd>3 forwards</dd></div>
+          </dl>
+          <p class="q2-after-tiles">Read the operator and kernel views together. An operator duration tells you where time accumulated. Its kernel names tell you what ran on the GPU. Adding the two durations can count the same work twice.</p>
           <span class="page-number">34</span>
         </div>
         <div class="book-page experiment q2-experiment" data-q2-demo="profile">
@@ -438,8 +486,8 @@ const base = '/concepts/llm-inference-v2/learn';
           <label class="range-label" for="q2-profile-mode">Capture</label>
           <select id="q2-profile-mode" class="q2-select"><option value="prefill">Prefill · one forward pass</option><option value="decode">Decode · three forward passes</option></select>
           <div class="q2-stat"><span>aten::mm calls</span><strong data-q2-profile-calls>113</strong></div>
-          <p class="q2-figure-copy">Choose a capture to inspect the cumulative CUDA time for selected PyTorch operators. The call count shows how many matrix multiplies contributed to each bar.</p>
-          <p class="q2-figure-copy" data-q2-profile-note aria-live="polite">One prompt forward accounts for the 117.24 ms matrix-multiply total. The attention timing is unlisted in the prefill operator summary.</p>
+          <p class="q2-figure-copy">Choose a capture to compare cumulative CUDA times. The same operator can launch different kernels depending on the shape of its input.</p>
+          <p class="q2-figure-copy" data-q2-profile-note aria-live="polite">The prefill summary lists 117.24 ms for matrix multiplies.</p>
           <span class="page-number">35</span>
         </div>
       </section>
@@ -447,16 +495,20 @@ const base = '/concepts/llm-inference-v2/learn';
         <div class="book-page lesson-page">
           <p class="book-kicker">CHAPTER 02 / LESSON 09</p>
           <h3 id="title-case">The cost<br/><em>of a reply</em></h3>
-          <p>A Qwen request begins with model weights already on the GPU. The prompt becomes token IDs, then prefill processes those positions together and produces the first token’s scores. For the rest of the reply, each selected token feeds another pass. That shift from many prompt rows to one new row per sequence changes how the GPU uses the same weights.</p>
-          <p>The KV cache and batching change different parts of that work. The cache carries forward keys and values within one request. This is why it helped more with a 512-token prompt than a 32-token prompt. Batching brings new rows from different requests together. In the fixed-batch benchmark, four requests produced 128 output tokens in roughly the time one request produced 32.</p>
-          <p>Those changes have different visible effects. First-token timing describes the wait before output begins. Decode timing describes the repeated work once output has started. Aggregate throughput counts the tokens the GPU serves across requests. The profiler connects those measurements to the model’s operations, showing how much of the short-context decode capture went into repeated dense multiplies.</p>
+          <p>A request starts with model weights in GPU memory. Prefill reads the prompt and supplies the first token’s scores. Each later token triggers a new pass, with one new row per sequence.</p>
+          <p>The KV cache reuses work across steps of the same request. Batching reuses weight tiles across requests in the same step. Their benefits appear in different measurements.</p>
+          <dl class="q2-tiles">
+            <div><dt>First-token latency</dt><dd>Wait before a reply starts</dd></div>
+            <div><dt>Decode throughput</dt><dd>Output tokens per second</dd></div>
+          </dl>
+          <p class="q2-after-tiles">Follow a delay to its phase. For a slow start, measure prefill and first-token selection together. For pauses between tokens, inspect single-step decode. For system capacity, count output across requests and keep the time per request beside the total rate.</p>
           <span class="page-number">36</span>
         </div>
         <div class="book-page experiment q2-experiment" data-q2-demo="case">
           <div class="q2-stage"><strong>QWEN IN NUMBERS</strong><div class="q2-case-grid"><div><span>FP16 WEIGHTS</span><b>2.88 GiB</b></div><div><span>KV CACHE SPEEDUP</span><b>3.05×</b></div><div><span>BATCH-4 THROUGHPUT</span><b>30.79 tok/s</b></div><div><span>DECODE STEP</span><b>117.26 ms</b></div></div></div>
           <label class="range-label" for="q2-case-choice">Metric</label>
           <select id="q2-case-choice" class="q2-select"><option value="0">Weight storage</option><option value="1">KV cache</option><option value="2">Batch throughput</option><option value="3">Decode step</option></select>
-          <p class="q2-figure-copy">The figures come from local measurements of the same FP16 Qwen model. Choose a metric to see what was measured and how it fits into a request.</p>
+          <p class="q2-figure-copy">Each metric describes a different part of the Qwen run. Choose one to see the workload behind it.</p>
           <p class="q2-figure-copy" data-q2-case-explain aria-live="polite">The 2.88 GiB of FP16 weights occupy almost all of the device memory PyTorch allocates when this Qwen model is loaded.</p>
           <span class="page-number">37</span>
         </div>
