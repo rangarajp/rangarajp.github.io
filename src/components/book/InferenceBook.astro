@@ -10,6 +10,15 @@ const sections = [
   { id: 'reuse', label: 'Reuse the weights' },
   { id: 'limits', label: 'Find the speed limit' },
   { id: 'evidence', label: 'Trust the measurements' },
+  { id: 'qwen', label: 'Meet Qwen' },
+  { id: 'prefill', label: 'Read the prompt' },
+  { id: 'decode', label: 'One token at a time' },
+  { id: 'qcache', label: 'Remember the work' },
+  { id: 'qbatch', label: 'Share the weights' },
+  { id: 'gemm', label: 'Big matrices, thin vectors' },
+  { id: 'intensity', label: 'Reuse changes the limit' },
+  { id: 'profile', label: 'Look inside the GPU' },
+  { id: 'case', label: 'The evidence board' },
   { id: 'tokens', label: 'One token at a time' },
   { id: 'cache', label: 'Remember the work' },
   { id: 'roofline', label: 'Find the bottleneck' },
@@ -31,8 +40,14 @@ const base = '/concepts/llm-inference-v2/learn';
         {sections.slice(1,10).map((s,i)=><a href={`#${s.id}`} data-book-tab={i+1} aria-controls={`spread-${s.id}`}><span>01.${i+1}</span> {s.label}</a>)}
       </div>
     </div>
-    <div class="book-tabs book-next-chapters" aria-label="Following chapters">
-      {sections.slice(10).map((s,i)=><a href={`#${s.id}`} data-book-tab={i+10} aria-controls={`spread-${s.id}`}><span>${String(i+2).padStart(2,'0')}</span> {s.label}</a>)}
+    <div class="book-chapter-one book-chapter-two">
+      <div class="book-chapter-heading"><strong>CHAPTER 02</strong><span>Inside LLM inference</span><small>9 interactive lessons · Qwen case study</small></div>
+      <div class="book-tabs book-chapter-lessons" aria-label="Chapter 02 lessons">
+        {sections.slice(10,19).map((s,i)=><a href={`#${s.id}`} data-book-tab={i+10} aria-controls={`spread-${s.id}`}><span>02.${i+1}</span> {s.label}</a>)}
+      </div>
+    </div>
+    <div class="book-tabs book-next-chapters" aria-label="Additional inference lessons">
+      {sections.slice(19).map((s,i)=><a href={`#${s.id}`} data-book-tab={i+19} aria-controls={`spread-${s.id}`}><span>EXTRA</span> {s.label}</a>)}
     </div>
   </nav>
   <div class="book-stage">
@@ -277,6 +292,106 @@ const base = '/concepts/llm-inference-v2/learn';
           <p class="book-note">These are notebook observations for the RTX A3000, not theoretical GPU peak specifications.</p>
           <span class="page-number">13</span>
         </div>
+      </section>
+
+      <section class="book-spread q2-spread" id="spread-qwen" data-spread="qwen" aria-labelledby="title-qwen">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">CHAPTER 02 / LESSON 01</p>
+          <h3 id="title-qwen">Text<br/><em>becomes tokens</em></h3>
+          <p>A prompt becomes token IDs before the model can do any arithmetic. Our Qwen2.5-1.5B-Instruct has 1.54 billion parameters; its FP16 weights occupy approximately 2.88 GiB.</p>
+          <div class="analogy"><span>THE MENTAL MODEL</span><p>Tokenize a sentence and watch the GPU memory fill.</p></div>
+          <p class="q2-evidence">02.1 · 1,543,714,304 parameters</p>
+          <span class="page-number">20</span>
+        </div>
+        <div class="book-page experiment q2-experiment" data-q2-demo="qwen"><div class="experiment-heading"><span>TRY IT / INTERACTIVE MODEL</span><span class="live-tag">CHAPTER 02</span></div><div class="q2-hero"><strong>THE TOKEN PIPELINE</strong><div class="q2-tokens" data-q2-tokens></div><div class="q2-flow">TEXT → TOKEN IDs → EMBEDDINGS → MODEL → LOGITS</div></div><label class="range-label" for="q2-token-input">Example prompt</label><select id="q2-token-input" class="q2-select"><option value="0">The GPU reads tokens</option><option value="1">One token at a time</option><option value="2">Cache keys and values</option></select><div class="q2-stat"><span>FP16 model weights</span><strong>2.88 GiB</strong></div><p class="demo-explanation" data-q2-explain>These word-like blocks are illustrative, not the model tokenizer's exact token IDs.</p><span class="page-number">21</span></div>
+      </section>
+      <section class="book-spread q2-spread" id="spread-prefill" data-spread="prefill" aria-labelledby="title-prefill">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">CHAPTER 02 / LESSON 02</p>
+          <h3 id="title-prefill">Prefill<br/><em>reads together</em></h3>
+          <p>Prefill processes the entire prompt in one forward pass. The model builds the initial attention state and produces logits for the first new token. Its large matrices can reuse weight data.</p>
+          <div class="analogy"><span>THE MENTAL MODEL</span><p>Choose the prompt length and watch a whole row of tokens pass through the model.</p></div>
+          <p class="q2-evidence">02.5 · 128-token prefill, batch 1: 151.12 ms</p>
+          <span class="page-number">22</span>
+        </div>
+        <div class="book-page experiment q2-experiment" data-q2-demo="prefill"><div class="experiment-heading"><span>TRY IT / INTERACTIVE MODEL</span><span class="live-tag">CHAPTER 02</span></div><div class="q2-stage"><strong>PARALLEL PROMPT PASS</strong><div class="q2-token-grid" data-q2-prefill-grid></div><div class="q2-flow">ALL PROMPT POSITIONS → TRANSFORMER → FIRST-TOKEN LOGITS</div></div><label class="range-label" for="q2-prefill-size">Prompt positions <output id="q2-prefill-value">32</output></label><input id="q2-prefill-size" type="range" min="1" max="4" value="2"/><button class="book-button" data-q2-prefill-play>Run prefill →</button><p class="demo-explanation">Each block represents several token positions. Larger prompts mean more work; the 151.12 ms measurement applies only to the 128-token benchmark.</p><span class="page-number">23</span></div>
+      </section>
+      <section class="book-spread q2-spread" id="spread-decode" data-spread="decode" aria-labelledby="title-decode">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">CHAPTER 02 / LESSON 03</p>
+          <h3 id="title-decode">Decode<br/><em>follows a rhythm</em></h3>
+          <p>Generation is autoregressive: select the next token, append it to the sequence, and repeat. Time to first token and per-token decode latency measure different parts of the journey.</p>
+          <div class="analogy"><span>THE MENTAL MODEL</span><p>Step through a four-token response, one prediction at a time.</p></div>
+          <p class="q2-evidence">02.5 · cached decode step, batch 1: 117.26 ms</p>
+          <span class="page-number">24</span>
+        </div>
+        <div class="book-page experiment q2-experiment" data-q2-demo="decode"><div class="experiment-heading"><span>TRY IT / INTERACTIVE MODEL</span><span class="live-tag">CHAPTER 02</span></div><div class="q2-stage"><strong>AUTOREGRESSIVE GENERATION</strong><div class="q2-token-grid q2-decode-grid" data-q2-decode-grid><span class="q2-cell is-on">Prompt</span></div><div class="q2-flow">PREDICT → APPEND → REPEAT</div></div><div class="demo-controls"><button class="book-button" data-q2-decode-next>Generate next token →</button><button class="quiet-button" data-q2-decode-reset>Reset</button></div><div class="q2-stat"><span>Generated tokens</span><strong data-q2-decode-count>0 / 4</strong></div><p class="demo-explanation">The four words are an illustration of greedy decoding, not a live model inference call.</p><span class="page-number">25</span></div>
+      </section>
+      <section class="book-spread q2-spread" id="spread-qcache" data-spread="qcache" aria-labelledby="title-qcache">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">CHAPTER 02 / LESSON 04</p>
+          <h3 id="title-qcache">Keep<br/><em>keys and values</em></h3>
+          <p>Without a KV cache, generation recomputes attention projections for earlier positions. With a cache, previous keys and values can be reused. Caching has a memory cost but saves repeated work.</p>
+          <div class="analogy"><span>THE MENTAL MODEL</span><p>Switch cache ON or OFF and choose a measured prompt length.</p></div>
+          <p class="q2-evidence">02.4 · 512-token prompt: 3.05× cache speedup</p>
+          <span class="page-number">26</span>
+        </div>
+        <div class="book-page experiment q2-experiment" data-q2-demo="qcache"><div class="experiment-heading"><span>TRY IT / INTERACTIVE MODEL</span><span class="live-tag">CHAPTER 02</span></div><div class="q2-stage"><strong>MEASURED GENERATION / 32 OUTPUT TOKENS</strong><div class="q2-compare"><div><span>CACHE ON</span><i data-q2-cache-on></i><b data-q2-cache-on-time>4.07 s</b></div><div><span>CACHE OFF</span><i data-q2-cache-off></i><b data-q2-cache-off-time>12.39 s</b></div></div></div><label class="range-label" for="q2-cache-context">Prompt tokens <output id="q2-cache-context-value">512</output></label><input id="q2-cache-context" type="range" min="0" max="2" value="2"/><div class="q2-stat"><span>Cache speedup</span><strong data-q2-cache-speed>3.05×</strong></div><p class="demo-explanation">Measured end-to-end generation times from Experiment 02.4, batch 1. Output IDs matched with cache on and off.</p><span class="page-number">27</span></div>
+      </section>
+      <section class="book-spread q2-spread" id="spread-qbatch" data-spread="qbatch" aria-labelledby="title-qbatch">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">CHAPTER 02 / LESSON 05</p>
+          <h3 id="title-qbatch">Batch<br/><em>requests together</em></h3>
+          <p>A single request makes a thin matrix multiply. Multiple requests can use the same weight matrix in one larger operation. Aggregate throughput rises even when individual batch latency rises slightly.</p>
+          <div class="analogy"><span>THE MENTAL MODEL</span><p>Switch between batches of 1, 2 and 4 and compare measured throughput.</p></div>
+          <p class="q2-evidence">02.4 · batch 1: 8.27 tok/s; batch 4: 30.79 tok/s</p>
+          <span class="page-number">28</span>
+        </div>
+        <div class="book-page experiment q2-experiment" data-q2-demo="qbatch"><div class="experiment-heading"><span>TRY IT / INTERACTIVE MODEL</span><span class="live-tag">CHAPTER 02</span></div><div class="q2-stage"><strong>REQUESTS SHARING THE GPU</strong><div class="q2-batch-rows" data-q2-batch-rows></div></div><label class="range-label" for="q2-batch-size">Batch size <output id="q2-batch-value">1</output></label><input id="q2-batch-size" type="range" min="0" max="2" value="0"/><div class="q2-stat"><span>Aggregate throughput</span><strong data-q2-batch-throughput>8.27 tok/s</strong></div><div class="q2-stat"><span>Total batch latency</span><strong data-q2-batch-latency>3.87 s</strong></div><p class="demo-explanation">Measured from Experiment 02.4: 128-token prompt, 32 output tokens per request, cache on. More throughput does not mean lower latency for each request.</p><span class="page-number">29</span></div>
+      </section>
+      <section class="book-spread q2-spread" id="spread-gemm" data-spread="gemm" aria-labelledby="title-gemm">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">CHAPTER 02 / LESSON 06</p>
+          <h3 id="title-gemm">The<br/><em>shape changes everything</em></h3>
+          <p>Prefill is matrix–matrix-like: many token rows multiplied by weights. Batch-one decode is matrix–vector-like: one token row multiplied by the same weights. More arithmetic does not imply proportionally more time.</p>
+          <div class="analogy"><span>THE MENTAL MODEL</span><p>Switch between 128 rows and one row; observe the same weight block being reused.</p></div>
+          <p class="q2-evidence">02.5 · profiled matmul: prefill 117.24 ms; decode ~97.71 ms per step</p>
+          <span class="page-number">30</span>
+        </div>
+        <div class="book-page experiment q2-experiment" data-q2-demo="gemm"><div class="experiment-heading"><span>TRY IT / INTERACTIVE MODEL</span><span class="live-tag">CHAPTER 02</span></div><div class="q2-stage"><strong>THE WEIGHTS DO NOT SHRINK</strong><div class="q2-matrix-demo"><div class="q2-input-matrix" data-q2-matrix-input></div><span>×</span><div class="q2-weight-matrix"></div><span>=</span><div class="q2-output-matrix" data-q2-matrix-output></div></div><div class="q2-flow" data-q2-matrix-label>PREFILL · MATRIX × MATRIX</div></div><div class="demo-controls"><button class="book-button" data-q2-matrix-toggle>Switch to decode →</button></div><p class="demo-explanation">Matrix rows are schematic. The real profiler's 293.13 ms decode matmul total covers three steps; ~97.71 ms is its per-step normalized total.</p><span class="page-number">31</span></div>
+      </section>
+      <section class="book-spread q2-spread" id="spread-intensity" data-spread="intensity" aria-labelledby="title-intensity">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">CHAPTER 02 / LESSON 07</p>
+          <h3 id="title-intensity">FLOPs<br/><em>per byte</em></h3>
+          <p>Arithmetic intensity compares arithmetic with data movement. For a simplified FP16 weight-only linear-layer model, batch-one decode is about 1 FLOP/byte and batch-four about 4. These are analytical estimates, not DRAM measurements.</p>
+          <div class="analogy"><span>THE MENTAL MODEL</span><p>Move the batch slider and watch the arithmetic-intensity marker move.</p></div>
+          <p class="q2-evidence">02.4 · estimated weight-only AI: 1, 2, 4 FLOPs/byte</p>
+          <span class="page-number">32</span>
+        </div>
+        <div class="book-page experiment q2-experiment" data-q2-demo="intensity"><div class="experiment-heading"><span>TRY IT / INTERACTIVE MODEL</span><span class="live-tag">CHAPTER 02</span></div><div class="q2-stage"><strong>WEIGHT-ONLY ARITHMETIC INTENSITY</strong><div class="q2-ai-axis"><div class="q2-ai-marker" data-q2-ai-marker>●</div><div class="q2-ai-ticks"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span></div></div><div class="q2-flow">MORE WEIGHT REUSE → MORE FLOPs / WEIGHT BYTE</div></div><label class="range-label" for="q2-ai-batch">Batch size <output id="q2-ai-batch-value">1</output></label><input id="q2-ai-batch" type="range" min="1" max="4" value="1"/><div class="q2-stat"><span>Approximate intensity</span><strong data-q2-ai>1 FLOP/byte</strong></div><p class="demo-explanation">Analytical dense-layer approximation only: excludes other memory traffic, attention, and caching. This is not measured DRAM bandwidth or a complete roofline measurement.</p><span class="page-number">33</span></div>
+      </section>
+      <section class="book-spread q2-spread" id="spread-profile" data-spread="profile" aria-labelledby="title-profile">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">CHAPTER 02 / LESSON 08</p>
+          <h3 id="title-profile">A<br/><em>profiler is a microscope</em></h3>
+          <p>A profiler identifies operator and kernel activity. Compare cumulative totals only for matching numbers of calls: our decode capture contained three steps, while prefill contained one.</p>
+          <div class="analogy"><span>THE MENTAL MODEL</span><p>Toggle prefill/decode and inspect selected profiled kernel categories.</p></div>
+          <p class="q2-evidence">02.5 · aten::mm: 113 calls prefill, 339 calls across 3 decode steps</p>
+          <span class="page-number">34</span>
+        </div>
+        <div class="book-page experiment q2-experiment" data-q2-demo="profile"><div class="experiment-heading"><span>TRY IT / INTERACTIVE MODEL</span><span class="live-tag">CHAPTER 02</span></div><div class="q2-stage"><strong>SELECTED PROFILED KERNEL TIME</strong><div class="q2-compare q2-profile-bars"><div><span>aten::mm</span><i data-q2-profile-mm></i><b data-q2-profile-mm-value>117.24 ms</b></div><div><span>ATTENTION</span><i data-q2-profile-attn></i><b data-q2-profile-attn-value>—</b></div></div></div><label class="range-label" for="q2-profile-mode">Capture</label><select id="q2-profile-mode" class="q2-select"><option value="prefill">Prefill · one forward pass</option><option value="decode">Decode · three forward passes</option></select><div class="q2-stat"><span>aten::mm calls</span><strong data-q2-profile-calls>113</strong></div><p class="demo-explanation" data-q2-profile-note>PyTorch profiler cumulative operator time. Do not add kernel-level rows to operator-level rows; they can describe the same work.</p><span class="page-number">35</span></div>
+      </section>
+      <section class="book-spread q2-spread" id="spread-case" data-spread="case" aria-labelledby="title-case">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">CHAPTER 02 / LESSON 09</p>
+          <h3 id="title-case">What<br/><em>did Qwen teach us?</em></h3>
+          <p>Our five experiments connect model memory, first-token latency, KV reuse, batching, and profiling. We can identify likely bottlenecks without pretending a FLOPs/byte estimate is a physical bandwidth measurement.</p>
+          <div class="analogy"><span>THE MENTAL MODEL</span><p>Explore the results dashboard and choose the next optimization hypothesis.</p></div>
+          <p class="q2-evidence">02.1–02.5 · local RTX A3000 Laptop GPU</p>
+          <span class="page-number">36</span>
+        </div>
+        <div class="book-page experiment q2-experiment" data-q2-demo="case"><div class="experiment-heading"><span>TRY IT / INTERACTIVE MODEL</span><span class="live-tag">CHAPTER 02</span></div><div class="q2-stage"><strong>FIVE EXPERIMENTS · ONE MODEL</strong><div class="q2-case-grid"><div><span>FP16 WEIGHTS</span><b>2.88 GiB</b></div><div><span>KV CACHE SPEEDUP</span><b>3.05×</b></div><div><span>BATCH-4 THROUGHPUT</span><b>30.79 tok/s</b></div><div><span>DECODE STEP</span><b>117.26 ms</b></div></div></div><label class="range-label" for="q2-case-choice">Explore the conclusion</label><select id="q2-case-choice" class="q2-select"><option value="0">What does caching prove?</option><option value="1">What does batching prove?</option><option value="2">What remains unproven?</option></select><p class="demo-explanation" data-q2-case-explain>KV reuse makes long-context generation faster. In Experiment 02.4, cached and uncached output token IDs matched.</p><p class="book-note">Local Qwen2.5-1.5B-Instruct FP16 results on RTX A3000 Laptop GPU. Results across experiments have different workloads; do not combine them as one benchmark.</p><span class="page-number">37</span></div>
       </section>
 
       <section class="book-spread" id="spread-tokens" data-spread="tokens" aria-labelledby="title-tokens">
