@@ -31,9 +31,9 @@ for (const continuous of [false, true]) {
   }
 }
 const html = await fs.readFile(new URL('../dist/concepts/llm-inference-v2/index.html', import.meta.url),'utf8');
-assert.equal((html.match(/data-spread=/g) || []).length, 6);
+assert.equal((html.match(/data-spread=/g) || []).length, 7);
 for (const link of html.matchAll(/href="(\/[^"#?]*)/g)) {
   const target = new URL(`../dist${link[1]}${link[1].endsWith('/') ? '' : '/'}index.html`, import.meta.url);
   if (!link[1].match(/\.[a-z]+$/)) await fs.access(target);
 }
-console.log('Book checks passed: precision storage, KV work, roofline limits, scheduling conservation, six spreads, and built internal links.');
+console.log('Book checks passed: precision storage, KV work, roofline limits, scheduling conservation, seven spreads, and built internal links.');
