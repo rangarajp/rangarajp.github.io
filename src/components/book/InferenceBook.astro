@@ -37,13 +37,13 @@ const base = '/concepts/llm-inference-v2/learn';
     <div class="book-chapter-one">
       <div class="book-chapter-heading"><strong>CHAPTER 01</strong><span>Know your GPU</span><small>9 interactive lessons</small></div>
       <div class="book-tabs book-chapter-lessons" aria-label="Chapter 01 lessons">
-        {sections.slice(1,10).map((s,i)=><a href={`#${s.id}`} data-book-tab={i+1} aria-controls={`spread-${s.id}`}><span>01.${i+1}</span> {s.label}</a>)}
+        {sections.slice(1,10).map((s,i)=><a href={`#${s.id}`} data-book-tab={i+1} aria-controls={`spread-${s.id}`}><span>{`01.${String(i + 1).padStart(2, '0')}`}</span> {s.label}</a>)}
       </div>
     </div>
     <div class="book-chapter-one book-chapter-two">
       <div class="book-chapter-heading"><strong>CHAPTER 02</strong><span>Inside LLM inference</span><small>9 interactive lessons · Qwen case study</small></div>
       <div class="book-tabs book-chapter-lessons" aria-label="Chapter 02 lessons">
-        {sections.slice(10,19).map((s,i)=><a href={`#${s.id}`} data-book-tab={i+10} aria-controls={`spread-${s.id}`}><span>02.${i+1}</span> {s.label}</a>)}
+        {sections.slice(10,19).map((s,i)=><a href={`#${s.id}`} data-book-tab={i+10} aria-controls={`spread-${s.id}`}><span>{`02.${String(i + 1).padStart(2, '0')}`}</span> {s.label}</a>)}
       </div>
     </div>
     <div class="book-tabs book-next-chapters" aria-label="Additional inference lessons">
