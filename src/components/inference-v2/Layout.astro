@@ -83,6 +83,15 @@ if (slug) crumbs.push({ label: title });
 							<p class="infv2-lede">{description}</p>
 						</header>
 
+						{slug === 'learn/gpu-fundamentals' && (
+							<section class="infv2-gpu-workbench" aria-labelledby="gpu-workbench-title">
+								<h2 id="gpu-workbench-title">Explore the GPU before reading the equations</h2>
+								<p>Try five hands-on explanations: how data reaches the workers, why memory traffic matters, how matrices multiply, what weight reuse changes, and how the roofline separates the two performance limits.</p>
+								<iframe title="Interactive GPU workbench" src="/inference-fieldbook/gpu-workbench.html" id="gpu-workbench-frame" loading="lazy" style="display:block;width:100%;height:630px;border:1px solid var(--gray-light,#d9dedc);border-radius:14px;background:#fffefa" />
+								<p class="infv2-gpu-note">The visual explanations are based on our RTX A3000 lab. The detailed chapter below extends these ideas to modern inference hardware.</p>
+							</section>
+						)}
+
 						<slot />
 
 						{
@@ -113,7 +122,19 @@ if (slug) crumbs.push({ label: title });
 			</div>
 		</div>
 		<Footer />
+		<style>
+			.infv2-gpu-workbench { margin: 2rem 0 3rem; }
+			.infv2-gpu-workbench p { text-align: left; hyphens: none; font-size: 1rem; line-height: 1.7; }
+			.infv2-gpu-workbench h2 { font-size: 1.45rem; }
+			.infv2-gpu-note { color: var(--gray,#59697b); font-size: .9rem !important; }
+		</style>
 		<script>
+			window.addEventListener('message', (event) => {
+				if (event.origin !== window.location.origin || event.data?.type !== 'gpu-lab-height') return;
+				const frame = document.getElementById('gpu-workbench-frame');
+				if (frame && Number.isFinite(event.data.height)) frame.style.height = Math.max(400, Math.min(1050, event.data.height + 18)) + 'px';
+			});
+
 			document.querySelectorAll('.infv2-article pre').forEach((pre) => {
 				if (pre.querySelector('.infv2-copy')) return;
 				pre.classList.add('infv2-code-wrap');
