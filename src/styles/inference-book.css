@@ -221,3 +221,30 @@
 .hardware-roofline p { font-size:12px; line-height:1.6; margin:0; }
 @media (prefers-reduced-motion:reduce) { .hardware-track i { animation:none; } .hardware-queue i,.hardware-workers i { transition:none; } }
 @media(max-width:560px) { .hardware-queue,.hardware-workers { grid-template-columns: 80px 1fr; } .hardware-queue small,.hardware-workers small { grid-column:2; text-align:left; } }
+
+
+/* GPU foundations: compact interactive instruments within existing book pages. */
+.hardware-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:17px 0}
+.hardware-metrics>div{background:#edf1e4;border:1px solid #d5ddcc;border-radius:4px;padding:12px;min-width:0}
+.hardware-metrics span{display:block;font-size:11px;color:#66776b;line-height:1.5}
+.hardware-metrics strong{display:block;font-size:18px;line-height:1.5;color:#214d3c;font-weight:650}
+.hardware-copy{margin:18px 0 25px}
+.hardware-matrix-demo{display:flex;align-items:center;justify-content:center;gap:12px;margin:38px 0 25px}
+.hardware-matrix-demo>b{font-size:23px;color:#66776b}
+.hardware-grid{display:grid;grid-template-columns:repeat(3,35px);gap:4px}
+.hardware-grid.vector{grid-template-columns:35px}
+.hardware-grid span{display:grid;place-items:center;width:35px;height:35px;background:#edf1e4;border:1px solid #cad7c4;border-radius:3px;font:600 14px ui-monospace,monospace;transition:background .2s}
+.hardware-grid span.is-active{background:#d7b18a;border-color:#b77b48}
+.hardware-grid span.is-done{background:#bdd5c2;border-color:#39735c}
+.hardware-bars{margin:24px 0}
+.hardware-bars label{display:block;font-size:12px;color:#66776b;margin:12px 0 5px}
+.hardware-bars>div{height:19px;background:#edf1e4;border-radius:4px;overflow:hidden}
+.hardware-bars i{display:block;height:100%;width:0;background:#39735c;transition:width .25s}
+.hardware-bars>div:last-child i{background:#b77b48}
+.hardware-roofline-plot{width:100%;height:auto;margin:18px 0 8px}
+.hardware-answer-options{display:flex;flex-wrap:wrap;gap:8px;margin:25px 0}
+.hardware-answer-options button{background:#f5f6ed;border:1px solid #b8c7b0;border-radius:4px;padding:10px 12px;font:600 12px inherit;color:#214d3c;cursor:pointer}
+.hardware-answer-options button:hover,.hardware-answer-options button:focus-visible{background:#e4ecdf;border-color:#214d3c}
+.inference-book .book-page p{text-align:left;hyphens:none;word-spacing:normal}
+@media(max-width:620px){.hardware-matrix-demo{gap:6px}.hardware-grid{grid-template-columns:repeat(3,28px)}.hardware-grid.vector{grid-template-columns:28px}.hardware-grid span{width:28px;height:30px}.hardware-metrics strong{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.hardware-grid span,.hardware-bars i{transition:none}}
