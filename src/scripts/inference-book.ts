@@ -11,6 +11,34 @@ if (book) {
   let turn: Animation | undefined;
   let batchTimer: number | undefined;
 
+  // Chapter 01: GPU factory — a teaching model of resource bottlenecks.
+  const delivery = find<HTMLInputElement>('#hardware-delivery');
+  const compute = find<HTMLInputElement>('#hardware-compute');
+  function updateHardware() {
+    const d = Number(delivery.value);
+    const c = Number(compute.value);
+    find<HTMLOutputElement>('#hardware-delivery-value').textContent = `${d} / 3`;
+    find<HTMLOutputElement>('#hardware-compute-value').textContent = `${c} / 3`;
+    const waiting = d > c ? 5 : d === c ? 1 : 0;
+    all<HTMLElement>('[data-hardware-queue] i').forEach((cell, i) => {
+      cell.classList.toggle('is-waiting', i < waiting);
+    });
+    all<HTMLElement>('[data-hardware-workers] i').forEach((cell, i) => {
+      cell.classList.toggle('is-idle', d < c && i >= d);
+    });
+    find('[data-hardware-queue-label]').textContent = d > c ? 'Queue builds' : d < c ? 'No backlog' : 'Short queue';
+    find('[data-hardware-worker-label]').textContent = d < c ? 'Some idle' : 'Working';
+    find('[data-hardware-roofline-label]').textContent = d < c ? 'Memory-bound' : d > c ? 'Compute-bound' : 'Balanced resources';
+    find('[data-hardware-explanation]').textContent = d < c
+      ? 'Workers are ready, but deliveries are too slow. Some workers wait for data: the memory-bound side of the roofline.'
+      : d > c
+        ? 'Materials arrive faster than workers can process them. Pending work builds up: the compute-bound side of the roofline.'
+        : 'Delivery and compute are balanced. The workers have enough data to keep moving.';
+  }
+  delivery.addEventListener('input', updateHardware);
+  compute.addEventListener('input', updateHardware);
+  updateHardware();
+
   function stopBatch() {
     window.clearInterval(batchTimer);
     batchTimer = undefined;
