@@ -2,6 +2,11 @@
 const sections = [
   { id: 'start', label: 'The field guide' },
   { id: 'hardware', label: 'Know your GPU' },
+  { id: 'memory', label: 'Move the bytes' },
+  { id: 'matrices', label: 'Multiply the numbers' },
+  { id: 'reuse', label: 'Reuse the weights' },
+  { id: 'limits', label: 'Find the speed limit' },
+  { id: 'evidence', label: 'Trust the measurements' },
   { id: 'tokens', label: 'One token at a time' },
   { id: 'cache', label: 'Remember the work' },
   { id: 'roofline', label: 'Find the bottleneck' },
@@ -73,6 +78,125 @@ const base = '/concepts/llm-inference-v2/learn';
             <p>Left: workers wait for bytes. Right: workers are busy calculating. The bend is where the limiting resource changes.</p>
           </div>
           <span class="page-number">03</span>
+        </div>
+      </section>
+
+
+      <section class="book-spread" id="spread-memory" data-spread="memory" aria-labelledby="title-memory">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">01 / HARDWARE FOUNDATIONS · MEMORY</p>
+          <h3 id="title-memory">The warehouse is big.<br/><em>The doorway has a speed limit.</em></h3>
+          <p>A GPU stores numbers in video memory, or <strong>VRAM</strong>. Its <strong>capacity</strong> tells us how much fits. Its <strong>bandwidth</strong> tells us how quickly data can move. These are different properties.</p>
+          <div class="analogy"><span>THINK OF IT THIS WAY</span><p>A warehouse may hold thousands of boxes, but a narrow loading dock still limits how quickly workers receive them.</p></div>
+          <p>Copying an array means reading every number from its source and writing every number to its destination. Both directions count as traffic.</p>
+          <p><strong>FP16</strong> means each number occupies two bytes. Sixteen million FP16 values occupy 32 MB; copying them moves about 64 MB in total.</p>
+          <a class="chapter-link" href={`${base}/gpu-fundamentals/`}>Read the detailed memory explanation →</a>
+          <span class="page-number">04</span>
+        </div>
+        <div class="book-page experiment">
+          <div class="experiment-heading"><span>TRY IT / FOLLOW THE BYTES</span><span class="live-tag">MEMORY COPY</span></div>
+          <p class="demo-caption">Choose how many FP16 values to copy.</p>
+          <div class="hardware-factory hardware-copy"><div class="hardware-factory-top"><div class="hardware-station"><strong>Source</strong><span>Read</span></div><div class="hardware-track"><i></i><i></i><i></i></div><div class="hardware-station workers"><strong>Destination</strong><span>Write</span></div></div></div>
+          <label class="range-label" for="copy-count">Number of values <output id="copy-count-value">16 million</output></label>
+          <input id="copy-count" type="range" min="1" max="32" step="1" value="16"/>
+          <div class="hardware-metrics"><div><span>Bytes read</span><strong data-copy-read>32 MB</strong></div><div><span>Bytes written</span><strong data-copy-write>32 MB</strong></div><div><span>Total traffic</span><strong data-copy-total>64 MB</strong></div><div><span>Time at 237.5 GB/s</span><strong data-copy-time>0.269 ms</strong></div></div>
+          <p class="demo-explanation">Our RTX A3000 notebook measured about <strong>237.5 GB/s</strong> effective copy bandwidth. The slider scales the expected transfer time using that measured rate.</p>
+          <p class="book-note">GB is decimal. Timing estimates assume the same sustained bandwidth; small copies can have additional overhead.</p>
+          <span class="page-number">05</span>
+        </div>
+      </section>
+
+      <section class="book-spread" id="spread-matrices" data-spread="matrices" aria-labelledby="title-matrices">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">01 / HARDWARE FOUNDATIONS · COMPUTE</p>
+          <h3 id="title-matrices">A matrix is a grid.<br/><em>A GPU does the arithmetic.</em></h3>
+          <p>A <strong>vector</strong> is a line of numbers. A <strong>matrix</strong> is a grid. Neural networks use matrices to transform inputs into new representations.</p>
+          <p>For each output number, multiply matching entries and add them together. The example on the right uses just two rows, but language models repeat this operation at enormous scale.</p>
+          <div class="analogy"><span>THE VOCABULARY</span><p>A <strong>FLOP</strong> is one floating-point operation. <strong>FLOP/s</strong> is a rate. A trillion operations per second is one <strong>TFLOP/s</strong>. <strong>GEMV</strong> is matrix–vector multiplication; <strong>GEMM</strong> is matrix–matrix multiplication.</p></div>
+          <p>GPU <strong>Tensor Cores</strong> are specialized execution units that accelerate supported matrix calculations.</p>
+          <span class="page-number">06</span>
+        </div>
+        <div class="book-page experiment">
+          <div class="experiment-heading"><span>TRY IT / MULTIPLY A ROW</span><span class="live-tag">STEP BY STEP</span></div>
+          <div class="hardware-matrix-demo"><div class="hardware-grid" data-matrix-a><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div><b>×</b><div class="hardware-grid vector"><span>2</span><span>1</span><span>4</span></div><b>=</b><div class="hardware-grid vector" data-matrix-result><span>?</span><span>?</span></div></div>
+          <p class="demo-explanation" data-matrix-explanation>Start with the first row. Each output is the sum of three multiplications.</p>
+          <div class="demo-controls"><button class="book-button" data-matrix-next>Calculate next row →</button><button class="quiet-button" data-matrix-reset>Reset</button></div>
+          <div class="analogy"><span>THE LARGE VERSION</span><p>A 4096 × 4096 weight matrix multiplied by 512 input columns requires approximately <strong>17.18 billion operations</strong>. Our measured throughput for that shape was <strong>43.73 TFLOP/s</strong>.</p></div>
+          <span class="page-number">07</span>
+        </div>
+      </section>
+
+      <section class="book-spread" id="spread-reuse" data-spread="reuse" aria-labelledby="title-reuse">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">01 / HARDWARE FOUNDATIONS · REUSE</p>
+          <h3 id="title-reuse">Fetch once.<br/><em>Do more useful work.</em></h3>
+          <p>Imagine opening a cookbook for one recipe. Now prepare many dishes while the same book is open. You get more use from the same retrieval.</p>
+          <p>Similarly, a matrix multiplication can reuse the same <strong>weights</strong> across many input columns. This increases the opportunity to do more arithmetic per byte moved.</p>
+          <div class="analogy"><span>THE KEY TERM</span><p><strong>Arithmetic intensity</strong> = operations performed ÷ bytes transferred. Higher intensity can move a workload away from a memory bottleneck.</p></div>
+          <p>Batching changes the shape of the work, not just the number of tasks. More batching is not guaranteed to be faster because different kernels and memory behaviors matter.</p>
+          <span class="page-number">08</span>
+        </div>
+        <div class="book-page experiment">
+          <div class="experiment-heading"><span>TRY IT / REUSE THE WEIGHTS</span><span class="live-tag">RTX A3000 RESULTS</span></div>
+          <label class="range-label" for="reuse-batch">Input columns <output id="reuse-batch-value">512</output></label>
+          <input id="reuse-batch" type="range" min="0" max="6" step="1" value="3"/>
+          <div class="hardware-metrics"><div><span>Arithmetic intensity</span><strong data-reuse-ai>409.6</strong></div><div><span>Achieved throughput</span><strong data-reuse-tf>43.73 TFLOP/s</strong></div></div>
+          <div class="hardware-bars"><label>Work per byte</label><div><i data-reuse-ai-bar></i></div><label>Operations per second</label><div><i data-reuse-tf-bar></i></div></div>
+          <p class="demo-explanation" data-reuse-explanation>At 512 columns, the weights can be reused across many inputs. This workload achieved the highest throughput in our consolidated sweep.</p>
+          <p class="book-note">The 1- and 32-column teaching points use estimated latencies because their original trials were inconsistent. Other points are measured. Arithmetic intensity uses idealized tensor traffic.</p>
+          <span class="page-number">09</span>
+        </div>
+      </section>
+
+      <section class="book-spread" id="spread-limits" data-spread="limits" aria-labelledby="title-limits">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">01 / HARDWARE FOUNDATIONS · ROOFLINE</p>
+          <h3 id="title-limits">Two speed limits.<br/><em>Only one binds first.</em></h3>
+          <p>Picture the same factory. On some days, workers stand ready because materials have not arrived. On other days, deliveries pile up because the workers are fully occupied.</p>
+          <p>The <strong>roofline model</strong> combines those two limits: <strong>memory bandwidth</strong> and <strong>compute throughput</strong>.</p>
+          <div class="analogy"><span>WHY IT MATTERS</span><p>If workers wait for data, buying faster workers may not help. If workers are already busy, widening the loading dock may not help. First identify the bottleneck; then choose the optimization.</p></div>
+          <p>This becomes crucial for LLMs: processing many prompt tokens can reuse weights, while generating one token often offers much less reuse.</p>
+          <span class="page-number">10</span>
+        </div>
+        <div class="book-page experiment">
+          <div class="experiment-heading"><span>TRY IT / FIND THE BOTTLENECK</span><span class="live-tag">ROOFLINE</span></div>
+          <svg class="hardware-roofline-plot" viewBox="0 0 450 245" role="img" aria-label="Roofline graph: sloping bandwidth limit and flat compute limit">
+            <path d="M40 18 V207 H435" stroke="#8c9b8a" stroke-width="1.4" fill="none"/>
+            <path d="M40 207 L260 55 H425" stroke="#214d3c" stroke-width="4" fill="none"/>
+            <path d="M260 55 V207" stroke="#aab7a8" stroke-dasharray="4 4"/>
+            <circle cx="260" cy="55" r="5" fill="#b77b48"/>
+            <circle cx="145" cy="134" r="9" fill="#b77b48" stroke="#fff" stroke-width="2" data-roofline-cursor/>
+            <text x="72" y="83" font-size="11" fill="#66776b">MEMORY LIMIT</text>
+            <text x="290" y="41" font-size="11" fill="#66776b">COMPUTE LIMIT</text>
+            <text x="244" y="222" font-size="10" fill="#66776b">RIDGE</text>
+            <text x="225" y="241" font-size="11" text-anchor="middle" fill="#66776b">Arithmetic intensity →</text>
+          </svg>
+          <label class="range-label" for="hardware-roof-slider">Work per byte <output id="hardware-roof-value">50 FLOPs/byte</output></label>
+          <input id="hardware-roof-slider" type="range" min="1" max="400" step="1" value="50"/>
+          <p class="demo-explanation" data-hardware-roof-description>Workers wait for data. Reducing memory traffic or reusing weights could help.</p>
+          <div class="analogy"><span>OUR MEASURED REFERENCE POINTS</span><p>Memory copy: <strong>237.5 GB/s</strong>. Best measured GEMM: <strong>43.73 TFLOP/s</strong>. Their simplified crossover is about <strong>184 FLOPs/byte</strong>.</p></div>
+          <span class="page-number">11</span>
+        </div>
+      </section>
+
+      <section class="book-spread" id="spread-evidence" data-spread="evidence" aria-labelledby="title-evidence">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">01 / HARDWARE FOUNDATIONS · MEASUREMENT</p>
+          <h3 id="title-evidence">Fast numbers are exciting.<br/><em>Trustworthy numbers are useful.</em></h3>
+          <p>GPU work is often asynchronous: the CPU can queue a calculation before the GPU has finished it. That is why we measure elapsed device time using <strong>CUDA events</strong> and proper synchronization.</p>
+          <p>We also <strong>warm up</strong> the GPU, repeat experiments, and inspect the variation. One unusually fast or slow number does not explain a system.</p>
+          <div class="analogy"><span>OUR RULE</span><p>Keep measured results separate from estimates. An estimate can help explain a concept, but it cannot prove an optimization worked.</p></div>
+          <p>We now have the vocabulary needed to follow a real model through memory, matrix calculations, and token generation.</p>
+          <span class="page-number">12</span>
+        </div>
+        <div class="book-page experiment">
+          <div class="experiment-heading"><span>TRY IT / PERFORMANCE DETECTIVE</span><span class="live-tag">BENCHMARK EVIDENCE</span></div>
+          <p>One batch-32 run reported a median of <strong>2.7542 ms</strong> but a fastest trial of <strong>0.1564 ms</strong>. Which number proves steady-state GPU performance?</p>
+          <div class="hardware-answer-options"><button data-evidence-answer="median">The median</button><button data-evidence-answer="fastest">The fastest</button><button data-evidence-answer="neither">Neither alone</button></div>
+          <p class="demo-explanation" data-evidence-feedback aria-live="polite">Choose an answer, then compare what each measurement can and cannot establish.</p>
+          <div class="hardware-metrics"><div><span>Memory capacity</span><strong>6 GiB</strong></div><div><span>Copy bandwidth</span><strong>237.5 GB/s</strong></div><div><span>Best GEMM</span><strong>43.73 TFLOP/s</strong></div><div><span>SM count</span><strong>32</strong></div></div>
+          <p class="book-note">These are notebook observations for the RTX A3000, not theoretical GPU peak specifications.</p>
+          <span class="page-number">13</span>
         </div>
       </section>
 
