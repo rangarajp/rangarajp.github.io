@@ -15,19 +15,30 @@ if (book) {
 
   // Chapter 02: each interactive figure is a small teaching model or a labeled measurement.
   const q2 = (selector: string) => find<HTMLElement>(selector);
-  const tokenExamples = [['The','GPU','reads','tokens'],['One','token','at','a','time'],['Cache','keys','and','values']];
-  const tokenSelect = find<HTMLSelectElement>('#q2-token-input');
-  function drawQ2Tokens() {
-    q2('[data-q2-tokens]').innerHTML = tokenExamples[Number(tokenSelect.value)].map((w,i)=>'<span class="q2-cell" style="animation-delay:'+i*90+'ms">'+w+'</span>').join('');
-  }
-  tokenSelect.addEventListener('change',drawQ2Tokens); drawQ2Tokens();
-  const prefillSlider = find<HTMLInputElement>('#q2-prefill-size');
-  function drawQ2Prefill(active=false) {
-    const n=[8,16,24,32][Number(prefillSlider.value)-1];
-    q2('#q2-prefill-value').textContent=String([32,64,96,128][Number(prefillSlider.value)-1]);
-    q2('[data-q2-prefill-grid]').innerHTML=Array.from({length:n},(_,i)=>'<span class="q2-cell '+(active?'is-on':'')+'" style="animation-delay:'+i*16+'ms"></span>').join('');
-  }
-  prefillSlider.addEventListener('input',()=>drawQ2Prefill()); find('[data-q2-prefill-play]').addEventListener('click',()=>drawQ2Prefill(true));drawQ2Prefill();
+  const prefillSwitch = find<HTMLFieldSetElement>('[data-q2-prefill-switch]');
+  const prefillTimesMs = [151.12, 334.79];
+  const prefillTokens = [128, 512];
+  const prefillBars = all('[data-q2-prefill-bar]');
+  const prefillResults = all('[data-q2-prefill-result]');
+  const prefillCaption = find('[data-q2-prefill-caption]');
+  const promptRate = new Intl.NumberFormat('en', { maximumFractionDigits: 0 });
+  prefillSwitch.addEventListener('change', () => {
+    const selected = prefillSwitch.querySelector<HTMLInputElement>('input:checked');
+    const showRate = selected?.value === 'throughput';
+    const values = showRate
+      ? prefillTimesMs.map((timeMs, i) => prefillTokens[i] * 1000 / timeMs)
+      : prefillTimesMs;
+    const max = Math.max(...values);
+    values.forEach((value, i) => {
+      prefillBars[i].style.width = `${value / max * 100}%`;
+      prefillResults[i].textContent = showRate ? `${promptRate.format(value)} tok/s` : `${value.toFixed(2)} ms`;
+    });
+    prefillCaption.textContent = showRate
+      ? 'Total prompt tokens divided by the median batch time.'
+      : 'Both bars show the median time to finish the batch.';
+  });
+  prefillSwitch.hidden = false;
+
   let decodeStep=0;
   function drawQ2Decode(){
     q2('[data-q2-decode-grid]').innerHTML=['Prompt',...['The','GPU','works','fast'].slice(0,decodeStep)].map((t,i)=>'<span class="q2-cell '+(i?'is-on':'')+'">'+t+'</span>').join('');
@@ -67,14 +78,6 @@ if (book) {
     find('[data-q2-matrix-toggle]').textContent=isDecodeMatrix?'Switch to prefill →':'Switch to decode →';
   }
   find('[data-q2-matrix-toggle]').addEventListener('click',()=>{isDecodeMatrix=!isDecodeMatrix;drawQ2Matrix();});drawQ2Matrix();
-  const aiSlider=find<HTMLInputElement>('#q2-ai-batch');
-  function drawQ2AI(){
-    const b=Number(aiSlider.value);
-    q2('#q2-ai-batch-value').textContent=String(b);
-    q2('[data-q2-ai]').textContent=b+' FLOP'+(b===1?'':'s')+'/byte';
-    q2('[data-q2-ai-marker]').style.left=(b/4*100)+'%';
-  }
-  aiSlider.addEventListener('input',drawQ2AI);drawQ2AI();
   const profileMode=find<HTMLSelectElement>('#q2-profile-mode');
   function drawQ2Profile(){
     const dec=profileMode.value==='decode', mm=dec?293.13:117.24, att=dec?1.37:0;
@@ -83,7 +86,7 @@ if (book) {
     q2('[data-q2-profile-mm]').style.width=(mm/293.13*100)+'%';
     q2('[data-q2-profile-attn]').style.width=(att/293.13*100)+'%';
     q2('[data-q2-profile-calls]').textContent=dec?'339 across 3 steps':'113 in 1 pass';
-    q2('[data-q2-profile-note]').textContent=dec?'The decode capture covers three forwards. The 293.13 ms matrix-multiply total averages 97.71 ms per forward. The efficient-attention operator took 1.37 ms across 84 calls.':'One prompt forward accounts for the 117.24 ms matrix-multiply total. The attention timing is unlisted in the prefill operator summary.';
+    q2('[data-q2-profile-note]').textContent=dec?'Across three decode forwards, the 293.13 ms matrix-multiply total averages 97.71 ms per forward. The efficient-attention operator ran 84 times.':'The prefill summary lists 117.24 ms for matrix multiplies.';
   }
   profileMode.addEventListener('change',drawQ2Profile);drawQ2Profile();
   const caseChoice=find<HTMLSelectElement>('#q2-case-choice');
