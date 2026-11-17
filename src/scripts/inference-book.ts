@@ -39,6 +39,87 @@ if (book) {
   compute.addEventListener('input', updateHardware);
   updateHardware();
 
+
+  // Hardware chapter: five more interactive spreads, in the same book runtime.
+  const copyCount = find<HTMLInputElement>('#copy-count');
+  function updateCopy() {
+    const n = Number(copyCount.value);
+    const mb = n * 2;
+    find('#copy-count-value').textContent = n + ' million';
+    find('[data-copy-read]').textContent = mb + ' MB';
+    find('[data-copy-write]').textContent = mb + ' MB';
+    find('[data-copy-total]').textContent = (mb * 2) + ' MB';
+    find('[data-copy-time]').textContent = (mb * 2 / 237.5).toFixed(3) + ' ms';
+  }
+  copyCount.addEventListener('input', updateCopy); updateCopy();
+
+  let matrixRow = 0;
+  const matrixCells = all<HTMLElement>('[data-matrix-a] span');
+  const matrixResults = all<HTMLElement>('[data-matrix-result] span');
+  function resetMatrix() {
+    matrixRow = 0;
+    matrixCells.forEach(c => c.classList.remove('is-active'));
+    matrixResults.forEach(c => { c.textContent = '?'; c.classList.remove('is-done'); });
+    find('[data-matrix-explanation]').textContent = 'Start with the first row. Each output is the sum of three multiplications.';
+  }
+  find('[data-matrix-next]').addEventListener('click', () => {
+    if (matrixRow >= 2) resetMatrix();
+    matrixCells.forEach((c, i) => c.classList.toggle('is-active', Math.floor(i / 3) === matrixRow));
+    matrixResults[matrixRow].textContent = matrixRow === 0 ? '16' : '37';
+    matrixResults[matrixRow].classList.add('is-done');
+    find('[data-matrix-explanation]').textContent = matrixRow === 0
+      ? 'First row: (1 × 2) + (2 × 1) + (3 × 4) = 16.'
+      : 'Second row: (4 × 2) + (5 × 1) + (6 × 4) = 37.';
+    matrixRow++;
+  });
+  find('[data-matrix-reset]').addEventListener('click', resetMatrix);
+
+  const reuse = [
+    {b:1,ai:1,tf:0.15,estimated:true},{b:32,ai:31.51,tf:6.32,estimated:true},
+    {b:128,ai:120.47,tf:20.689},{b:512,ai:409.6,tf:43.733},
+    {b:1024,ai:682.67,tf:34.632},{b:2048,ai:1024,tf:36.253},
+    {b:4096,ai:1365.33,tf:38.289}
+  ];
+  const reuseInput = find<HTMLInputElement>('#reuse-batch');
+  function updateReuse() {
+    const d = reuse[Number(reuseInput.value)];
+    find('#reuse-batch-value').textContent = String(d.b);
+    find('[data-reuse-ai]').textContent = d.ai.toFixed(1);
+    find('[data-reuse-tf]').textContent = d.tf.toFixed(2) + ' TFLOP/s';
+    find<HTMLElement>('[data-reuse-ai-bar]').style.width = (d.ai / 1365.33 * 100) + '%';
+    find<HTMLElement>('[data-reuse-tf-bar]').style.width = (d.tf / 43.733 * 100) + '%';
+    find('[data-reuse-explanation]').textContent = d.estimated
+      ? 'This small-batch point is an estimate because the original trials varied substantially. More reuse generally raises arithmetic intensity.'
+      : d.b === 512
+        ? 'At 512 columns, the weights can be reused across many inputs. This was the fastest throughput measured in our sweep.'
+        : 'This point was measured in the notebook. Higher batch size does not always mean higher throughput.';
+  }
+  reuseInput.addEventListener('input', updateReuse); updateReuse();
+
+  const roofInput = find<HTMLInputElement>('#hardware-roof-slider');
+  function updateRoof() {
+    const ai = Number(roofInput.value);
+    const bound = ai < 184.13;
+    find('#hardware-roof-value').textContent = ai + ' FLOPs/byte';
+    find('[data-hardware-roof-description]').textContent = bound
+      ? 'Memory-bound: workers can calculate, but the next bytes have not arrived. Reuse data or reduce transfers.'
+      : 'Compute-bound: the workers have enough data to stay busy. Faster arithmetic and efficient matrix kernels may help.';
+    const x = 40 + Math.min(ai / 400, 1) * 385;
+    const y = 207 - Math.min(ai / 184.13, 1) * 152;
+    const cursor = find<SVGCircleElement>('[data-roofline-cursor]');
+    cursor.setAttribute('cx', String(x)); cursor.setAttribute('cy', String(y));
+  }
+  roofInput.addEventListener('input', updateRoof); updateRoof();
+
+  all<HTMLButtonElement>('[data-evidence-answer]').forEach(button => button.addEventListener('click', () => {
+    const answer = button.dataset.evidenceAnswer;
+    find('[data-evidence-feedback]').textContent = answer === 'neither'
+      ? 'Correct. Repeat under controlled conditions. The median summarizes the run; the fastest trial suggests a possible path, but neither alone proves stable speed.'
+      : answer === 'median'
+        ? 'The median summarizes the trials, but these trials appear to have mixed operating conditions. It does not establish a stable baseline.'
+        : 'The fastest trial is promising, but a single fast result does not establish repeatability. We need controlled repeated runs.';
+  }));
+
   function stopBatch() {
     window.clearInterval(batchTimer);
     batchTimer = undefined;
