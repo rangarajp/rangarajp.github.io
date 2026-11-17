@@ -192,3 +192,32 @@
   .book-spread { break-inside: avoid; margin-bottom: 30px !important; box-shadow: none; }
   .book-binding, .book-tabs, .book-navigation, .demo-controls { display: none !important; }
 }
+
+
+/* Chapter 01: hardware foundations — same book pages and visual grammar as other spreads. */
+.hardware-factory { margin: 18px 0 22px; padding: 18px 16px; background: #edf1e4; border: 1px solid #ced9c3; border-radius: 5px; }
+.hardware-factory-top { display: grid; grid-template-columns: 1fr 1.35fr 1fr; align-items: center; gap: 9px; }
+.hardware-station { background: #fbf8ef; border: 1px solid #a6b89c; border-radius: 4px; padding: 13px 5px; text-align: center; }
+.hardware-station strong,.hardware-station span { display:block; font-size: 12px; line-height:1.6; }
+.hardware-station span { font-size: 10px; color:#66776b; }
+.hardware-station.workers { border-color: #b77b48; }
+.hardware-track { height: 23px; background:#dce7d8; border-radius: 30px; overflow:hidden; position:relative; }
+.hardware-track i { display:block; position:absolute; top:6px; left:-18%; width:15%; height:11px; border-radius:3px; background:#39735c; animation: hardware-delivery 2.4s linear infinite; }
+.hardware-track i:nth-child(2) { animation-delay: -.8s; }
+.hardware-track i:nth-child(3) { animation-delay: -1.6s; }
+@keyframes hardware-delivery { to { left:110%; } }
+.hardware-queue,.hardware-workers { display:grid; grid-template-columns: 95px 1fr 76px; align-items:center; gap:9px; margin-top:18px; }
+.hardware-queue>span,.hardware-workers>span { font: 9px ui-monospace,monospace; letter-spacing:1px; color:#66776b; }
+.hardware-queue>div,.hardware-workers>div { display:flex; gap:4px; }
+.hardware-queue i,.hardware-workers i { flex:1; height:20px; border:1px solid #a6b89c; background:#f9faf5; border-radius:3px; transition: background .25s; }
+.hardware-queue i.is-waiting { background:#b77b48; border-color:#b77b48; }
+.hardware-workers i { background:#39735c; }
+.hardware-workers i.is-idle { background:#f9faf5; }
+.hardware-queue small,.hardware-workers small { font:10px ui-monospace,monospace; text-align:right; color:#66776b; }
+.hardware-roofline { margin-top:22px; padding:15px; border:1px solid #d6d9ca; background:#f4f5ed; border-radius:4px; }
+.hardware-roofline>div:first-child { display:flex; justify-content:space-between; gap:8px; font:9px ui-monospace,monospace; letter-spacing:.7px; color:#66776b; }
+.hardware-roofline>div:first-child span { color:#214d3c; font-weight:700; }
+.hardware-roofline-chart svg { display:block; width:100%; max-height:120px; }
+.hardware-roofline p { font-size:12px; line-height:1.6; margin:0; }
+@media (prefers-reduced-motion:reduce) { .hardware-track i { animation:none; } .hardware-queue i,.hardware-workers i { transition:none; } }
+@media(max-width:560px) { .hardware-queue,.hardware-workers { grid-template-columns: 80px 1fr; } .hardware-queue small,.hardware-workers small { grid-column:2; text-align:left; } }
