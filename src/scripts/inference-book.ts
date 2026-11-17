@@ -7,10 +7,89 @@ if (book) {
   const spreads = all<HTMLElement>('[data-spread]');
   const tabs = all<HTMLAnchorElement>('[data-book-tab]');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const sectionNames = ['Cover','Know your GPU','Meet your hardware','Move the bytes','Time the journey','Count the work','Multiply the numbers','Reuse the weights','Find the speed limit','Trust the measurements','One token at a time','Remember the work','Find the bottleneck','Make room for more','Keep the GPU busy'];
+  const sectionNames = ['Cover','Know your GPU','Meet your hardware','Move the bytes','Time the journey','Count the work','Multiply the numbers','Reuse the weights','Find the speed limit','Trust the measurements','Meet Qwen','Read the prompt','One token at a time','Remember the work','Share the weights','Big matrices, thin vectors','Reuse changes the limit','Look inside the GPU','The evidence board','One token at a time','Remember the work','Find the bottleneck','Make room for more','Keep the GPU busy'];
   let current = 0;
   let turn: Animation | undefined;
   let batchTimer: number | undefined;
+
+
+  // Chapter 02: each interactive figure is a small teaching model or a labeled measurement.
+  const q2 = (selector: string) => find<HTMLElement>(selector);
+  const tokenExamples = [['The','GPU','reads','tokens'],['One','token','at','a','time'],['Cache','keys','and','values']];
+  const tokenSelect = find<HTMLSelectElement>('#q2-token-input');
+  function drawQ2Tokens() {
+    q2('[data-q2-tokens]').innerHTML = tokenExamples[Number(tokenSelect.value)].map((w,i)=>'<span class="q2-cell" style="animation-delay:'+i*90+'ms">'+w+'</span>').join('');
+  }
+  tokenSelect.addEventListener('change',drawQ2Tokens); drawQ2Tokens();
+  const prefillSlider = find<HTMLInputElement>('#q2-prefill-size');
+  function drawQ2Prefill(active=false) {
+    const n=[8,16,24,32][Number(prefillSlider.value)-1];
+    q2('#q2-prefill-value').textContent=String([32,64,96,128][Number(prefillSlider.value)-1]);
+    q2('[data-q2-prefill-grid]').innerHTML=Array.from({length:n},(_,i)=>'<span class="q2-cell '+(active?'is-on':'')+'" style="animation-delay:'+i*16+'ms"></span>').join('');
+  }
+  prefillSlider.addEventListener('input',()=>drawQ2Prefill()); find('[data-q2-prefill-play]').addEventListener('click',()=>drawQ2Prefill(true));drawQ2Prefill();
+  let decodeStep=0;
+  function drawQ2Decode(){
+    q2('[data-q2-decode-grid]').innerHTML=['Prompt',...['The','GPU','works','fast'].slice(0,decodeStep)].map((t,i)=>'<span class="q2-cell '+(i?'is-on':'')+'">'+t+'</span>').join('');
+    q2('[data-q2-decode-count]').textContent=decodeStep+' / 4';
+  }
+  find('[data-q2-decode-next]').addEventListener('click',()=>{decodeStep=decodeStep===4?0:decodeStep+1;drawQ2Decode();});
+  find('[data-q2-decode-reset]').addEventListener('click',()=>{decodeStep=0;drawQ2Decode();});drawQ2Decode();
+  const cacheData=[{n:32,on:3.80609,off:4.42215},{n:128,on:3.84876,off:5.84706},{n:512,on:4.07042,off:12.39456}];
+  const cacheSlider=find<HTMLInputElement>('#q2-cache-context');
+  function drawQ2Cache(){
+    const d=cacheData[Number(cacheSlider.value)];
+    q2('#q2-cache-context-value').textContent=String(d.n);
+    q2('[data-q2-cache-on-time]').textContent=d.on.toFixed(2)+' s';
+    q2('[data-q2-cache-off-time]').textContent=d.off.toFixed(2)+' s';
+    q2('[data-q2-cache-on]').style.width=(d.on/12.39456*100)+'%';
+    q2('[data-q2-cache-off]').style.width=(d.off/12.39456*100)+'%';
+    q2('[data-q2-cache-speed]').textContent=(d.off/d.on).toFixed(2)+'×';
+  }
+  cacheSlider.addEventListener('input',drawQ2Cache);drawQ2Cache();
+  const batchData=[{b:1,t:8.27185,ms:3868.54},{b:2,t:16.05551,ms:3986.17},{b:4,t:30.78599,ms:4157.74}];
+  const batchSlider=find<HTMLInputElement>('#q2-batch-size');
+  function drawQ2Batch(){
+    const d=batchData[Number(batchSlider.value)];
+    q2('#q2-batch-value').textContent=String(d.b);
+    q2('[data-q2-batch-rows]').innerHTML=Array.from({length:d.b},(_,i)=>'<div class="q2-batch-row"><span>REQUEST '+(i+1)+'</span><i></i><i></i><i></i><i></i><i></i></div>').join('');
+    q2('[data-q2-batch-throughput]').textContent=d.t.toFixed(2)+' tok/s';
+    q2('[data-q2-batch-latency]').textContent=(d.ms/1000).toFixed(2)+' s';
+  }
+  batchSlider.addEventListener('input',drawQ2Batch);drawQ2Batch();
+  let isDecodeMatrix=false;
+  function drawQ2Matrix(){
+    q2('[data-q2-matrix-input]').innerHTML=Array.from({length:isDecodeMatrix?1:9},()=>'<i></i>').join('');
+    q2('[data-q2-matrix-output]').innerHTML=Array.from({length:isDecodeMatrix?1:9},()=>'<i></i>').join('');
+    q2('[data-q2-matrix-label]').textContent=isDecodeMatrix?'DECODE · MATRIX × VECTOR-LIKE':'PREFILL · MATRIX × MATRIX';
+    q2('[data-q2-matrix-input]').classList.toggle('is-thin',isDecodeMatrix);
+    q2('[data-q2-matrix-output]').classList.toggle('is-thin',isDecodeMatrix);
+    find('[data-q2-matrix-toggle]').textContent=isDecodeMatrix?'Switch to prefill →':'Switch to decode →';
+  }
+  find('[data-q2-matrix-toggle]').addEventListener('click',()=>{isDecodeMatrix=!isDecodeMatrix;drawQ2Matrix();});drawQ2Matrix();
+  const aiSlider=find<HTMLInputElement>('#q2-ai-batch');
+  function drawQ2AI(){
+    const b=Number(aiSlider.value);
+    q2('#q2-ai-batch-value').textContent=String(b);
+    q2('[data-q2-ai]').textContent=b+' FLOP'+(b===1?'':'s')+'/byte';
+    q2('[data-q2-ai-marker]').style.left=(b/4*95)+'%';
+  }
+  aiSlider.addEventListener('input',drawQ2AI);drawQ2AI();
+  const profileMode=find<HTMLSelectElement>('#q2-profile-mode');
+  function drawQ2Profile(){
+    const dec=profileMode.value==='decode', mm=dec?293.13:117.24, att=dec?1.37:0;
+    q2('[data-q2-profile-mm-value]').textContent=mm.toFixed(2)+' ms';
+    q2('[data-q2-profile-attn-value]').textContent=dec?'1.37 ms':'not in top ops';
+    q2('[data-q2-profile-mm]').style.width=(mm/293.13*100)+'%';
+    q2('[data-q2-profile-attn]').style.width=(att/293.13*100)+'%';
+    q2('[data-q2-profile-calls]').textContent=dec?'339 across 3 steps':'113 in 1 pass';
+    q2('[data-q2-profile-note]').textContent=dec?'Decode captures 3 forward passes. Its cumulative aten::mm time is 293.13 ms, or about 97.71 ms per step. Attention totals 1.37 ms across 84 calls.':'Prefill captures 1 forward pass. The top-ops list includes 117.24 ms cumulative aten::mm time. Do not add operator and underlying kernel rows.';
+  }
+  profileMode.addEventListener('change',drawQ2Profile);drawQ2Profile();
+  const caseChoice=find<HTMLSelectElement>('#q2-case-choice');
+  const caseExplanations=['KV reuse makes long-context generation faster. In Experiment 02.4, cached and uncached output token IDs matched.','Batching raised aggregate throughput from 8.27 to 30.79 output tokens/s for 128-token prompts. Per-request latency did not fall.','Weight-only arithmetic intensity is an analytical estimate, not observed DRAM bandwidth. The difference between Experiment 02.3 and 02.4 baseline speed remains unexplained.'];
+  function drawQ2Case(){q2('[data-q2-case-explain]').textContent=caseExplanations[Number(caseChoice.value)];}
+  caseChoice.addEventListener('change',drawQ2Case);drawQ2Case();
 
   // Chapter 01: GPU factory — a teaching model of resource bottlenecks.
   const delivery = find<HTMLInputElement>('#hardware-delivery');
