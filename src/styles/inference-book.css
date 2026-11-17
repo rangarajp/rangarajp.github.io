@@ -248,3 +248,24 @@
 .inference-book .book-page p{text-align:left;hyphens:none;word-spacing:normal}
 @media(max-width:620px){.hardware-matrix-demo{gap:6px}.hardware-grid{grid-template-columns:repeat(3,28px)}.hardware-grid.vector{grid-template-columns:28px}.hardware-grid span{width:28px;height:30px}.hardware-metrics strong{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.hardware-grid span,.hardware-bars i{transition:none}}
+
+/* Chapter 01 additions: GPU inspection, latency, and FLOP/s. */
+.hardware-parts{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0}
+.hardware-parts button{border:1px solid #a7bba4;background:#f7f7ef;color:#214d3c;border-radius:4px;padding:9px 11px;font-size:12px;cursor:pointer}
+.hardware-parts button[aria-pressed="true"]{background:#214d3c;color:#fff}
+.hardware-inspection-visual{display:flex;gap:12px;align-items:stretch;background:#edf1e4;padding:17px;border-radius:5px;margin:15px 0}
+.hardware-inspection-vram{flex:1;min-height:110px;display:grid;place-items:center;background:#c9d9c6;border:2px solid #8fae93;border-radius:5px;font:600 12px ui-monospace,monospace;text-align:center}
+.hardware-inspection-sms{flex:1.4;display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.hardware-inspection-sms i{background:#7fa993;border:1px solid #39735c;border-radius:3px}
+.hardware-inspection-visual .highlight{outline:3px solid #b77b48;outline-offset:3px}
+.hardware-delivery-demo{display:grid;grid-template-columns:1fr 1.2fr 1fr;align-items:center;gap:8px;margin:25px 0}
+.hardware-delivery-demo .hardware-track i{animation-duration:var(--delivery-duration,2.4s)}
+.hardware-timebar{height:15px;background:#edf1e4;border-radius:10px;overflow:hidden;margin:12px 0 22px}
+.hardware-timebar i{display:block;height:100%;width:10%;background:#39735c;transition:width .2s}
+.hardware-flops-visual{display:flex;align-items:center;gap:13px;margin:22px 0}
+.hardware-flops-weight{background:#d4e2d2;border:1px solid #93ad8e;border-radius:5px;padding:15px 10px;text-align:center;font:600 14px ui-monospace,monospace}
+.hardware-flops-visual>span{font-size:24px}
+.hardware-flops-input{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.hardware-flops-input b{display:block;width:12%;height:46px;background:repeating-linear-gradient(90deg,#39735c 0 6px,#a8c4a7 6px 10px);border:1px solid #39735c;transition:width .25s}
+.hardware-flops-input small,.hardware-flops-weight small{font:10px ui-monospace,monospace;color:#66776b}
+@media(prefers-reduced-motion:reduce){.hardware-timebar i,.hardware-flops-input b{transition:none}}

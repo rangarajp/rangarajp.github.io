@@ -120,6 +120,54 @@ if (book) {
         : 'The fastest trial is promising, but a single fast result does not establish repeatability. We need controlled repeated runs.';
   }));
 
+
+  // Additional hardware spreads: device inspection, copy latency, and FLOP/s.
+  const partDetails: Record<string,string> = {
+    vram:'VRAM stores model weights, activations and caches. Our GPU has 6 GiB of device memory. A model must fit alongside its working tensors.',
+    sm:'Streaming multiprocessors (SMs) execute many threads. Our RTX A3000 laptop GPU has 32 SMs. More SMs do not automatically mean a faster workload.',
+    clock:'GPU clocks vary with power, temperature and workload. We observed low idle clocks and much higher clocks under sustained GEMM load.',
+    tensor:'Tensor Cores accelerate supported matrix operations. Their usefulness depends on data types, shapes, and which kernel is selected.'
+  };
+  all<HTMLButtonElement>('[data-part]').forEach(button=>button.addEventListener('click',()=>{
+    all<HTMLButtonElement>('[data-part]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+    find('[data-part-explanation]').textContent=partDetails[button.dataset.part || 'vram'];
+    find('[data-inspect-vram]').classList.toggle('highlight',button.dataset.part==='vram');
+    find('[data-inspect-sms]').classList.toggle('highlight',button.dataset.part!=='vram');
+  }));
+  const bwInput=find<HTMLInputElement>('#latency-bandwidth');
+  function updateLatency(){
+    const bw=Number(bwInput.value),ms=64/bw;
+    find('#latency-bandwidth-value').textContent=bw.toFixed(1)+' GB/s';
+    find('[data-latency-time]').textContent=ms.toFixed(3)+' ms';
+    find('[data-latency-rate]').textContent=bw.toFixed(1)+' GB/s';
+    find('[data-latency-us]').textContent=Math.round(ms*1000)+' μs';
+    find<HTMLElement>('[data-latency-bar]').style.width=Math.min(100,25/bw*100)+'%';
+    const track=find<HTMLElement>('.hardware-delivery-demo .hardware-track');
+    track.style.setProperty('--delivery-duration',(2.4*237.5/bw).toFixed(2)+'s');
+  }
+  bwInput.addEventListener('input',updateLatency);updateLatency();
+  const flopsData=[
+    {n:1,ms:0.224,estimated:true},{n:32,ms:0.170,estimated:true},
+    {n:128,ms:0.208},{n:512,ms:0.393},
+    {n:1024,ms:0.992},{n:2048,ms:1.896},{n:4096,ms:3.590}
+  ];
+  const flopsInput=find<HTMLInputElement>('#flops-columns');
+  function updateFlops(){
+    const d=flopsData[Number(flopsInput.value)];
+    const gf=2*4096*4096*d.n/1e9;
+    const tf=gf/d.ms/1000;
+    find('#flops-columns-value').textContent=String(d.n);
+    find('[data-flops-work]').textContent=gf.toFixed(2)+' GFLOPs';
+    find('[data-flops-ms]').textContent=d.ms.toFixed(3)+' ms';
+    find('[data-flops-rate]').textContent=tf.toFixed(2)+' TFLOP/s';
+    find('[data-flops-giga]').textContent=Math.round(tf*1000).toLocaleString('en-US')+' GFLOP/s';
+    find<HTMLElement>('[data-flops-blocks]').style.width=Math.max(8,Math.round(d.n/4096*100))+'%';
+    find('[data-flops-explanation]').textContent=d.estimated
+      ? 'This small-batch timing is an estimate, not a stable measurement. FLOP/s is calculated by dividing the total operations by the elapsed time.'
+      : 'This workload requires '+gf.toFixed(2)+' billion operations. Dividing by '+d.ms.toFixed(3)+' ms gives '+tf.toFixed(2)+' trillion operations per second.';
+  }
+  flopsInput.addEventListener('input',updateFlops);updateFlops();
+
   function stopBatch() {
     window.clearInterval(batchTimer);
     batchTimer = undefined;
