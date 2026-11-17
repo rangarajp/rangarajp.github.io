@@ -106,7 +106,7 @@ if (book) {
       : 'Compute-bound: the workers have enough data to stay busy. Faster arithmetic and efficient matrix kernels may help.';
     const x = 40 + Math.min(ai / 400, 1) * 385;
     const y = 207 - Math.min(ai / 184.13, 1) * 152;
-    const cursor = find<SVGCircleElement>('[data-roofline-cursor]');
+    const cursor = book.querySelector<SVGCircleElement>('[data-roofline-cursor]')!;
     cursor.setAttribute('cx', String(x)); cursor.setAttribute('cy', String(y));
   }
   roofInput.addEventListener('input', updateRoof); updateRoof();
