@@ -7,7 +7,7 @@ if (book) {
   const spreads = all<HTMLElement>('[data-spread]');
   const tabs = all<HTMLAnchorElement>('[data-book-tab]');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const sectionNames = ['Cover','Know your GPU','Meet your hardware','Move the bytes','Time the journey','Count the work','Multiply the numbers','Reuse the weights','Find the speed limit','Trust the measurements','Meet Qwen','Read the prompt','One token at a time','Remember the work','Share the weights','Big matrices, thin vectors','Reuse changes the limit','Look inside the GPU','The evidence board','One token at a time','Remember the work','Find the bottleneck','Make room for more','Keep the GPU busy'];
+  const sectionNames = ['Cover','Know your GPU','Meet your hardware','Move the bytes','Time the journey','Count the work','Multiply the numbers','Reuse the weights','Find the speed limit','Trust the measurements','Meet Qwen','Read the prompt','One token at a time','Remember the work','Share the weights','Big matrices, thin vectors','Reuse changes the limit','Look inside the GPU','The cost of a reply','One token at a time','Remember the work','Find the bottleneck','Make room for more','Keep the GPU busy'];
   let current = 0;
   let turn: Animation | undefined;
   let batchTimer: number | undefined;
@@ -59,9 +59,9 @@ if (book) {
   batchSlider.addEventListener('input',drawQ2Batch);drawQ2Batch();
   let isDecodeMatrix=false;
   function drawQ2Matrix(){
-    q2('[data-q2-matrix-input]').innerHTML=Array.from({length:isDecodeMatrix?1:9},()=>'<i></i>').join('');
-    q2('[data-q2-matrix-output]').innerHTML=Array.from({length:isDecodeMatrix?1:9},()=>'<i></i>').join('');
-    q2('[data-q2-matrix-label]').textContent=isDecodeMatrix?'DECODE · MATRIX × VECTOR-LIKE':'PREFILL · MATRIX × MATRIX';
+    q2('[data-q2-matrix-input]').innerHTML=Array.from({length:isDecodeMatrix?3:9},()=>'<i></i>').join('');
+    q2('[data-q2-matrix-output]').innerHTML=Array.from({length:isDecodeMatrix?3:9},()=>'<i></i>').join('');
+    q2('[data-q2-matrix-label]').textContent=isDecodeMatrix?'DECODE · ONE ROW × WEIGHTS':'PREFILL · MATRIX × MATRIX';
     q2('[data-q2-matrix-input]').classList.toggle('is-thin',isDecodeMatrix);
     q2('[data-q2-matrix-output]').classList.toggle('is-thin',isDecodeMatrix);
     find('[data-q2-matrix-toggle]').textContent=isDecodeMatrix?'Switch to prefill →':'Switch to decode →';
@@ -72,22 +72,27 @@ if (book) {
     const b=Number(aiSlider.value);
     q2('#q2-ai-batch-value').textContent=String(b);
     q2('[data-q2-ai]').textContent=b+' FLOP'+(b===1?'':'s')+'/byte';
-    q2('[data-q2-ai-marker]').style.left=(b/4*95)+'%';
+    q2('[data-q2-ai-marker]').style.left=(b/4*100)+'%';
   }
   aiSlider.addEventListener('input',drawQ2AI);drawQ2AI();
   const profileMode=find<HTMLSelectElement>('#q2-profile-mode');
   function drawQ2Profile(){
     const dec=profileMode.value==='decode', mm=dec?293.13:117.24, att=dec?1.37:0;
     q2('[data-q2-profile-mm-value]').textContent=mm.toFixed(2)+' ms';
-    q2('[data-q2-profile-attn-value]').textContent=dec?'1.37 ms':'not in top ops';
+    q2('[data-q2-profile-attn-value]').textContent=dec?'1.37 ms':'Not listed';
     q2('[data-q2-profile-mm]').style.width=(mm/293.13*100)+'%';
     q2('[data-q2-profile-attn]').style.width=(att/293.13*100)+'%';
     q2('[data-q2-profile-calls]').textContent=dec?'339 across 3 steps':'113 in 1 pass';
-    q2('[data-q2-profile-note]').textContent=dec?'Decode captures 3 forward passes. Its cumulative aten::mm time is 293.13 ms, or about 97.71 ms per step. Attention totals 1.37 ms across 84 calls.':'Prefill captures 1 forward pass. The top-ops list includes 117.24 ms cumulative aten::mm time. Do not add operator and underlying kernel rows.';
+    q2('[data-q2-profile-note]').textContent=dec?'The decode capture covers three forwards. The 293.13 ms matrix-multiply total averages 97.71 ms per forward. The efficient-attention operator took 1.37 ms across 84 calls.':'One prompt forward accounts for the 117.24 ms matrix-multiply total. The attention timing is unlisted in the prefill operator summary.';
   }
   profileMode.addEventListener('change',drawQ2Profile);drawQ2Profile();
   const caseChoice=find<HTMLSelectElement>('#q2-case-choice');
-  const caseExplanations=['KV reuse makes long-context generation faster. In Experiment 02.4, cached and uncached output token IDs matched.','Batching raised aggregate throughput from 8.27 to 30.79 output tokens/s for 128-token prompts. Per-request latency did not fall.','Weight-only arithmetic intensity is an analytical estimate, not observed DRAM bandwidth. The difference between Experiment 02.3 and 02.4 baseline speed remains unexplained.'];
+  const caseExplanations = [
+    'The 2.88 GiB of FP16 weights occupy almost all of the device memory PyTorch allocates when this Qwen model is loaded.',
+    'For one 512-token prompt and 32 new tokens, caching made generation 3.05 times as fast. Each decode step reused the keys and values from the earlier positions.',
+    'A batch of four requests produced 30.79 output tokens per second in total. Each request began with a 128-token prompt and produced 32 tokens.',
+    'With a 128-token prompt cache ready, one batch-one decode forward took 117.26 ms. This pass uses the previous token as input and produces scores for the next token.',
+  ];
   function drawQ2Case(){q2('[data-q2-case-explain]').textContent=caseExplanations[Number(caseChoice.value)];}
   caseChoice.addEventListener('change',drawQ2Case);drawQ2Case();
 
@@ -266,7 +271,7 @@ if (book) {
     });
     find<HTMLButtonElement>('[data-book-prev]').disabled = current === 0;
     find<HTMLButtonElement>('[data-book-next]').disabled = current === spreads.length - 1;
-    find('[data-book-position]').textContent = current === 0 ? 'Cover' : current <= 9 ? `Chapter 01 · Lesson ${current} of 9` : `Chapter ${String(current - 8).padStart(2,'0')} · ${sectionNames[current]}`;
+    find('[data-book-position]').textContent = current === 0 ? 'Cover' : current <= 9 ? `Chapter 01 · Lesson ${current} of 9` : current <= 18 ? `Chapter 02 · Lesson ${current - 9} of 9` : sectionNames[current];
     find('[data-book-progress]').style.width = `${(current + 1) / spreads.length * 100}%`;
     if (updateHash) history.replaceState(null, '', `#${spreads[current].dataset.spread}`);
     if (!reducedMotion.matches) {
