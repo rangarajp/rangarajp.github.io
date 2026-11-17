@@ -1,6 +1,7 @@
 ---
 const sections = [
   { id: 'start', label: 'The field guide' },
+  { id: 'hardware', label: 'Know your GPU' },
   { id: 'tokens', label: 'One token at a time' },
   { id: 'cache', label: 'Remember the work' },
   { id: 'roofline', label: 'Find the bottleneck' },
@@ -35,7 +36,43 @@ const base = '/concepts/llm-inference-v2/learn';
           <p>This little book makes that story tangible. Turn a page, change a control, and watch one idea at a time.</p>
           <div class="learning-route"><span>01 <b>Watch a request unfold</b></span><span>02 <b>Try a small experiment</b></span><span>03 <b>Follow the deeper chapter</b></span></div>
           <button class="book-button" data-book-go="1">Open the first lesson <span>→</span></button>
-          <p class="book-note">Five interactive explanations. No 3D graphics required.<br/>Use the buttons or your left and right arrow keys.</p>
+          <p class="book-note">Six interactive explanations. No 3D graphics required.<br/>Use the buttons or your left and right arrow keys.</p>
+        </div>
+      </section>
+
+
+      <section class="book-spread" id="spread-hardware" data-spread="hardware" aria-labelledby="title-hardware">
+        <div class="book-page lesson-page">
+          <p class="book-kicker">01 / UNDERSTAND THE MACHINE</p>
+          <h3 id="title-hardware">A GPU is a factory<br/><em>for numbers.</em></h3>
+          <p>Imagine a warehouse, a delivery team, and a room full of workers. The warehouse stores materials. The delivery team moves them. The workers turn them into results.</p>
+          <div class="analogy"><span>THINK OF IT THIS WAY</span><p>GPU memory (<strong>VRAM</strong>) is the warehouse. The <strong>SMs</strong> are the workers. <strong>Bandwidth</strong> is how fast materials arrive.</p></div>
+          <p>If workers wait for deliveries, the task is <strong>memory-bound</strong>. If deliveries arrive faster than workers can process them, the task is <strong>compute-bound</strong>.</p>
+          <p>Neural networks multiply enormous matrices. Reusing the same weights for more inputs can help the workers stay busy. The <strong>roofline</strong> describes where the bottleneck changes.</p>
+          <a class="chapter-link" href={`${base}/gpu-fundamentals/`}>Go deeper: hardware foundations →</a>
+          <span class="page-number">02</span>
+        </div>
+        <div class="book-page experiment" data-hardware-demo>
+          <div class="experiment-heading"><span>TRY IT / THE GPU FACTORY</span><span class="live-tag">CHANGE THE SPEED</span></div>
+          <p class="demo-caption">Move the sliders. Watch the workers and the queue.</p>
+          <div class="hardware-factory" aria-label="GPU factory showing delivery and worker activity">
+            <div class="hardware-factory-top"><div class="hardware-station"><strong>VRAM</strong><span>Warehouse</span></div><div class="hardware-track"><i></i><i></i><i></i></div><div class="hardware-station workers"><strong>SMs</strong><span>Workers</span></div></div>
+            <div class="hardware-queue"><span>WAITING WORK</span><div data-hardware-queue><i></i><i></i><i></i><i></i><i></i></div><small data-hardware-queue-label>Balanced</small></div>
+            <div class="hardware-workers" aria-label="Worker status"><span>WORKER STATUS</span><div data-hardware-workers><i></i><i></i><i></i><i></i></div><small data-hardware-worker-label>Working</small></div>
+          </div>
+          <label class="range-label" for="hardware-delivery">Delivery speed <output id="hardware-delivery-value">2 / 3</output></label>
+          <input id="hardware-delivery" type="range" min="1" max="3" step="1" value="2" />
+          <label class="range-label" for="hardware-compute">Compute speed <output id="hardware-compute-value">2 / 3</output></label>
+          <input id="hardware-compute" type="range" min="1" max="3" step="1" value="2" />
+          <p class="demo-explanation" data-hardware-explanation aria-live="polite">Delivery and compute are balanced. The workers have enough data to keep moving.</p>
+          <div class="hardware-roofline">
+            <div><strong>THE ROOFLINE CONNECTION</strong><span data-hardware-roofline-label>Balanced resources</span></div>
+            <div class="hardware-roofline-chart" role="img" aria-label="A sloped memory bandwidth ceiling transitions to a flat compute ceiling">
+              <svg viewBox="0 0 400 120" aria-hidden="true"><path d="M22 10 V100 H388" stroke="#9da995" fill="none" stroke-width="1.4"/><path d="M22 100 L215 28 H386" stroke="#214d3c" fill="none" stroke-width="4" stroke-linejoin="round"/><circle cx="215" cy="28" r="5" fill="#b77b48"/><text x="70" y="57" font-size="10" fill="#66776b">MEMORY LIMIT</text><text x="270" y="18" font-size="10" fill="#66776b">COMPUTE LIMIT</text></svg>
+            </div>
+            <p>Left: workers wait for bytes. Right: workers are busy calculating. The bend is where the limiting resource changes.</p>
+          </div>
+          <span class="page-number">03</span>
         </div>
       </section>
 
