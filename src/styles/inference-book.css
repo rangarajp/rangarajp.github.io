@@ -269,3 +269,17 @@
 .hardware-flops-input b{display:block;width:12%;height:46px;background:repeating-linear-gradient(90deg,#39735c 0 6px,#a8c4a7 6px 10px);border:1px solid #39735c;transition:width .25s}
 .hardware-flops-input small,.hardware-flops-weight small{font:10px ui-monospace,monospace;color:#66776b}
 @media(prefers-reduced-motion:reduce){.hardware-timebar i,.hardware-flops-input b{transition:none}}
+
+.book-chapters{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.book-chapter-cover{display:inline-block;font:11px ui-monospace,monospace;padding:12px 14px;text-decoration:none;color:#214d3c;border:1px solid #d6d9ca;border-radius:4px}
+.book-chapter-cover[aria-current]{background:#214d3c;color:#fff9e9}
+.book-chapter-one{flex:1 1 650px;min-width:0;background:#eef1e7;border:1px solid #d6d9ca;border-radius:5px;padding:11px 14px}
+.book-chapter-heading{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:13px;color:#214d3c}
+.book-chapter-heading strong{font:600 10px ui-monospace,monospace;letter-spacing:.1em}
+.book-chapter-heading small{margin-left:auto;font-size:11px;color:#66776b}
+.book-chapter-lessons{margin-bottom:0;gap:4px}
+.book-chapter-lessons a{padding:6px 8px;font-size:10px}
+.book-next-chapters{flex:1 1 100%;margin-bottom:0;border-top:1px solid #d6d9ca;padding-top:12px}
+.book-next-chapters:before{content:'NEXT CHAPTERS';font:600 10px ui-monospace,monospace;letter-spacing:.1em;color:#66776b;align-self:center;margin-right:10px}
+.hardware-intro-takeaway{margin-top:18px}
+@media(max-width:650px){.book-chapter-heading{flex-wrap:wrap}.book-chapter-heading small{margin-left:0}.book-chapters{gap:9px}}

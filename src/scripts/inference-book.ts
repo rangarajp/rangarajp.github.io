@@ -7,6 +7,7 @@ if (book) {
   const spreads = all<HTMLElement>('[data-spread]');
   const tabs = all<HTMLAnchorElement>('[data-book-tab]');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const sectionNames = ['Cover','Know your GPU','Meet your hardware','Move the bytes','Time the journey','Count the work','Multiply the numbers','Reuse the weights','Find the speed limit','Trust the measurements','One token at a time','Remember the work','Find the bottleneck','Make room for more','Keep the GPU busy'];
   let current = 0;
   let turn: Animation | undefined;
   let batchTimer: number | undefined;
@@ -28,11 +29,10 @@ if (book) {
     });
     find('[data-hardware-queue-label]').textContent = d > c ? 'Queue builds' : d < c ? 'No backlog' : 'Short queue';
     find('[data-hardware-worker-label]').textContent = d < c ? 'Some idle' : 'Working';
-    find('[data-hardware-roofline-label]').textContent = d < c ? 'Memory-bound' : d > c ? 'Compute-bound' : 'Balanced resources';
     find('[data-hardware-explanation]').textContent = d < c
-      ? 'Workers are ready, but deliveries are too slow. Some workers wait for data: the memory-bound side of the roofline.'
+      ? 'Workers are ready, but deliveries are too slow. Some workers wait for data.'
       : d > c
-        ? 'Materials arrive faster than workers can process them. Pending work builds up: the compute-bound side of the roofline.'
+        ? 'Materials arrive faster than workers can process them. Pending work builds up.'
         : 'Delivery and compute are balanced. The workers have enough data to keep moving.';
   }
   delivery.addEventListener('input', updateHardware);
@@ -187,7 +187,7 @@ if (book) {
     });
     find<HTMLButtonElement>('[data-book-prev]').disabled = current === 0;
     find<HTMLButtonElement>('[data-book-next]').disabled = current === spreads.length - 1;
-    find('[data-book-position]').textContent = `${current === 0 ? 'Cover' : `Lesson ${current}`} · ${current + 1} / ${spreads.length}`;
+    find('[data-book-position]').textContent = current === 0 ? 'Cover' : current <= 9 ? `Chapter 01 · Lesson ${current} of 9` : `Chapter ${String(current - 8).padStart(2,'0')} · ${sectionNames[current]}`;
     find('[data-book-progress]').style.width = `${(current + 1) / spreads.length * 100}%`;
     if (updateHash) history.replaceState(null, '', `#${spreads[current].dataset.spread}`);
     if (!reducedMotion.matches) {

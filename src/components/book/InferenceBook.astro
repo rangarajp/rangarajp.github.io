@@ -23,8 +23,17 @@ const base = '/concepts/llm-inference-v2/learn';
     <span class="book-edition">A VISUAL FIELD GUIDE <span>BY RANGARAJ P</span></span>
     <a href="#chapters">Full handbook →</a>
   </div>
-  <nav class="book-tabs" aria-label="Visual book contents">
-    {sections.map((s, i) => <a href={`#${s.id}`} data-book-tab={i} aria-controls={`spread-${s.id}`}><span>0{i}</span> {s.label}</a>)}
+  <nav class="book-chapters" aria-label="Book chapters">
+    <a class="book-chapter-cover" href="#start" data-book-tab={0} aria-controls="spread-start">00 · The field guide</a>
+    <div class="book-chapter-one">
+      <div class="book-chapter-heading"><strong>CHAPTER 01</strong><span>Know your GPU</span><small>9 interactive lessons</small></div>
+      <div class="book-tabs book-chapter-lessons" aria-label="Chapter 01 lessons">
+        {sections.slice(1,10).map((s,i)=><a href={`#${s.id}`} data-book-tab={i+1} aria-controls={`spread-${s.id}`}><span>01.${i+1}</span> {s.label}</a>)}
+      </div>
+    </div>
+    <div class="book-tabs book-next-chapters" aria-label="Following chapters">
+      {sections.slice(10).map((s,i)=><a href={`#${s.id}`} data-book-tab={i+10} aria-controls={`spread-${s.id}`}><span>${String(i+2).padStart(2,'0')}</span> {s.label}</a>)}
+    </div>
   </nav>
   <div class="book-stage">
     <div class="book-binding" aria-hidden="true"></div>
@@ -55,8 +64,8 @@ const base = '/concepts/llm-inference-v2/learn';
           <h3 id="title-hardware">A GPU is a factory<br/><em>for numbers.</em></h3>
           <p>Imagine a warehouse, a delivery team, and a room full of workers. The warehouse stores materials. The delivery team moves them. The workers turn them into results.</p>
           <div class="analogy"><span>THINK OF IT THIS WAY</span><p>GPU memory (<strong>VRAM</strong>) is the warehouse. The <strong>SMs</strong> are the workers. <strong>Bandwidth</strong> is how fast materials arrive.</p></div>
-          <p>If workers wait for deliveries, the task is <strong>memory-bound</strong>. If deliveries arrive faster than workers can process them, the task is <strong>compute-bound</strong>.</p>
-          <p>Neural networks multiply enormous matrices. Reusing the same weights for more inputs can help the workers stay busy. The <strong>roofline</strong> describes where the bottleneck changes.</p>
+          <p>The GPU's job is to move numbers and calculate with them. <strong>VRAM</strong> stores the numbers, <strong>SMs</strong> do the work, and data must travel between them. That is the foundation of GPU performance.</p>
+          <p>Over nine lessons we will inspect the GPU, move 32 MB of data, measure latency, count FLOPs, multiply matrices, reuse weights, and only then connect these ideas with the roofline.</p>
           <a class="chapter-link" href={`${base}/gpu-fundamentals/`}>Go deeper: hardware foundations →</a>
           <span class="page-number">02</span>
         </div>
@@ -73,13 +82,7 @@ const base = '/concepts/llm-inference-v2/learn';
           <label class="range-label" for="hardware-compute">Compute speed <output id="hardware-compute-value">2 / 3</output></label>
           <input id="hardware-compute" type="range" min="1" max="3" step="1" value="2" />
           <p class="demo-explanation" data-hardware-explanation aria-live="polite">Delivery and compute are balanced. The workers have enough data to keep moving.</p>
-          <div class="hardware-roofline">
-            <div><strong>THE ROOFLINE CONNECTION</strong><span data-hardware-roofline-label>Balanced resources</span></div>
-            <div class="hardware-roofline-chart" role="img" aria-label="A sloped memory bandwidth ceiling transitions to a flat compute ceiling">
-              <svg viewBox="0 0 400 120" aria-hidden="true"><path d="M22 10 V100 H388" stroke="#9da995" fill="none" stroke-width="1.4"/><path d="M22 100 L215 28 H386" stroke="#214d3c" fill="none" stroke-width="4" stroke-linejoin="round"/><circle cx="215" cy="28" r="5" fill="#b77b48"/><text x="70" y="57" font-size="10" fill="#66776b">MEMORY LIMIT</text><text x="270" y="18" font-size="10" fill="#66776b">COMPUTE LIMIT</text></svg>
-            </div>
-            <p>Left: workers wait for bytes. Right: workers are busy calculating. The bend is where the limiting resource changes.</p>
-          </div>
+          <div class="analogy hardware-intro-takeaway"><span>WHAT TO NOTICE</span><p>Workers can be ready but waiting for materials. Or materials can arrive while workers are still busy. Later we will measure these two situations and explain why they matter.</p></div>
           <span class="page-number">03</span>
         </div>
       </section>
@@ -393,7 +396,7 @@ const base = '/concepts/llm-inference-v2/learn';
   </div>
   <div class="book-navigation" data-book-navigation hidden>
     <button class="quiet-button" data-book-prev aria-label="Previous lesson">← Previous</button>
-    <div><span data-book-position aria-live="polite">Cover · 1 / 6</span><div class="book-progress" aria-hidden="true"><i data-book-progress></i></div></div>
+    <div><span data-book-position aria-live="polite">Cover</span><div class="book-progress" aria-hidden="true"><i data-book-progress></i></div></div>
     <button class="quiet-button" data-book-next aria-label="Next lesson">Next lesson →</button>
   </div>
   <noscript><p class="no-script-note">All lessons are shown below each other. Interactive controls require JavaScript; the full written handbook is available below.</p></noscript>
